@@ -29,6 +29,8 @@ GEM
       rack-test
       sinatra (~> 1.4.0)
       tilt (>= 1.3, < 3)
+    sinatra-param (1.4.0)
+      sinatra (~> 1.3)
     slop (3.6.0)
     tilt (2.0.1)
 
@@ -43,6 +45,7 @@ DEPENDENCIES
   sequel
   sinatra
   sinatra-contrib
+  sinatra-param
 
 BUNDLED WITH
    1.10.6
