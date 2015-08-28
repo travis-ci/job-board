@@ -1,0 +1,3 @@
+require './imgref'
+
+run IMGRef
