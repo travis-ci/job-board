@@ -1,4 +1,14 @@
 language: ruby
+
 rvm: 2.2.2
+
+addons:
+  postgresql: 9.3
+
+env:
+  global:
+  - DATABASE_URL='postgres://'
+  - COVERAGE='1'
+
 before_script:
 - psql < db/schema.sql
