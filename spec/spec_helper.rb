@@ -1,0 +1,3 @@
+require 'simplecov'
+
+require 'imgref'

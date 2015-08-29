@@ -1,8 +1,8 @@
-require 'rack/auth/basic'
-require './imgref'
+#!/usr/bin/env rackup
 
-use Rack::Auth::Basic, 'SECRET AREA' do |username, password|
-  password == 'x' && username == ENV['AUTH_TOKEN']
-end
+lib = File.expand_path('../lib', __FILE__)
+$LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
-run IMGRef
+require 'imgref'
+
+run IMGRef::App
