@@ -4,14 +4,15 @@ require 'sequel'
 module CareerCenter
   module Services
     class FetchImages
-      attr_reader :params
+      attr_reader :params, :infra
 
       def initialize(params: {})
         @params = params
+        @infra = params.fetch('infra')
       end
 
       def run
-        image_query = CareerCenter::Models::Image.where(infra: params.fetch('infra'))
+        image_query = CareerCenter::Models::Image.where(infra: infra)
         override_query = CareerCenter::Models::Override
 
         %w(slug owner os language dist osx_image).each do |key|
@@ -47,7 +48,7 @@ module CareerCenter
 
         if images.empty?
           default_image = CareerCenter::Models::Image.where(
-            infra: params.fetch('infra'), is_default: true
+            infra: infra, is_default: true
           ).first
           images << default_image if default_image
         end
