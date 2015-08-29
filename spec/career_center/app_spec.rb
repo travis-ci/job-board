@@ -37,7 +37,8 @@ describe CareerCenter::App do
     it 'returns an array of images' do
       get '/images?infra=test'
       expect(last_response.body).to_not be_empty
-      expect(JSON.parse(last_response.body)['images']).to_not be_nil
+      expect(JSON.parse(last_response.body)['data']).to_not be_nil
+      expect(JSON.parse(last_response.body)['data']).to_not be_empty
     end
   end
 end

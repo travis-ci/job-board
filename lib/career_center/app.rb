@@ -54,7 +54,10 @@ module CareerCenter
       images = CareerCenter::Services::FetchImages.new(params: params).run
 
       status 200
-      json images: images.map(&:to_hash)
+      json data: images.map(&:to_hash),
+           meta: {
+             limit: params.fetch('limit')
+           }
     end
 
     post '/images' do
@@ -68,7 +71,7 @@ module CareerCenter
       image = CareerCenter::Services::CreateImage.new(params: params).run
 
       status 201
-      json images: [image.to_hash]
+      json data: [image.to_hash]
     end
 
     put '/images/:id' do
@@ -83,7 +86,7 @@ module CareerCenter
       halt 404 if image.nil?
 
       status 200
-      json images: [image.to_hash]
+      json data: [image.to_hash]
     end
 
     run! if app_file == $PROGRAM_NAME
