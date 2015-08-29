@@ -1,3 +1,5 @@
 --require spec_helper
+--require pry
 --color
 --format documentation
+--order rand

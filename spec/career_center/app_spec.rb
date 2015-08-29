@@ -2,4 +2,42 @@ describe CareerCenter::App do
   it 'has some auth tokens' do
     expect(described_class.auth_tokens).to_not be_nil
   end
+
+  describe 'GET /' do
+    it 'redirects to /images' do
+      get '/'
+      expect(last_response.status).to eql(301)
+      expect(URI(last_response.location).path).to eql('/images')
+    end
+  end
+
+  describe 'POST /images' do
+    it 'requires infra param' do
+      post '/images'
+      expect(last_response.status).to eql(400)
+    end
+
+    it 'requires name param' do
+      post '/images?infra=test'
+      expect(last_response.status).to eql(400)
+    end
+
+    it 'creates a new image' do
+      post '/images?infra=test&name=whatever'
+      expect(last_response.status).to eql(201)
+    end
+  end
+
+  describe 'GET /images' do
+    it 'requires infra param' do
+      get '/images'
+      expect(last_response.status).to eql(400)
+    end
+
+    it 'returns an array of images' do
+      get '/images?infra=test'
+      expect(last_response.body).to_not be_empty
+      expect(JSON.parse(last_response.body)['images']).to_not be_nil
+    end
+  end
 end

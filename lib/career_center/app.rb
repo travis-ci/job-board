@@ -21,7 +21,7 @@ module CareerCenter
       end
     end
 
-    unless development?
+    unless development? || test?
       use Rack::Auth::Basic, 'CareerCenter Realm' do |_, password|
         CareerCenter::App.auth_tokens.include?(password)
       end
@@ -60,8 +60,10 @@ module CareerCenter
     post '/images' do
       param :infra, String, blank: true, required: true
       param :name, String, blank: true, required: true
-      param :is_default, Boolean, default: false
+      param :is_default, Boolean
       param :tags, Hash, default: {}
+
+      params['is_default'] = false unless params.key?('is_default')
 
       image = CareerCenter::Services::CreateImage.new(params: params).run
 
@@ -72,8 +74,10 @@ module CareerCenter
     put '/images/:id' do
       param :infra, String, blank: true, required: true
       param :name, String, blank: true, required: true
-      param :is_default, Boolean, default: false
+      param :is_default, Boolean
       param :tags, Hash, default: {}
+
+      params['is_default'] = false unless params.key?('is_default')
 
       image = CareerCenter::Services::UpdateImage.new(params: params).run
       halt 404 if image.nil?
