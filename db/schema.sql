@@ -2,9 +2,9 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS hstore;
 
-CREATE SCHEMA imgref;
+CREATE SCHEMA career_center;
 
-CREATE TABLE imgref.images (
+CREATE TABLE career_center.images (
   id serial PRIMARY KEY,
   infra character varying(255) NOT NULL,
   name character varying(255) NOT NULL,
@@ -14,15 +14,15 @@ CREATE TABLE imgref.images (
   updated_at timestamp without time zone
 );
 
-CREATE UNIQUE INDEX images_is_default_infra ON imgref.images(infra, is_default) WHERE is_default IS true;
+CREATE UNIQUE INDEX images_is_default_infra ON career_center.images(infra, is_default) WHERE is_default IS true;
 
-CREATE INDEX images_on_infra ON imgref.images(infra);
+CREATE INDEX images_on_infra ON career_center.images(infra);
 
-CREATE INDEX images_on_name ON imgref.images(name);
+CREATE INDEX images_on_name ON career_center.images(name);
 
-CREATE INDEX images_on_tags ON imgref.images USING GIST (tags);
+CREATE INDEX images_on_tags ON career_center.images USING GIST (tags);
 
-CREATE TABLE imgref.overrides (
+CREATE TABLE career_center.overrides (
   id serial PRIMARY KEY,
   image_id bigint NOT NULL,
   slug character varying(255),
@@ -37,20 +37,20 @@ CREATE TABLE imgref.overrides (
   updated_at timestamp without time zone
 );
 
-CREATE INDEX overrides_on_image_id ON imgref.overrides(image_id);
+CREATE INDEX overrides_on_image_id ON career_center.overrides(image_id);
 
-CREATE INDEX overrides_on_slug ON imgref.overrides(slug);
+CREATE INDEX overrides_on_slug ON career_center.overrides(slug);
 
-CREATE INDEX overrides_on_owner ON imgref.overrides(owner);
+CREATE INDEX overrides_on_owner ON career_center.overrides(owner);
 
-CREATE INDEX overrides_on_os ON imgref.overrides(os);
+CREATE INDEX overrides_on_os ON career_center.overrides(os);
 
-CREATE INDEX overrides_on_language ON imgref.overrides(language);
+CREATE INDEX overrides_on_language ON career_center.overrides(language);
 
-CREATE INDEX overrides_on_dist ON imgref.overrides(dist);
+CREATE INDEX overrides_on_dist ON career_center.overrides(dist);
 
-CREATE INDEX overrides_on_osx_image ON imgref.overrides(osx_image);
+CREATE INDEX overrides_on_osx_image ON career_center.overrides(osx_image);
 
-CREATE INDEX overrides_on_services ON imgref.overrides USING GIN (services);
+CREATE INDEX overrides_on_services ON career_center.overrides USING GIN (services);
 
 COMMIT;

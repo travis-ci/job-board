@@ -1,6 +1,6 @@
 require 'sequel'
 
-module IMGRef
+module CareerCenter
   module Services
     class UpdateImage
       attr_reader :params
@@ -10,7 +10,7 @@ module IMGRef
       end
 
       def run
-        image = IMGRef::Models::Image[params.fetch('id')]
+        image = CareerCenter::Models::Image[params.fetch('id')]
         return nil if image.nil?
 
         image.update(

@@ -1,7 +1,7 @@
 require 'travis/config'
 require 'hashr'
 
-module IMGRef
+module CareerCenter
   class Config < Travis::Config
     extend Hashr::EnvDefaults
 

@@ -11,19 +11,19 @@ require 'sinatra/base'
 require 'sinatra/json'
 require 'sinatra/param'
 
-module IMGRef
+module CareerCenter
   class App < Sinatra::Base
     helpers Sinatra::Param
 
     class << self
       def auth_tokens
-        @auth_tokens ||= IMGRef.config.auth.tokens.split(':').map(&:strip)
+        @auth_tokens ||= CareerCenter.config.auth.tokens.split(':').map(&:strip)
       end
     end
 
     unless development?
-      use Rack::Auth::Basic, 'IMGRef Realm' do |_, password|
-        IMGRef::App.auth_tokens.include?(password)
+      use Rack::Auth::Basic, 'CareerCenter Realm' do |_, password|
+        CareerCenter::App.auth_tokens.include?(password)
       end
 
       use Rack::SSL
@@ -51,7 +51,7 @@ module IMGRef
       param :osx_image, String, blank: true
       param :services, Array, blank: true
 
-      images = IMGRef::Services::FetchImages.new(params: params).run
+      images = CareerCenter::Services::FetchImages.new(params: params).run
 
       status 200
       json images: images.map(&:to_hash)
@@ -63,7 +63,7 @@ module IMGRef
       param :is_default, Boolean, default: false
       param :tags, Hash, default: {}
 
-      image = IMGRef::Services::CreateImage.new(params: params).run
+      image = CareerCenter::Services::CreateImage.new(params: params).run
 
       status 201
       json images: [image.to_hash]
@@ -75,7 +75,7 @@ module IMGRef
       param :is_default, Boolean, default: false
       param :tags, Hash, default: {}
 
-      image = IMGRef::Services::UpdateImage.new(params: params).run
+      image = CareerCenter::Services::UpdateImage.new(params: params).run
       halt 404 if image.nil?
 
       status 200

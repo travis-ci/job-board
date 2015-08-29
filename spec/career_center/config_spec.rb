@@ -1,4 +1,4 @@
-describe IMGRef::Config do
+describe CareerCenter::Config do
   subject { described_class.load }
 
   it 'has a class env' do

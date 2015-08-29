@@ -1,9 +1,8 @@
 require 'sequel/model'
 
-module IMGRef
+module CareerCenter
   module Models
-    class Override < Sequel::Model(:imgref__overrides)
-      many_to_one :image
+    class Image < Sequel::Model(:career_center__images)
       set_primary_key :id
 
       plugin :timestamps, update_on_create: true

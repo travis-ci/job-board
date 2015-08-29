@@ -1,7 +1,7 @@
-require 'imgref'
+require 'career_center'
 require 'sequel'
 
-module IMGRef
+module CareerCenter
   module Services
     class FetchImages
       attr_reader :params
@@ -11,8 +11,8 @@ module IMGRef
       end
 
       def run
-        image_query = IMGRef::Models::Image.where(infra: params.fetch('infra'))
-        override_query = IMGRef::Models::Override
+        image_query = CareerCenter::Models::Image.where(infra: params.fetch('infra'))
+        override_query = CareerCenter::Models::Override
 
         %w(slug owner os language dist osx_image).each do |key|
           if params.key?(key)
@@ -46,7 +46,7 @@ module IMGRef
         end
 
         if images.empty?
-          default_image = IMGRef::Models::Image.where(
+          default_image = CareerCenter::Models::Image.where(
             infra: params.fetch('infra'), is_default: true
           ).first
           images << default_image if default_image
