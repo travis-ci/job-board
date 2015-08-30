@@ -1,8 +1,6 @@
-require 'sequel'
-
-module CareerCenter
+module JobBoard
   module Services
-    class UpdateImage
+    class CreateImage
       attr_reader :params
 
       def initialize(params: {})
@@ -10,17 +8,12 @@ module CareerCenter
       end
 
       def run
-        image = CareerCenter::Models::Image[params.fetch('id')]
-        return nil if image.nil?
-
-        image.update(
+        JobBoard::Models::Image.create(
           infra: params.fetch('infra'),
           name: params.fetch('name'),
           is_default: params.fetch('is_default'),
           tags: Sequel.hstore(params.fetch('tags'))
         )
-
-        image
       end
     end
   end

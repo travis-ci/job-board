@@ -11,19 +11,19 @@ require 'sinatra/base'
 require 'sinatra/json'
 require 'sinatra/param'
 
-module CareerCenter
+module JobBoard
   class App < Sinatra::Base
     helpers Sinatra::Param
 
     class << self
       def auth_tokens
-        @auth_tokens ||= CareerCenter.config.auth.tokens.split(':').map(&:strip)
+        @auth_tokens ||= JobBoard.config.auth.tokens.split(':').map(&:strip)
       end
     end
 
     unless development? || test?
-      use Rack::Auth::Basic, 'CareerCenter Realm' do |_, password|
-        CareerCenter::App.auth_tokens.include?(password)
+      use Rack::Auth::Basic, 'JobBoard Realm' do |_, password|
+        JobBoard::App.auth_tokens.include?(password)
       end
 
       use Rack::SSL
@@ -51,7 +51,7 @@ module CareerCenter
       param :osx_image, String, blank: true
       param :services, Array, blank: true
 
-      images = CareerCenter::Services::FetchImages.new(params: params).run
+      images = JobBoard::Services::FetchImages.new(params: params).run
 
       status 200
       json data: images.map(&:to_hash),
@@ -68,7 +68,7 @@ module CareerCenter
 
       params['is_default'] = false unless params.key?('is_default')
 
-      image = CareerCenter::Services::CreateImage.new(params: params).run
+      image = JobBoard::Services::CreateImage.new(params: params).run
 
       status 201
       json data: [image.to_hash]
@@ -82,7 +82,7 @@ module CareerCenter
 
       params['is_default'] = false unless params.key?('is_default')
 
-      image = CareerCenter::Services::UpdateImage.new(params: params).run
+      image = JobBoard::Services::UpdateImage.new(params: params).run
       halt 404 if image.nil?
 
       status 200

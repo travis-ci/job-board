@@ -1,7 +1,7 @@
-require 'career_center'
+require 'job_board'
 require 'sequel'
 
-module CareerCenter
+module JobBoard
   module Services
     class FetchImages
       attr_reader :params, :infra
@@ -12,8 +12,8 @@ module CareerCenter
       end
 
       def run
-        image_query = CareerCenter::Models::Image.where(infra: infra)
-        override_query = CareerCenter::Models::Override
+        image_query = JobBoard::Models::Image.where(infra: infra)
+        override_query = JobBoard::Models::Override
 
         %w(slug owner os language dist osx_image).each do |key|
           if params.key?(key)
@@ -47,7 +47,7 @@ module CareerCenter
         end
 
         if images.empty?
-          default_image = CareerCenter::Models::Image.where(
+          default_image = JobBoard::Models::Image.where(
             infra: infra, is_default: true
           ).first
           images << default_image if default_image

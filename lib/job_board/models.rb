@@ -1,23 +1,23 @@
 require 'sequel'
 require 'sequel/model'
 
-module CareerCenter
+module JobBoard
   module Models
-    autoload :Image, 'career_center/models/image'
-    autoload :Override, 'career_center/models/override'
+    autoload :Image, 'job_board/models/image'
+    autoload :Override, 'job_board/models/override'
 
     class << self
       def db
         @db ||= Sequel.connect(
-          CareerCenter.config.database.url,
-          max_connections: CareerCenter.config.database.pool_size,
+          JobBoard.config.database.url,
+          max_connections: JobBoard.config.database.pool_size,
           logger: db_logger
         )
       end
 
       def db_logger
         @db_logger ||= (
-          CareerCenter.config.database.sql_logging ? Logger.new($stderr) : nil
+          JobBoard.config.database.sql_logging ? Logger.new($stderr) : nil
         )
       end
 
@@ -26,9 +26,9 @@ module CareerCenter
         Sequel.extension :core_extensions, :pg_hstore
 
         %w(images overrides).each do |table|
-          :"career_center__#{table}"
-          Sequel.qualify(:career_center, table.to_sym)
-          table.to_sym.qualify(:career_center)
+          :"job_board__#{table}"
+          Sequel.qualify(:job_board, table.to_sym)
+          table.to_sym.qualify(:job_board)
         end
 
         @initdb = db['select now()']

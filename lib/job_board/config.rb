@@ -1,7 +1,7 @@
 require 'travis/config'
 require 'hashr'
 
-module CareerCenter
+module JobBoard
   class Config < Travis::Config
     extend Hashr::EnvDefaults
 

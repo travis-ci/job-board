@@ -1,4 +1,4 @@
-describe CareerCenter::Services::FetchImages do
+describe JobBoard::Services::FetchImages do
   subject { described_class.new(params: { 'infra' => 'test' }) }
 
   it 'has params' do

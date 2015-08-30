@@ -2,9 +2,9 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS hstore;
 
-CREATE SCHEMA career_center;
+CREATE SCHEMA job_board;
 
-CREATE TABLE career_center.images (
+CREATE TABLE job_board.images (
   id serial PRIMARY KEY,
   infra character varying(255) NOT NULL,
   name character varying(255) NOT NULL,
@@ -14,15 +14,15 @@ CREATE TABLE career_center.images (
   updated_at timestamp without time zone
 );
 
-CREATE UNIQUE INDEX images_is_default_infra ON career_center.images(infra, is_default) WHERE is_default IS true;
+CREATE UNIQUE INDEX images_is_default_infra ON job_board.images(infra, is_default) WHERE is_default IS true;
 
-CREATE INDEX images_on_infra ON career_center.images(infra);
+CREATE INDEX images_on_infra ON job_board.images(infra);
 
-CREATE INDEX images_on_name ON career_center.images(name);
+CREATE INDEX images_on_name ON job_board.images(name);
 
-CREATE INDEX images_on_tags ON career_center.images USING GIST (tags);
+CREATE INDEX images_on_tags ON job_board.images USING GIST (tags);
 
-CREATE TABLE career_center.overrides (
+CREATE TABLE job_board.overrides (
   id serial PRIMARY KEY,
   image_id bigint NOT NULL,
   slug character varying(255),
@@ -37,20 +37,20 @@ CREATE TABLE career_center.overrides (
   updated_at timestamp without time zone
 );
 
-CREATE INDEX overrides_on_image_id ON career_center.overrides(image_id);
+CREATE INDEX overrides_on_image_id ON job_board.overrides(image_id);
 
-CREATE INDEX overrides_on_slug ON career_center.overrides(slug);
+CREATE INDEX overrides_on_slug ON job_board.overrides(slug);
 
-CREATE INDEX overrides_on_owner ON career_center.overrides(owner);
+CREATE INDEX overrides_on_owner ON job_board.overrides(owner);
 
-CREATE INDEX overrides_on_os ON career_center.overrides(os);
+CREATE INDEX overrides_on_os ON job_board.overrides(os);
 
-CREATE INDEX overrides_on_language ON career_center.overrides(language);
+CREATE INDEX overrides_on_language ON job_board.overrides(language);
 
-CREATE INDEX overrides_on_dist ON career_center.overrides(dist);
+CREATE INDEX overrides_on_dist ON job_board.overrides(dist);
 
-CREATE INDEX overrides_on_osx_image ON career_center.overrides(osx_image);
+CREATE INDEX overrides_on_osx_image ON job_board.overrides(osx_image);
 
-CREATE INDEX overrides_on_services ON career_center.overrides USING GIN (services);
+CREATE INDEX overrides_on_services ON job_board.overrides USING GIN (services);
 
 COMMIT;

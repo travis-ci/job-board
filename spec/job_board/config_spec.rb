@@ -1,4 +1,4 @@
-describe CareerCenter::Config do
+describe JobBoard::Config do
   subject { described_class.load }
 
   it 'has a class env' do

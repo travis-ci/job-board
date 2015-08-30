@@ -1,9 +1,8 @@
 require 'sequel/model'
 
-module CareerCenter
+module JobBoard
   module Models
-    class Override < Sequel::Model(:career_center__overrides)
-      many_to_one :image
+    class Image < Sequel::Model(:job_board__images)
       set_primary_key :id
 
       plugin :timestamps, update_on_create: true

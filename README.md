@@ -1,3 +1,3 @@
-# career-center
+# `job-board`
 
-Job placement for the masses
+Job placement for everyone!
