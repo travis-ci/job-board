@@ -2,7 +2,7 @@ require 'sequel/model'
 
 module JobBoard
   module Models
-    class Override < Sequel::Model(:job_board__overrides)
+    class JobRouteOverride < Sequel::Model(:job_board__job_route_overrides)
       many_to_one :image
       set_primary_key :id
 

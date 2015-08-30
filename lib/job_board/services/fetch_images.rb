@@ -4,6 +4,10 @@ require 'sequel'
 module JobBoard
   module Services
     class FetchImages
+      def self.run(params: {})
+        new(params: params).run
+      end
+
       attr_reader :params, :infra
 
       def initialize(params: {})
@@ -13,37 +17,17 @@ module JobBoard
 
       def run
         image_query = JobBoard::Models::Image.where(infra: infra)
-        override_query = JobBoard::Models::Override
+        images = []
 
-        %w(slug owner os language dist osx_image).each do |key|
-          if params.key?(key)
-            override_query = override_query.where(key => params.fetch(key))
-          end
-        end
-
-        if params.key?('services')
-          override_query = override_query.where(
-            'services && ?', params.fetch('services')
+        if params.key?('tags')
+          image_query = image_query.where(
+            'tags @> ?', Sequel.hstore(params.fetch('tags'))
           )
         end
 
-        images = []
-
-        if override_query.count > 0
-          override_query.reverse_order(:importance).each do |override|
-            images << override.image
-          end
-        else
-          if params.key?('tags')
-            image_query = image_query.where(
-              'tags @> ?', Sequel.hstore(params.fetch('tags'))
-            )
-          end
-
-          limit = params.fetch('limit')
-          image_query.reverse_order(:created_at).limit(limit).each do |image|
-            images << image
-          end
+        limit = params.fetch('limit')
+        image_query.reverse_order(:created_at).limit(limit).each do |image|
+          images << image
         end
 
         if images.empty?

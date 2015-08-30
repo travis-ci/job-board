@@ -3,6 +3,10 @@ require 'sequel'
 module JobBoard
   module Services
     class UpdateImage
+      def self.run(params: {})
+        new(params: params).run
+      end
+
       attr_reader :params
 
       def initialize(params: {})

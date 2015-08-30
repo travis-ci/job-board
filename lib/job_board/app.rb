@@ -51,7 +51,7 @@ module JobBoard
       param :osx_image, String, blank: true
       param :services, Array, blank: true
 
-      images = JobBoard::Services::FetchImages.new(params: params).run
+      images = JobBoard::Services::FetchImages.run(params: params)
 
       status 200
       json data: images.map(&:to_hash),
@@ -68,7 +68,7 @@ module JobBoard
 
       params['is_default'] = false unless params.key?('is_default')
 
-      image = JobBoard::Services::CreateImage.new(params: params).run
+      image = JobBoard::Services::CreateImage.run(params: params)
 
       status 201
       json data: [image.to_hash]
@@ -82,7 +82,7 @@ module JobBoard
 
       params['is_default'] = false unless params.key?('is_default')
 
-      image = JobBoard::Services::UpdateImage.new(params: params).run
+      image = JobBoard::Services::UpdateImage.run(params: params)
       halt 404 if image.nil?
 
       status 200

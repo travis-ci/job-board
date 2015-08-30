@@ -1,6 +1,10 @@
 module JobBoard
   module Services
     class CreateImage
+      def self.run(params: {})
+        new(params: params).run
+      end
+
       attr_reader :params
 
       def initialize(params: {})

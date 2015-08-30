@@ -1,4 +1,4 @@
---require spec_helper
+--require support
 --require pry
 --color
 --format documentation
