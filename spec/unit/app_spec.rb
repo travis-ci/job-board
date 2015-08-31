@@ -53,19 +53,19 @@ describe JobBoard::App do
     end
   end
 
-  describe 'PUT /images/:id' do
+  describe 'PUT /images' do
     it 'requires infra param' do
-      put '/images/1'
+      put '/images'
       expect(last_response.status).to eql(400)
     end
 
     it 'requires name param' do
-      put '/images/1?infra=test'
+      put '/images?infra=test'
       expect(last_response.status).to eql(400)
     end
 
     it 'updates the updated image' do
-      put '/images/1?infra=test&name=whatever'
+      put '/images?infra=test&name=whatever'
       expect(last_response.status).to eql(200)
     end
   end

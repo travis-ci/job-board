@@ -68,7 +68,7 @@ module JobBoard
       json data: [image.to_hash]
     end
 
-    put '/images/:id' do
+    put '/images' do
       param :infra, String, blank: true, required: true
       param :name, String, blank: true, required: true
       param :is_default, Boolean
