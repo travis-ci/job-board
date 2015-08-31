@@ -8,7 +8,7 @@ gem 'pg'
 gem 'pry', require: false
 gem 'puma'
 gem 'rack-test', group: %i(development test)
-gem 'rack-ssl'
+gem 'rack-ssl', require: false
 gem 'rake'
 gem 'rspec', group: %i(development test)
 gem 'rubocop', group: %i(development test)

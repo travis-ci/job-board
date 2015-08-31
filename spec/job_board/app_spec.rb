@@ -1,9 +1,13 @@
 describe JobBoard::App do
+  let(:image0) { build(:image) }
+
   before do
     allow(JobBoard::Services::CreateImage).to receive(:run)
-      .and_return(build(:image))
+      .and_return(image0)
     allow(JobBoard::Services::FetchImages).to receive(:run)
       .and_return(build_list(:image, 3))
+    allow(JobBoard::Services::UpdateImage).to receive(:run)
+      .and_return(image0)
   end
 
   it 'has some auth tokens' do
@@ -46,6 +50,23 @@ describe JobBoard::App do
       expect(last_response.body).to_not be_empty
       expect(JSON.parse(last_response.body)['data']).to_not be_nil
       expect(JSON.parse(last_response.body)['data'].length).to eql(3)
+    end
+  end
+
+  describe 'PUT /images/:id' do
+    it 'requires infra param' do
+      put '/images/1'
+      expect(last_response.status).to eql(400)
+    end
+
+    it 'requires name param' do
+      put '/images/1?infra=test'
+      expect(last_response.status).to eql(400)
+    end
+
+    it 'updates the updated image' do
+      put '/images/1?infra=test&name=whatever'
+      expect(last_response.status).to eql(200)
     end
   end
 end

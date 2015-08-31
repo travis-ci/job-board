@@ -12,6 +12,9 @@ env:
   global:
   - DATABASE_URL='postgres://'
   - COVERAGE='1'
+  matrix:
+  - INTEGRATION_SPECS='1'
+  - INTEGRATION_SPECS='0'
 
 before_script:
 - psql < db/schema.sql

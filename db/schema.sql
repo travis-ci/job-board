@@ -22,35 +22,4 @@ CREATE INDEX images_on_name ON job_board.images(name);
 
 CREATE INDEX images_on_tags ON job_board.images USING GIST (tags);
 
-CREATE TABLE job_board.job_route_overrides (
-  id serial PRIMARY KEY,
-  image_id bigint NOT NULL,
-  slug character varying(255),
-  owner character varying(255),
-  os character varying(255),
-  language character varying(255),
-  dist character varying(255),
-  osx_image character varying(255),
-  services text[][],
-  importance integer NOT NULL DEFAULT 0,
-  created_at timestamp without time zone NOT NULL DEFAULT (now() at time zone 'UTC'),
-  updated_at timestamp without time zone
-);
-
-CREATE INDEX job_route_overrides_on_image_id ON job_board.job_route_overrides(image_id);
-
-CREATE INDEX job_route_overrides_on_slug ON job_board.job_route_overrides(slug);
-
-CREATE INDEX job_route_overrides_on_owner ON job_board.job_route_overrides(owner);
-
-CREATE INDEX job_route_overrides_on_os ON job_board.job_route_overrides(os);
-
-CREATE INDEX job_route_overrides_on_language ON job_board.job_route_overrides(language);
-
-CREATE INDEX job_route_overrides_on_dist ON job_board.job_route_overrides(dist);
-
-CREATE INDEX job_route_overrides_on_osx_image ON job_board.job_route_overrides(osx_image);
-
-CREATE INDEX job_route_overrides_on_services ON job_board.job_route_overrides USING GIN (services);
-
 COMMIT;

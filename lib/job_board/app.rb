@@ -4,8 +4,6 @@ require 'logger'
 require_relative 'config'
 require_relative 'models'
 
-require 'rack/auth/basic'
-require 'rack/ssl'
 require 'sequel'
 require 'sinatra/base'
 require 'sinatra/json'
@@ -22,9 +20,13 @@ module JobBoard
     end
 
     unless development? || test?
+      require 'rack/auth/basic'
+
       use Rack::Auth::Basic, 'JobBoard Realm' do |_, password|
         JobBoard::App.auth_tokens.include?(password)
       end
+
+      require 'rack/ssl'
 
       use Rack::SSL
     end
@@ -42,14 +44,6 @@ module JobBoard
       param :name, String, blank: true
       param :tags, Hash, default: {}
       param :limit, Integer, default: 1
-
-      param :slug, String, blank: true
-      param :owner, String, blank: true
-      param :os, String, blank: true
-      param :language, String, blank: true
-      param :dist, String, blank: true, default: 'precise'
-      param :osx_image, String, blank: true
-      param :services, Array, blank: true
 
       images = JobBoard::Services::FetchImages.run(params: params)
 
