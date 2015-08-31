@@ -19,6 +19,12 @@ module JobBoard
         image_query = JobBoard::Models::Image.where(infra: infra)
         images = []
 
+        if params.key?('name')
+          image_query = image_query.where(
+            Sequel.like(:name, /#{params.fetch('name')}/)
+          )
+        end
+
         if params.key?('tags')
           image_query = image_query.where(
             'tags @> ?', Sequel.hstore(params.fetch('tags'))
