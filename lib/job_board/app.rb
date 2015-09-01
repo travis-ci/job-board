@@ -4,6 +4,7 @@ require 'logger'
 require_relative 'config'
 require_relative 'models'
 
+require 'rack/deflater'
 require 'sequel'
 require 'sinatra/base'
 require 'sinatra/json'
@@ -29,7 +30,10 @@ module JobBoard
       require 'rack/ssl'
 
       use Rack::SSL
+
     end
+
+    use Rack::Deflater
 
     before do
       content_type :json
