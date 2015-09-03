@@ -58,6 +58,17 @@ module JobBoard
            }
     end
 
+    # This is a POST-ish version of `GET /images` that accepts a body of
+    # line-delimited queries, returning with the first query with results
+    post '/images/search' do
+      images, limit = fetch_images_from_body(request.body)
+      status 200
+      json data: images.map(&:to_hash),
+           meta: {
+             limit: limit
+           }
+    end
+
     post '/images' do
       param :infra, String, blank: true, required: true
       param :name, String, blank: true, required: true
@@ -88,5 +99,33 @@ module JobBoard
     end
 
     run! if app_file == $PROGRAM_NAME
+
+    private
+
+    def fetch_images_from_body(request_body)
+      images = []
+      limit = 1
+
+      request_body.each_line do |line|
+        line_params = Hash[
+          CGI.parse(line).map { |key, values| [key, values.first || ''] }
+        ]
+
+        next if line_params['infra'].nil? || line_params['infra'].empty?
+
+        if line_params.key?('tags')
+          line_params['tags'] = Hash[
+            line_params['tags'].split(',').map { |t| t.split(':', 2) }
+          ]
+        end
+
+        line_params['limit'] = limit = Integer(line_params['limit'] || 1)
+
+        images = JobBoard::Services::FetchImages.run(params: line_params)
+        return images, limit if images.length > 0
+      end
+
+      [images, limit]
+    end
   end
 end

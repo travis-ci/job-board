@@ -47,6 +47,31 @@ describe JobBoard::App do
 
     it 'returns an array of images' do
       get '/images?infra=test'
+      expect(last_response.status).to eql(200)
+      expect(last_response.body).to_not be_empty
+      expect(JSON.parse(last_response.body)['data']).to_not be_nil
+      expect(JSON.parse(last_response.body)['data'].length).to eql(3)
+    end
+  end
+
+  describe 'POST /images/search' do
+    it 'returns empty dataset if no queries include "infra"' do
+      post '/images/search',
+           %w(foo=test name=whatever).join("\n"),
+           'CONTENT_TYPE' => 'text/uri-list'
+
+      expect(last_response.status).to eql(200)
+      expect(last_response.body).to_not be_empty
+      expect(JSON.parse(last_response.body)['data']).to_not be_nil
+      expect(JSON.parse(last_response.body)['data'].length).to eql(0)
+    end
+
+    it 'returns an array of images' do
+      post '/images/search',
+           %w(infra=test infra=test&name=whatever).join("\n"),
+           'CONTENT_TYPE' => 'text/uri-list'
+
+      expect(last_response.status).to eql(200)
       expect(last_response.body).to_not be_empty
       expect(JSON.parse(last_response.body)['data']).to_not be_nil
       expect(JSON.parse(last_response.body)['data'].length).to eql(3)
