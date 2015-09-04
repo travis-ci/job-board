@@ -5,4 +5,6 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
 require 'job_board'
 
+$stdout.sync = true if ENV.key?('DYNO')
+puts 'IS THIS THING ON'
 run JobBoard::App
