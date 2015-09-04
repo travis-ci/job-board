@@ -98,6 +98,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  activesupport
   factory_girl
   jemalloc
   pg

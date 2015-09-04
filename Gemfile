@@ -2,6 +2,7 @@ source 'https://rubygems.org'
 
 ruby '2.2.2' if ENV.key?('DYNO')
 
+gem 'activesupport'
 gem 'factory_girl', group: %i(development test)
 gem 'jemalloc'
 gem 'pg'
