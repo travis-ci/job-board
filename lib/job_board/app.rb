@@ -106,9 +106,12 @@ module JobBoard
       images = []
       limit = 1
 
-      request_body.each do |line|
+      full_body = request_body.read
+      logger.debug("handling request full_body=#{full_body.inspect}")
+
+      full_body.split(/\n|\r\n/).each do |line|
         line_params = Hash[
-          CGI.parse(line).map { |key, values| [key, values.first || ''] }
+          CGI.parse(line).map { |k, v| [k, (v.first || '').strip] }
         ]
         logger.debug("handling request line=#{line.inspect}")
 
@@ -123,7 +126,8 @@ module JobBoard
         line_params['limit'] = limit = Integer(line_params['limit'] || 1)
 
         images = JobBoard::Services::FetchImages.run(params: line_params)
-        logger.debug("found images=#{images.inspect} params=#{line_params.inspect}")
+        logger.debug("found images=#{images.inspect} " \
+                     "params=#{line_params.inspect}")
         return images, limit if images.length > 0
       end
 
