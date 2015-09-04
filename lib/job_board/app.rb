@@ -18,6 +18,12 @@ module JobBoard
       def auth_tokens
         @auth_tokens ||= JobBoard.config.auth.tokens.split(':').map(&:strip)
       end
+
+      def logger
+        @logger ||= Logger.new($stdout).tap do |l|
+          l.level = Logger::DEBUG
+        end
+      end
     end
 
     unless development? || test?
@@ -103,6 +109,7 @@ module JobBoard
     private
 
     def fetch_images_from_body(request_body)
+      logger.debug("received request_body=#{request_body.inspect}")
       images = []
       limit = 1
 
@@ -125,7 +132,12 @@ module JobBoard
         return images, limit if images.length > 0
       end
 
+      logger.debug("returning images=#{images.inspect} limit=#{limit.inspect}")
       [images, limit]
+    end
+
+    def logger
+      self.class.logger
     end
   end
 end
