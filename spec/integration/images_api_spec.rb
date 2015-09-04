@@ -82,13 +82,11 @@ describe 'Images API', integration: true do
     end
 
     {
-      'with infra & name' => [%w(infra=test&name=whatever), 1],
-      'with infra, name, & is_default' =>
-        [%w(infra=test&name=whatever&is_default=true&limit=3), 1],
+      'with infra & wildcard name' => [%w(infra=test&name=.*), 1],
       'with infra & limit' =>
         [%w(infra=test&limit=3), 3],
       'with infra & tags' =>
-        [%w(infra=test&tags=foo:bar,production:true), 1]
+        [%w(infra=test&tags=foo:bar,production:yep), 1]
     }.each do |desc, (body, count)|
       context desc do
         it 'returns 200' do
