@@ -22,7 +22,7 @@ module JobBoard
       def logger
         @logger ||= Logger.new($stdout).tap do |l|
           $stdout.sync = true
-          l.level = Logger::DEBUG
+          l.level = Logger.const_get(JobBoard.config.log_level.upcase)
         end
       end
     end
@@ -68,7 +68,6 @@ module JobBoard
     # This is a POST-ish version of `GET /images` that accepts a body of
     # line-delimited queries, returning with the first query with results
     post '/images/search' do
-      puts 'Handling POST /images/search'
       images, limit = fetch_images_from_body(request.body)
       status 200
       json data: images.map(&:to_hash),
@@ -112,7 +111,6 @@ module JobBoard
 
     def fetch_images_from_body(request_body)
       logger.debug("received request_body=#{request_body.inspect}")
-      puts("received request_body=#{request_body.inspect}")
       images = []
       limit = 1
 
@@ -136,7 +134,6 @@ module JobBoard
       end
 
       logger.debug("returning images=#{images.inspect} limit=#{limit.inspect}")
-      puts("returning images=#{images.inspect} limit=#{limit.inspect}")
       [images, limit]
     end
 

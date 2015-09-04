@@ -14,7 +14,8 @@ module JobBoard
     end
 
     define auth: { tokens: '' },
-           database: { url: '', sql_logging: false }
+           database: { url: '', sql_logging: false },
+           log_level: 'info'
 
     default(access: [:key])
   end
