@@ -36,13 +36,6 @@ module JobBoard
           images << image
         end
 
-        if images.empty?
-          default_image = JobBoard::Models::Image.where(
-            infra: infra, is_default: true
-          ).first
-          images << default_image if default_image
-        end
-
         images
       end
     end

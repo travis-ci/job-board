@@ -54,17 +54,13 @@ describe JobBoard::Services::FetchImages do
   end
 
   context 'when no images are found' do
-    it 'returns the default image for the infra' do
+    it 'returns no images' do
       expect(JobBoard::Models::Image).to receive(:where).with(
         infra: 'test'
       ).and_return(FakeImageQuery.new([]))
 
-      expect(JobBoard::Models::Image).to receive(:where).with(
-        infra: 'test', is_default: true
-      ).and_return([image0])
-
       fetch_params = { 'infra' => 'test', 'limit' => 10 }
-      expect(described_class.run(params: fetch_params)).to eql([image0])
+      expect(described_class.run(params: fetch_params)).to be_empty
     end
   end
 end

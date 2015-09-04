@@ -26,7 +26,7 @@ describe 'Images API', integration: true do
       'with infra & name regex' =>
         ['/images?infra=test&name=test-.*&limit=10', 3],
       'with nonmatched conditions' =>
-        ['/images?infra=test&name=foo&limit=10', 1],
+        ['/images?infra=test&name=foo&limit=10', 0],
       'with infra & tags production:yep' =>
         ['/images?infra=test&tags=production:yep&limit=10', 1],
       'with infra & tags production:nope' =>
@@ -40,11 +40,10 @@ describe 'Images API', integration: true do
           expect(last_response.status).to eql(200)
         end
 
-        it 'returns images' do
+        it "returns #{count} image(s)" do
           get path
           response_body = JSON.parse(last_response.body)
           expect(response_body['data']).to_not be_nil
-          expect(response_body['data']).to_not be_empty
           expect(response_body['data'].length).to eql(count)
         end
       end
