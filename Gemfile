@@ -7,8 +7,8 @@ gem 'jemalloc'
 gem 'pg'
 gem 'pry', require: false
 gem 'puma'
-gem 'rack-test', group: %i(development test)
 gem 'rack-ssl', require: false
+gem 'rack-test', group: %i(development test)
 gem 'rake'
 gem 'rspec', group: %i(development test)
 gem 'rubocop', group: %i(development test)
@@ -18,3 +18,4 @@ gem 'sinatra'
 gem 'sinatra-contrib'
 gem 'sinatra-param', require: 'sinatra/param'
 gem 'travis-config'
+gem 'travis-support', github: 'travis-ci/travis-support'

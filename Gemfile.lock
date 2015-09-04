@@ -1,3 +1,9 @@
+GIT
+  remote: git://github.com/travis-ci/travis-support.git
+  revision: a56f184c84f1f243da40daeaaf07f4ba931e6384
+  specs:
+    travis-support (0.0.1)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -108,6 +114,7 @@ DEPENDENCIES
   sinatra-contrib
   sinatra-param
   travis-config
+  travis-support!
 
 BUNDLED WITH
    1.10.6

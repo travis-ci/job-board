@@ -1,5 +1,4 @@
 require 'json'
-require 'logger'
 
 require_relative 'config'
 require_relative 'models'
@@ -17,13 +16,6 @@ module JobBoard
     class << self
       def auth_tokens
         @auth_tokens ||= JobBoard.config.auth.tokens.split(':').map(&:strip)
-      end
-
-      def logger
-        @logger ||= Logger.new($stdout).tap do |l|
-          $stdout.sync = true
-          l.level = Logger.const_get(JobBoard.config.log_level.upcase)
-        end
       end
     end
 
@@ -114,10 +106,11 @@ module JobBoard
       images = []
       limit = 1
 
-      request_body.each_line do |line|
+      request_body.each do |line|
         line_params = Hash[
           CGI.parse(line).map { |key, values| [key, values.first || ''] }
         ]
+        logger.debug("handling request line=#{line.inspect}")
 
         next if line_params['infra'].nil? || line_params['infra'].empty?
 
@@ -130,6 +123,7 @@ module JobBoard
         line_params['limit'] = limit = Integer(line_params['limit'] || 1)
 
         images = JobBoard::Services::FetchImages.run(params: line_params)
+        logger.debug("found images=#{images.inspect} params=#{line_params.inspect}")
         return images, limit if images.length > 0
       end
 
@@ -138,7 +132,7 @@ module JobBoard
     end
 
     def logger
-      self.class.logger
+      ::JobBoard.logger
     end
   end
 end
