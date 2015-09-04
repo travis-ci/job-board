@@ -21,6 +21,7 @@ module JobBoard
 
       def logger
         @logger ||= Logger.new($stdout).tap do |l|
+          $stdout.sync = true
           l.level = Logger::DEBUG
         end
       end
