@@ -1,3 +1,4 @@
+require_relative 'travis'
 require 'travis/support/logger'
 require 'travis/support/logging'
 

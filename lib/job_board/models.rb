@@ -10,8 +10,7 @@ module JobBoard
         @db ||= Sequel.connect(
           JobBoard.config.database.url,
           max_connections: JobBoard.config.database.pool_size,
-          # logger: db_logger
-          logger: Logger.new($stdout)
+          logger: db_logger
         )
       end
 

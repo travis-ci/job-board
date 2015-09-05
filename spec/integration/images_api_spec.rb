@@ -90,7 +90,6 @@ describe 'Images API', integration: true do
     }.each do |desc, (body, count)|
       context desc do
         it 'returns 200' do
-          puts body.inspect
           post '/images/search', body.join("\n"),
                'CONTENT_TYPE' => 'text/uri-list'
           expect(last_response.status).to eql(200)
