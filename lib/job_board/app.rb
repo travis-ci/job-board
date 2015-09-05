@@ -2,6 +2,7 @@ require 'json'
 
 require_relative 'config'
 require_relative 'models'
+require_relative 'image_searcher'
 
 require 'rack/deflater'
 require 'sequel'
@@ -60,7 +61,7 @@ module JobBoard
     # This is a POST-ish version of `GET /images` that accepts a body of
     # line-delimited queries, returning with the first query with results
     post '/images/search' do
-      images, limit = fetch_images_from_body(request.body)
+      images, limit = image_searcher.search(request.body.read)
       status 200
       json data: images.map(&:to_hash),
            meta: {
@@ -101,38 +102,8 @@ module JobBoard
 
     private
 
-    def fetch_images_from_body(request_body)
-      logger.debug("received request_body=#{request_body.inspect}")
-      images = []
-      limit = 1
-
-      full_body = request_body.read
-      logger.debug("handling request full_body=#{full_body.inspect}")
-
-      full_body.split(/\n|\r\n/).each do |line|
-        line_params = Hash[
-          CGI.parse(line).map { |k, v| [k, (v.first || '').strip] }
-        ]
-        logger.debug("handling request line=#{line.inspect}")
-
-        next if line_params['infra'].nil? || line_params['infra'].empty?
-
-        if line_params.key?('tags')
-          line_params['tags'] = Hash[
-            line_params['tags'].split(',').map { |t| t.split(':', 2) }
-          ]
-        end
-
-        line_params['limit'] = limit = Integer(line_params['limit'] || 1)
-
-        images = JobBoard::Services::FetchImages.run(params: line_params)
-        logger.debug("found images=#{images.inspect} " \
-                     "params=#{line_params.inspect}")
-        return images, limit if images.length > 0
-      end
-
-      logger.debug("returning images=#{images.inspect} limit=#{limit.inspect}")
-      [images, limit]
+    def image_searcher
+      @image_searcher ||= JobBoard::ImageSearcher.new
     end
 
     def logger

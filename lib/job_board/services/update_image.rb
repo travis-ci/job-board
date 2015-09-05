@@ -14,13 +14,21 @@ module JobBoard
       end
 
       def run
-        image = JobBoard::Models::Image.where(
+        image = by_infra_and_name
+        return nil if image.nil?
+        update_image(image)
+      end
+
+      private
+
+      def by_infra_and_name
+        JobBoard::Models::Image.where(
           infra: params.fetch('infra'),
           name: params.fetch('name')
         ).first
+      end
 
-        return nil if image.nil?
-
+      def update_image(image)
         image.update(
           infra: params.fetch('infra'),
           name: params.fetch('name'),
