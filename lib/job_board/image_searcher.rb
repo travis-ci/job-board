@@ -3,26 +3,22 @@ require_relative 'services/fetch_images'
 module JobBoard
   class ImageSearcher
     def search(request_body)
-      images = []
-      limit = 1
-
       logger.debug("handling request request_body=#{request_body.inspect}")
 
       request_body.split(/\n|\r\n/).each do |line|
-        images, limit = fetch_images_for_line(line, limit)
-        return images, limit if images.length > 0
+        images, limit = fetch_images_for_line(line)
+        return [images, line.strip, limit] if images.length > 0
       end
 
-      logger.debug("returning images=#{images.inspect} limit=#{limit.inspect}")
-      [images, limit]
+      [[], '', 1]
     end
 
     private
 
-    def fetch_images_for_line(line, limit)
+    def fetch_images_for_line(line)
       params = parse_params(line)
 
-      return [[], limit] if missing_infra?(params)
+      return [[], 1] if missing_infra?(params)
 
       params['tags'] = parse_tags(params['tags']) if params.key?('tags')
       params['limit'] = limit = Integer(params['limit'] || 1)

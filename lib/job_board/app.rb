@@ -61,11 +61,12 @@ module JobBoard
     # This is a POST-ish version of `GET /images` that accepts a body of
     # line-delimited queries, returning with the first query with results
     post '/images/search' do
-      images, limit = image_searcher.search(request.body.read)
+      images, matching_query, limit = image_searcher.search(request.body.read)
       status 200
       json data: images.map(&:to_hash),
            meta: {
-             limit: limit
+             limit: limit,
+             matching_query: matching_query
            }
     end
 

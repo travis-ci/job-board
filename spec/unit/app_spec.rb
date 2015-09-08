@@ -76,6 +76,19 @@ describe JobBoard::App do
       expect(JSON.parse(last_response.body)['data']).to_not be_nil
       expect(JSON.parse(last_response.body)['data'].length).to eql(3)
     end
+
+    it 'returns the matching query' do
+      post '/images/search',
+           %w(infra=test infra=test&name=whatever).join("\n"),
+           'CONTENT_TYPE' => 'text/uri-list'
+
+      expect(last_response.status).to eql(200)
+      expect(last_response.body).to_not be_empty
+      expect(JSON.parse(last_response.body)['meta']).to_not be_nil
+      expect(
+        JSON.parse(last_response.body)['meta']['matching_query']
+      ).to eql('infra=test')
+    end
   end
 
   describe 'PUT /images' do
