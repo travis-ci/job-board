@@ -6,8 +6,8 @@ module JobBoard
       logger.debug("handling request request_body=#{request_body.inspect}")
 
       request_body.split(/\n|\r\n/).each do |line|
-        images, limit = fetch_images_for_line(line)
-        return [images, line.strip, limit] if images.length > 0
+        images, params, limit = fetch_images_for_line(line)
+        return [images, params, limit] if images.length > 0
       end
 
       [[], '', 1]
@@ -23,7 +23,7 @@ module JobBoard
       params['tags'] = parse_tags(params['tags']) if params.key?('tags')
       params['limit'] = limit = Integer(params['limit'] || 1)
 
-      [fetch_images(params), limit]
+      [fetch_images(params), params, limit]
     end
 
     def missing_infra?(params)

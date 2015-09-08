@@ -60,6 +60,16 @@ describe 'Images API', integration: true do
         expect(JSON.parse(last_response.body)['message']).to_not be_empty
       end
     end
+
+    it 'supports fields specification' do
+      get '/images?infra=test&fields[images]=name'
+      response_body = JSON.parse(last_response.body)
+      expect(response_body).to_not be_empty
+      expect(response_body['data']).to_not be_nil
+      response_body['data'].each do |image|
+        expect(image.keys).to eql(%w(name))
+      end
+    end
   end
 
   describe 'POST /images/search' do
@@ -119,6 +129,22 @@ describe 'Images API', integration: true do
           expect(response_body['data']).to_not be_nil
           expect(response_body['data']).to be_empty
         end
+      end
+    end
+
+    it 'supports fields specification' do
+      post '/images/search',
+           %w(
+             infra=test&fields[images]=name
+             infra=test&name=whatever&fields[images]=name
+           ).join("\n"),
+           'CONTENT_TYPE' => 'text/uri-list'
+
+      response_body = JSON.parse(last_response.body)
+      expect(response_body).to_not be_empty
+      expect(response_body['data']).to_not be_nil
+      response_body['data'].each do |image|
+        expect(image.keys).to eql(%w(name))
       end
     end
   end
