@@ -52,7 +52,9 @@ module JobBoard
       images = JobBoard::Services::FetchImages.run(params: params)
       data = images.map(&:to_hash)
 
-      fields = ((params['fields'] || {})['images'] || '').split(',').map do |key|
+      fields = (
+        (params['fields'] || {})['images'] || ''
+      ).split(',').map do |key|
         key.strip.to_sym
       end
 
