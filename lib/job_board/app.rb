@@ -1,8 +1,8 @@
 require 'json'
-require 'logger'
 
 require_relative 'config'
 require_relative 'models'
+require_relative 'image_searcher'
 
 require 'rack/deflater'
 require 'sequel'
@@ -50,11 +50,40 @@ module JobBoard
       param :limit, Integer, default: 1
 
       images = JobBoard::Services::FetchImages.run(params: params)
+      data = images.map(&:to_hash)
+
+      fields = (
+        (params['fields'] || {})['images'] || ''
+      ).split(',').map do |key|
+        key.strip.to_sym
+      end
+
+      data = images_fields(data, fields) unless fields.empty?
 
       status 200
-      json data: images.map(&:to_hash),
+      json data: data,
            meta: {
              limit: params.fetch('limit')
+           }
+    end
+
+    # This is a POST-ish version of `GET /images` that accepts a body of
+    # line-delimited queries, returning with the first query with results
+    post '/images/search' do
+      images, matching_query, limit = image_searcher.search(request.body.read)
+      data = images.map(&:to_hash)
+
+      fields = (matching_query['fields[images]'] || '').split(',').map do |key|
+        key.strip.to_sym
+      end
+
+      data = images_fields(data, fields) unless fields.empty?
+
+      status 200
+      json data: data,
+           meta: {
+             limit: limit,
+             matching_query: matching_query
            }
     end
 
@@ -88,5 +117,21 @@ module JobBoard
     end
 
     run! if app_file == $PROGRAM_NAME
+
+    private
+
+    def image_searcher
+      @image_searcher ||= JobBoard::ImageSearcher.new
+    end
+
+    def images_fields(images, fields)
+      images.map do |image|
+        image.delete_if { |k, _| !fields.include?(k) }
+      end
+    end
+
+    def logger
+      ::JobBoard.logger
+    end
   end
 end

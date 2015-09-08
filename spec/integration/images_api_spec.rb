@@ -26,7 +26,7 @@ describe 'Images API', integration: true do
       'with infra & name regex' =>
         ['/images?infra=test&name=test-.*&limit=10', 3],
       'with nonmatched conditions' =>
-        ['/images?infra=test&name=foo&limit=10', 1],
+        ['/images?infra=test&name=foo&limit=10', 0],
       'with infra & tags production:yep' =>
         ['/images?infra=test&tags=production:yep&limit=10', 1],
       'with infra & tags production:nope' =>
@@ -40,12 +40,11 @@ describe 'Images API', integration: true do
           expect(last_response.status).to eql(200)
         end
 
-        it 'returns images' do
+        it "returns #{count} image(s)" do
           get path
-          body = JSON.parse(last_response.body)
-          expect(body['data']).to_not be_nil
-          expect(body['data']).to_not be_empty
-          expect(body['data'].length).to eql(count)
+          response_body = JSON.parse(last_response.body)
+          expect(response_body['data']).to_not be_nil
+          expect(response_body['data'].length).to eql(count)
         end
       end
     end
@@ -59,6 +58,93 @@ describe 'Images API', integration: true do
       it 'returns an error message' do
         get '/images'
         expect(JSON.parse(last_response.body)['message']).to_not be_empty
+      end
+    end
+
+    it 'supports fields specification' do
+      get '/images?infra=test&fields[images]=name'
+      response_body = JSON.parse(last_response.body)
+      expect(response_body).to_not be_empty
+      expect(response_body['data']).to_not be_nil
+      response_body['data'].each do |image|
+        expect(image.keys).to eql(%w(name))
+      end
+    end
+  end
+
+  describe 'POST /images/search' do
+    before :each do
+      JobBoard::Models::Image.where(infra: 'test').delete
+
+      3.times do |n|
+        JobBoard::Services::CreateImage.run(
+          params: {
+            'infra' => 'test',
+            'name' => "test-image-#{n}",
+            'is_default' => (n == 0),
+            'tags' => {
+              'foo' => 'bar',
+              'production' => (n.even? ? 'nope' : 'yep')
+            }
+          }
+        )
+      end
+    end
+
+    {
+      'with infra & wildcard name' => [%w(infra=test&name=.*), 1],
+      'with infra & limit' =>
+        [%w(infra=test&limit=3), 3],
+      'with infra & tags' =>
+        [%w(infra=test&tags=foo:bar,production:yep), 1]
+    }.each do |desc, (body, count)|
+      context desc do
+        it 'returns 200' do
+          post '/images/search', body.join("\n"),
+               'CONTENT_TYPE' => 'text/uri-list'
+          expect(last_response.status).to eql(200)
+        end
+
+        it 'returns an array of images' do
+          post '/images/search', body.join("\n"),
+               'CONTENT_TYPE' => 'text/uri-list'
+
+          response_body = JSON.parse(last_response.body)
+          expect(response_body['data']).to_not be_nil
+          expect(response_body['data']).to_not be_empty
+          expect(response_body['data'].length).to eql(count)
+        end
+      end
+    end
+
+    {
+      'when no queries include "infra"' => %w(foo=test&limit=1 name=whatever)
+    }.each do |desc, body|
+      context desc do
+        it 'returns empty dataset' do
+          post '/images/search', body.join("\n"),
+               'CONTENT_TYPE' => 'text/uri-list'
+
+          response_body = JSON.parse(last_response.body)
+          expect(response_body['data']).to_not be_nil
+          expect(response_body['data']).to be_empty
+        end
+      end
+    end
+
+    it 'supports fields specification' do
+      post '/images/search',
+           %w(
+             infra=test&fields[images]=name
+             infra=test&name=whatever&fields[images]=name
+           ).join("\n"),
+           'CONTENT_TYPE' => 'text/uri-list'
+
+      response_body = JSON.parse(last_response.body)
+      expect(response_body).to_not be_empty
+      expect(response_body['data']).to_not be_nil
+      response_body['data'].each do |image|
+        expect(image.keys).to eql(%w(name))
       end
     end
   end

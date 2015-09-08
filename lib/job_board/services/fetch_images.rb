@@ -16,34 +16,31 @@ module JobBoard
       end
 
       def run
-        image_query = JobBoard::Models::Image.where(infra: infra)
         images = []
 
-        if params.key?('name')
-          image_query = image_query.where(
-            Sequel.like(:name, /#{params.fetch('name')}/)
-          )
-        end
-
-        if params.key?('tags')
-          image_query = image_query.where(
-            'tags @> ?', Sequel.hstore(params.fetch('tags'))
-          )
-        end
-
-        limit = params.fetch('limit')
-        image_query.reverse_order(:created_at).limit(limit).each do |image|
+        build_query.reverse_order(:created_at).limit(
+          params.fetch('limit')
+        ).each do |image|
           images << image
         end
 
-        if images.empty?
-          default_image = JobBoard::Models::Image.where(
-            infra: infra, is_default: true
-          ).first
-          images << default_image if default_image
-        end
-
         images
+      end
+
+      private
+
+      def build_query
+        image_query = JobBoard::Models::Image.where(infra: infra)
+
+        image_query = image_query.where(
+          Sequel.like(:name, /#{params.fetch('name')}/)
+        ) if params.key?('name')
+
+        image_query = image_query.where(
+          'tags @> ?', Sequel.hstore(params.fetch('tags'))
+        ) if params.key?('tags')
+
+        image_query
       end
     end
   end

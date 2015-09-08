@@ -16,7 +16,7 @@ module JobBoard
 
       def db_logger
         @db_logger ||= (
-          JobBoard.config.database.sql_logging ? Logger.new($stderr) : nil
+          JobBoard.config.database.sql_logging ? Logger.new($stdout) : nil
         )
       end
 
