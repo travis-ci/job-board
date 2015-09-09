@@ -189,4 +189,46 @@ describe 'Images API', integration: true do
       end
     end
   end
+
+  describe 'DELETE /images' do
+    before :each do
+      JobBoard::Models::Image.where(infra: 'test').delete
+
+      3.times do |n|
+        JobBoard::Services::CreateImage.run(
+          params: {
+            'infra' => 'test',
+            'name' => "test-image-#{n}",
+            'is_default' => (n == 0),
+            'tags' => {
+              'foo' => 'bar',
+              'production' => (n.even? ? 'nope' : 'yep')
+            }
+          }
+        )
+      end
+    end
+
+    {
+      'with infra & name' =>
+        ['/images?infra=test&name=test-image-0&limit=10', 204],
+      'with infra, name & tags production:yep' =>
+        ['/images?infra=test&name=test-image-0' \
+         '&tags=production:yep&limit=10', 204]
+    }.each do |desc, (path, status)|
+      context desc do
+        it "returns #{status}" do
+          delete path
+          expect(last_response.status).to eql(status)
+        end
+
+        it 'deletes matching image(s)' do
+          expect do
+            delete path
+            expect(last_response.body).to be_empty
+          end.to change { JobBoard::Models::Image.count }.by(-1)
+        end
+      end
+    end
+  end
 end

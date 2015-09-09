@@ -116,6 +116,17 @@ module JobBoard
       json data: [image.to_hash]
     end
 
+    delete '/images' do
+      param :infra, String, blank: true, required: true
+      param :name, String, blank: true, required: true
+      param :tags, Hash, default: {}
+
+      n_destroyed = JobBoard::Services::DeleteImages.run(params: params)
+      halt 404 if n_destroyed == 0
+
+      [204, {}, '']
+    end
+
     run! if app_file == $PROGRAM_NAME
 
     private
