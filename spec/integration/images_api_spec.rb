@@ -45,6 +45,10 @@ describe 'Images API', integration: true do
           response_body = JSON.parse(last_response.body)
           expect(response_body['data']).to_not be_nil
           expect(response_body['data'].length).to eql(count)
+          response_body['data'].each do |image|
+            expect(image['tags']).to_not be_nil
+            expect(image['tags']['foo']).to eql('bar')
+          end
         end
       end
     end

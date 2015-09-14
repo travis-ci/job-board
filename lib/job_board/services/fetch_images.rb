@@ -21,7 +21,9 @@ module JobBoard
         build_query.reverse_order(:created_at).limit(
           params.fetch('limit')
         ).each do |image|
-          images << image
+          images << image.tap do |i|
+            i['tags'] = i['tags'].to_hash if i['tags']
+          end
         end
 
         images
