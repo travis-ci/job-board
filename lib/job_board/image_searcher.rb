@@ -22,6 +22,7 @@ module JobBoard
 
       params['tags'] = parse_tags(params['tags']) if params.key?('tags')
       params['limit'] = limit = Integer(params['limit'] || 1)
+      params['is_default'] = parse_bool(params['is_default'] || false)
 
       [fetch_images(params), params, limit]
     end
@@ -32,6 +33,11 @@ module JobBoard
 
     def parse_tags(tags_string)
       Hash[tags_string.split(',').map { |t| t.split(':', 2) }]
+    end
+
+    def parse_bool(bool_string)
+      return true if %w(yes true on 1).include?(bool_string.to_s.downcase)
+      false
     end
 
     def parse_params(line)
