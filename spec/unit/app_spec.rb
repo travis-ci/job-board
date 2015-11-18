@@ -87,7 +87,7 @@ describe JobBoard::App do
       expect(JSON.parse(last_response.body)['meta']).to_not be_nil
       expect(
         JSON.parse(last_response.body)['meta']['matching_query']
-      ).to eql('infra' => 'test', 'limit' => 1)
+      ).to eql('infra' => 'test', 'limit' => 1, 'is_default' => false)
     end
   end
 
