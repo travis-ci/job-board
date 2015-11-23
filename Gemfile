@@ -1,8 +1,9 @@
 source 'https://rubygems.org'
 
-ruby '2.2.2' if ENV.key?('DYNO')
+ruby '2.2.3' if ENV.key?('DYNO')
 
 gem 'activesupport'
+gem 'codeclimate-test-reporter', group: %i(development test), require: nil
 gem 'factory_girl', group: %i(development test)
 gem 'jemalloc'
 gem 'pg'
