@@ -2,8 +2,6 @@
 
 Job placement for everyone!
 
-:no_entry_sign: Alpha quality party time :tada:
-
 ## Image API
 
 One of the things that's queryable in job-board is image names on various
