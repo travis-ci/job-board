@@ -1,4 +1,6 @@
 require 'simplecov'
 require 'codeclimate-test-reporter'
 
-CodeClimate::TestReporter.start if ENV['COVERAGE']
+if ENV['COVERAGE'] && ENV['INTEGRATION_SPECS'] == '1'
+  CodeClimate::TestReporter.start
+end
