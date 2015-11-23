@@ -1,15 +1,13 @@
 language: ruby
 
-rvm: 2.2.2
+rvm: 2.2.3
 
 cache:
   bundler: true
 
 addons:
   postgresql: 9.3
-  code_climate:
-    repo_token:
-      secure: u7k6zXjarnX0mGoDcvcdmpqfdu2dLKUffFazW68DLpUwlTi52zrc/gEfvDLlba543o25VmZqaQxenScJ6HelfHmbOa5l/kDzWeMLxt0oPpSAMohPlDQkpN3j5d5WFkJuu8uOOHD363TU/7v4AA/9sVXqgqkdaDl1rNHl2zi/1aIfxYZ+fm6zbtlwJDPUlEFjwSIJRdHHmM+wKUDcu0OtpyXiVFSd7yLk226lVyprxNOU4RiB0hdhcNJ2Pz3VCKNCS8c1h9Gm5ybnlm1XYxvSdrxxD2kf+OE3DwaRZarSrPhT6tJRtDFxyRsRTwPLdYTUXr6gY5ufaC1K8P5bKSFATuHHPlagJDkBVD9iVQZ1pZf3zO3MvfYX7cOi7i80FZR+44TmC18GzDeqB0CZpJEFkAoJwCFyqN29bFwIfB6xRVZtytyYU/jY/dCIyAVZhbLj+UmklS9UW+5akChxOd1yVQHUbE8PHJPP+xaetRZZuwRTQ4YwK7XA4w+XJDtpppRJnAXXOyEsjAIgcIsFX7zBQbP0H/9RnYFGAW3GMOHd3v3NVvlKgwJbZSjWjT2eU5yoHeIIVNLGOvSd9uNgSM3LJmtZ8d7zrUPgOBXeeuIlps0fgTOruEzf5erVXULsy3Xy9X1Qrngu+bsOglPhqLcsjqrLufc0yHtOTa/BtPucIbA=
+
 env:
   global:
   - DATABASE_URL='postgres://'
