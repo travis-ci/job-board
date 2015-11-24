@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+#+ Usage: ${script} [-h|--help|help] <src> <dest>
+#+ .
+#+ Sync images matching $FILTER from <src> job-board to <dest> job-board, where
+#+ the <src> and <dest> should be the base URL, e.g.:
+#+ .
+#+     ${script} http://user:pass@src.example.org http://user:pass@dest.example.org
+#+ .
+#+ Influential env vars include:
+#+ .
+#+     FILTER - name filter used to select images (default: '^travis-ci')
+#+     INFRA  - infrastructure name (default: 'gce')
+#+ .
+
+set -o errexit
+
+main() {
+  if [[ $* =~ -h|help ]] ; then
+    __usage
+    exit 0
+  fi
+
+  local src="$1"
+  local dest="$2"
+  local infra="${INFRA:-gce}"
+  local filter="${FILTER:-^travis-ci}"
+  local tmpdir="$(mktemp -d /var/tmp/job-board-sync.XXXXX)"
+
+  __dump_src "${src}" "${infra}" "${tmpdir}"
+  __load_dest "${dest}" "${infra}" "${tmpdir}" "${filter}"
+  exit 0
+}
+
+__usage() {
+  local script="$(basename "${0}")"
+  awk "/^#\\+ / {
+        sub(/#\\+ \\.?/, \"\", \$0) ;
+        sub(/\\\${script}/, \"${script}\", \$0) ;
+        print \$0
+      }
+    " < "${0}"
+}
+
+__dump_src() {
+  local src="${1}"
+  local infra="${2}"
+  local tmpdir="${3}"
+
+  echo "---> dumping to ${tmpdir}/dump.json"
+  curl -sSL "${src}/images?infra=${infra}&limit=100" > "${tmpdir}/dump.json"
+}
+
+__load_dest() {
+  local dest="${1}"
+  local infra="${2}"
+  local tmpdir="${3}"
+  local filter="${4}"
+
+  echo "---> loading from ${tmpdir}/dump.json"
+  for args in $(__json_to_qs "${filter}" < "${tmpdir}/dump.json") ; do
+    (
+      echo "syncing ${args}"
+      curl -fsSL -X PUT "${dest}/images?${args}"  ||  (
+      curl -fsSL -X POST "${dest}/images?${args}" || \
+        echo "ERROR: failed to sync ${args}"
+      )
+    ) 2>&1 | sed 's/^/     /'
+  done
+}
+
+__json_to_qs() {
+  local filter="${1}"
+
+  ruby -rjson -e "
+    JSON.parse(\$stdin.read)['data'].each do |record|
+      next unless record['name'] =~ /${filter}/
+      out = []
+      out << \"infra=#{record['infra']}&name=#{record['name']}\"
+      out << \"is_default=#{record['is_default']}\"
+      tags = []
+      record['tags'].each do |k, v|
+        tags << \"#{k}:#{v}\"
+      end
+      out << \"tags=#{tags.join(',')}\"
+      puts out.join('&')
+    end
+  "
+}
+
+main "$@"
