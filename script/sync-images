@@ -71,20 +71,13 @@ __load_dest() {
 __json_to_qs() {
   local filter="${1}"
 
-  ruby -rjson -e "
-    JSON.parse(\$stdin.read)['data'].each do |record|
-      next unless record['name'] =~ /${filter}/
-      out = []
-      out << \"infra=#{record['infra']}&name=#{record['name']}\"
-      out << \"is_default=#{record['is_default']}\"
-      tags = []
-      record['tags'].each do |k, v|
-        tags << \"#{k}:#{v}\"
-      end
-      out << \"tags=#{tags.join(',')}\"
-      puts out.join('&')
-    end
-  "
+  jq -r '.data[] | select(.name | test("'"${filter}"'")) |
+    [
+      "infra=" + .infra,
+      "name=" + .name,
+      "is_default=" + (.is_default | tostring),
+      "tags=" + (.tags | to_entries | map(.key + ":" + .value) | join(","))
+    ] | join("&")'
 }
 
 main "$@"
