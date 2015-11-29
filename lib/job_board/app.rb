@@ -30,7 +30,6 @@ module JobBoard
       require 'rack/ssl'
 
       use Rack::SSL
-
     end
 
     use Rack::Deflater
@@ -48,6 +47,7 @@ module JobBoard
       param :name, String, blank: true
       param :tags, Hash, default: {}
       param :limit, Integer, default: 1
+      param :is_default, Boolean, default: false
 
       images = JobBoard::Services::FetchImages.run(params: params)
       data = images.map(&:to_hash)
