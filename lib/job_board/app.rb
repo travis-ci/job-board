@@ -4,6 +4,7 @@ require_relative 'config'
 require_relative 'models'
 require_relative 'image_searcher'
 
+require 'rack/auth/basic'
 require 'rack/deflater'
 require 'sequel'
 require 'sinatra/base'
@@ -15,27 +16,29 @@ module JobBoard
     helpers Sinatra::Param
 
     class << self
+      def authorized?(user, password)
+        return true if [user, password] == %w(guest guest)
+        auth_tokens.include?(password)
+      end
+
+      private
+
       def auth_tokens
         @auth_tokens ||= JobBoard.config.auth.tokens.split(':').map(&:strip)
       end
     end
 
-    unless development? || test?
-      require 'rack/auth/basic'
-
-      use Rack::Auth::Basic, 'JobBoard Realm' do |_, password|
-        JobBoard::App.auth_tokens.include?(password)
-      end
-
-      require 'rack/ssl'
-
-      use Rack::SSL
-    end
-
+    use Rack::Auth::Basic, 'JobBoard Realm', &method(:authorized?)
     use Rack::Deflater
 
     before do
       content_type :json
+    end
+
+    helpers do
+      def guest?
+        (env['REMOTE_USER'] || 'guest') == 'guest'
+      end
     end
 
     get '/' do
@@ -88,6 +91,8 @@ module JobBoard
     end
 
     post '/images' do
+      halt 403 if guest?
+
       param :infra, String, blank: true, required: true
       param :name, String, blank: true, required: true
       param :is_default, Boolean
@@ -102,6 +107,8 @@ module JobBoard
     end
 
     put '/images' do
+      halt 403 if guest?
+
       param :infra, String, blank: true, required: true
       param :name, String, blank: true, required: true
       param :is_default, Boolean
@@ -117,6 +124,8 @@ module JobBoard
     end
 
     delete '/images' do
+      halt 403 if guest?
+
       param :infra, String, blank: true, required: true
       param :name, String, blank: true, required: true
       param :tags, Hash, default: {}
@@ -139,10 +148,6 @@ module JobBoard
       images.map do |image|
         image.delete_if { |k, _| !fields.include?(k) }
       end
-    end
-
-    def logger
-      ::JobBoard.logger
     end
   end
 end

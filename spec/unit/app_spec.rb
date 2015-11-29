@@ -1,7 +1,11 @@
 describe JobBoard::App do
   let(:image0) { build(:image) }
+  let(:auth) { %w(guest guest) }
+  let(:auth_tokens) { %w(abc123 secret) }
 
   before do
+    JobBoard::App.instance_variable_set(:@auth_tokens, auth_tokens)
+    authorize(*auth)
     allow(JobBoard::Services::CreateImage).to receive(:run)
       .and_return(image0)
     allow(JobBoard::Services::FetchImages).to receive(:run)
@@ -11,7 +15,7 @@ describe JobBoard::App do
   end
 
   it 'has some auth tokens' do
-    expect(described_class.auth_tokens).to_not be_nil
+    expect(described_class.send(:auth_tokens)).to_not be_nil
   end
 
   describe 'GET /' do
@@ -23,6 +27,8 @@ describe JobBoard::App do
   end
 
   describe 'POST /images' do
+    let(:auth) { %w(admin secret) }
+
     it 'requires infra param' do
       post '/images'
       expect(last_response.status).to eql(400)
@@ -92,6 +98,8 @@ describe JobBoard::App do
   end
 
   describe 'PUT /images' do
+    let(:auth) { %w(admin secret) }
+
     it 'requires infra param' do
       put '/images'
       expect(last_response.status).to eql(400)

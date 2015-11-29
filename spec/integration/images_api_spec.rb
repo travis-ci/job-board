@@ -1,4 +1,12 @@
 describe 'Images API', integration: true do
+  let(:auth) { %w(guest guest) }
+  let(:auth_tokens) { %w(abc123 secret) }
+
+  before do
+    JobBoard::App.instance_variable_set(:@auth_tokens, auth_tokens)
+    authorize(*auth)
+  end
+
   describe 'GET /images' do
     before :each do
       JobBoard::Models::Image.where(infra: 'test').delete
@@ -158,6 +166,8 @@ describe 'Images API', integration: true do
   end
 
   describe 'POST /images' do
+    let(:auth) { %w(admin secret) }
+
     before :each do
       JobBoard::Models::Image.where(infra: 'test').delete
     end
@@ -177,6 +187,19 @@ describe 'Images API', integration: true do
 
         it 'creates a new image' do
           expect { post path }.to change { JobBoard::Models::Image.count }
+        end
+
+        context 'with guest auth' do
+          let(:auth) { %w(guest guest) }
+
+          it 'returns 403' do
+            post path
+            expect(last_response.status).to eql(403)
+          end
+
+          it 'does not create a new image' do
+            expect { post path }.to_not change { JobBoard::Models::Image.count }
+          end
         end
       end
     end
@@ -198,7 +221,87 @@ describe 'Images API', integration: true do
     end
   end
 
+  describe 'PUT /images' do
+    let(:auth) { %w(admin secret) }
+
+    before :each do
+      JobBoard::Models::Image.where(infra: 'test').delete
+
+      3.times do |n|
+        JobBoard::Services::CreateImage.run(
+          params: {
+            'infra' => 'test',
+            'name' => "test-image-#{n}",
+            'is_default' => (n == 0),
+            'tags' => {
+              'foo' => 'bar',
+              'production' => (n.even? ? 'nope' : 'yep')
+            }
+          }
+        )
+      end
+    end
+
+    {
+      'with infra & nonexistent name' =>
+        ['/images?infra=test&name=test-image-99', 404, nil, nil],
+      'with infra, name & tags production:yep' =>
+        [
+          '/images?infra=test&name=test-image-0&tags=production:totes',
+          200,
+          { 'production' => 'totes' },
+          false
+        ],
+      'with infra, name & empty tags' =>
+        [
+          '/images?infra=test&name=test-image-0&tags=',
+          200,
+          {},
+          false
+        ],
+      'with infra, name, is_default=true, & tags production:sure' =>
+        [
+          '/images?infra=test&name=test-image-0&' \
+            'tags=production:sure&is_default=true',
+          200,
+          { 'production' => 'sure' },
+          true
+        ]
+    }.each do |desc, (path, status, tags, is_default)|
+      context desc do
+        it "returns #{status}" do
+          put path
+          expect(last_response.status).to eql(status)
+        end
+
+        if status < 299
+          it 'updates image' do
+            put path
+            response_body = JSON.parse(last_response.body)
+            expect(response_body).to_not be_empty
+            expect(response_body['data']).to_not be_nil
+            expect(response_body['data'].length).to eql(1)
+            image = response_body['data'].fetch(0)
+            expect(image['tags']).to eql(tags)
+            expect(image['is_default']).to eql(is_default)
+          end
+        end
+
+        context 'with guest auth' do
+          let(:auth) { %w(guest guest) }
+
+          it 'returns 403' do
+            put path
+            expect(last_response.status).to eql(403)
+          end
+        end
+      end
+    end
+  end
+
   describe 'DELETE /images' do
+    let(:auth) { %w(admin secret) }
+
     before :each do
       JobBoard::Models::Image.where(infra: 'test').delete
 
@@ -235,6 +338,22 @@ describe 'Images API', integration: true do
             delete path
             expect(last_response.body).to be_empty
           end.to change { JobBoard::Models::Image.count }.by(-1)
+        end
+
+        context 'with guest auth' do
+          let(:auth) { %w(guest guest) }
+
+          it 'returns 403' do
+            delete path
+            expect(last_response.status).to eql(403)
+          end
+
+          it 'does not delete matching image(s)' do
+            expect do
+              delete path
+              expect(last_response.body).to be_empty
+            end.to_not change { JobBoard::Models::Image.count }
+          end
         end
       end
     end
