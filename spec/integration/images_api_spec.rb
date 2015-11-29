@@ -40,7 +40,7 @@ describe 'Images API', integration: true do
           expect(last_response.status).to eql(200)
         end
 
-        it "returns #{count} image(s)" do
+        it "returns #{count} image#{count > 1 ? 's' : ''}" do
           get path
           response_body = JSON.parse(last_response.body)
           expect(response_body['data']).to_not be_nil
@@ -97,10 +97,14 @@ describe 'Images API', integration: true do
 
     {
       'with infra & wildcard name' => [%w(infra=test&name=.*), 1],
-      'with infra & limit' =>
+      'with infra & limit=3' =>
         [%w(infra=test&limit=3), 3],
       'with infra & tags' =>
-        [%w(infra=test&tags=foo:bar,production:yep), 1]
+        [%w(infra=test&tags=foo:bar,production:yep), 1],
+      'with infra, tags, limit=3, & is_default=false' =>
+        [%w(infra=test&tags=foo:bar&is_default=false&limit=3), 3],
+      'with infra, tags, limit=3, & is_default=true' =>
+        [%w(infra=test&tags=foo:bar&is_default=true&limit=3), 1]
     }.each do |desc, (body, count)|
       context desc do
         it 'returns 200' do
@@ -109,7 +113,7 @@ describe 'Images API', integration: true do
           expect(last_response.status).to eql(200)
         end
 
-        it 'returns an array of images' do
+        it "returns an array of #{count} image#{count > 1 ? 's' : ''}" do
           post '/images/search', body.join("\n"),
                'CONTENT_TYPE' => 'text/uri-list'
 
@@ -216,7 +220,7 @@ describe 'Images API', integration: true do
     {
       'with infra & name' =>
         ['/images?infra=test&name=test-image-0&limit=10', 204],
-      'with infra, name & tags production:yep' =>
+      'with infra, name, & tags production:yep' =>
         ['/images?infra=test&name=test-image-0' \
          '&tags=production:yep&limit=10', 204]
     }.each do |desc, (path, status)|
@@ -226,7 +230,7 @@ describe 'Images API', integration: true do
           expect(last_response.status).to eql(status)
         end
 
-        it 'deletes matching image(s)' do
+        it 'deletes matching image' do
           expect do
             delete path
             expect(last_response.body).to be_empty

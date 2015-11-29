@@ -32,17 +32,34 @@ module JobBoard
       private
 
       def build_query
-        image_query = JobBoard::Models::Image.where(infra: infra)
+        with_tags_matching(
+          with_name_like(
+            with_is_default(
+              JobBoard::Models::Image.where(infra: infra)
+            )
+          )
+        )
+      end
 
-        image_query = image_query.where(
+      def with_is_default(image_query)
+        return image_query unless params.fetch('is_default', false)
+        image_query.where(
+          'is_default = ?', true
+        )
+      end
+
+      def with_name_like(image_query)
+        return image_query unless params.key?('name')
+        image_query.where(
           Sequel.like(:name, /#{params.fetch('name')}/)
-        ) if params.key?('name')
+        )
+      end
 
-        image_query = image_query.where(
+      def with_tags_matching(image_query)
+        return image_query unless params.key?('tags')
+        image_query.where(
           'tags @> ?', Sequel.hstore(params.fetch('tags'))
-        ) if params.key?('tags')
-
-        image_query
+        )
       end
     end
   end

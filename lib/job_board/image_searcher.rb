@@ -36,8 +36,7 @@ module JobBoard
     end
 
     def parse_bool(bool_string)
-      return true if %w(yes true on 1).include?(bool_string.to_s.downcase)
-      false
+      %w(yes true on 1).include?(bool_string.to_s.downcase)
     end
 
     def parse_params(line)
