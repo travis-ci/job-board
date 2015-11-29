@@ -1,8 +1,8 @@
 # `job-board`
 
-[![Build Status](https://travis-ci.org/travis-ci/job-board.svg?branch=master)](https://travis-ci.org/travis-ci/job-board)
-[![Code Climate](https://codeclimate.com/github/travis-ci/job-board/badges/gpa.svg)](https://codeclimate.com/github/travis-ci/job-board)
-[![Test Coverage](https://codeclimate.com/github/travis-ci/job-board/badges/coverage.svg)](https://codeclimate.com/github/travis-ci/job-board/coverage)
+[![Build Status](https://travis-ci.org/travis-ci/job-board.svg?branch=master&cachebust=1)](https://travis-ci.org/travis-ci/job-board)
+[![Code Climate](https://codeclimate.com/github/travis-ci/job-board/badges/gpa.svg?cachebust=1)](https://codeclimate.com/github/travis-ci/job-board)
+[![Test Coverage](https://codeclimate.com/github/travis-ci/job-board/badges/coverage.svg?cachebust=1)](https://codeclimate.com/github/travis-ci/job-board/coverage)
 
 Job placement for everyone!
 
