@@ -22,6 +22,13 @@ main() {
 
   local src="$1"
   local dest="$2"
+
+  if [[ ! ${src} || ! ${dest} ]] ; then
+    echo "ERROR: missing positional argument(s)" >&2
+    __usage
+    exit 1
+  fi
+
   local infra="${INFRA:-gce}"
   local filter="${FILTER:-^travis-ci}"
   local tmpdir="$(mktemp -d /var/tmp/job-board-sync.XXXXX)"
