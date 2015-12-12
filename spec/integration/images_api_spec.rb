@@ -4,6 +4,7 @@ describe 'Images API', integration: true do
 
   before do
     JobBoard::App.instance_variable_set(:@auth_tokens, auth_tokens)
+    JobBoard::App.instance_variable_set(:@images_name_format, /^test-im.*/)
     authorize(*auth)
   end
 
@@ -134,7 +135,7 @@ describe 'Images API', integration: true do
     end
 
     {
-      'when no queries include "infra"' => %w(foo=test&limit=1 name=whatever)
+      'when no queries include "infra"' => %w(foo=test&limit=1 name=test-image)
     }.each do |desc, body|
       context desc do
         it 'returns empty dataset' do
@@ -152,7 +153,7 @@ describe 'Images API', integration: true do
       post '/images/search',
            %w(
              infra=test&fields[images]=name
-             infra=test&name=whatever&fields[images]=name
+             infra=test&name=test-image&fields[images]=name
            ).join("\n"),
            'CONTENT_TYPE' => 'text/uri-list'
 
@@ -173,11 +174,11 @@ describe 'Images API', integration: true do
     end
 
     {
-      'with infra & name' => '/images?infra=test&name=whatever',
+      'with infra & name' => '/images?infra=test&name=test-image',
       'with infra, name, & is_default' =>
-        '/images?infra=test&name=whatever&is_default=true',
+        '/images?infra=test&name=test-image&is_default=true',
       'with infra, name, & tags' =>
-        '/images?infra=test&name=whatever&tags=foo:bar'
+        '/images?infra=test&name=test-image&tags=foo:bar'
     }.each do |desc, path|
       context desc do
         it 'returns 201' do
@@ -206,7 +207,8 @@ describe 'Images API', integration: true do
 
     {
       'when no infra param is provided' => '/images',
-      'when no name param is provided' => '/images?infra=test'
+      'when no name param is provided' => '/images?infra=test',
+      'when name is invalid' => '/images?infra=test&name=bogus'
     }.each do |desc, path|
       context desc do
         it 'returns 400' do

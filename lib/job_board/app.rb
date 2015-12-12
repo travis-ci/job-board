@@ -21,6 +21,10 @@ module JobBoard
         auth_tokens.include?(password)
       end
 
+      def images_name_format
+        @images_name_format ||= /#{ENV['JOB_BOARD_IMAGES_NAME_FORMAT'] || '.*'}/
+      end
+
       private
 
       def auth_tokens
@@ -31,13 +35,19 @@ module JobBoard
     use Rack::Auth::Basic, 'JobBoard Realm', &method(:authorized?)
     use Rack::Deflater
 
-    before do
-      content_type :json
-    end
+    before { content_type :json }
 
     helpers do
       def guest?
         (env['REMOTE_USER'] || 'guest') == 'guest'
+      end
+
+      def set_images_mutation_params
+        param :infra, String, blank: true, required: true
+        param :is_default, Boolean
+        param :tags, Hash, default: {}
+        param :name, String, blank: true, required: true,
+                             format: JobBoard::App.images_name_format
       end
     end
 
@@ -84,19 +94,13 @@ module JobBoard
 
       status 200
       json data: data,
-           meta: {
-             limit: limit,
-             matching_query: matching_query
-           }
+           meta: { limit: limit, matching_query: matching_query }
     end
 
     post '/images' do
       halt 403 if guest?
 
-      param :infra, String, blank: true, required: true
-      param :name, String, blank: true, required: true
-      param :is_default, Boolean
-      param :tags, Hash, default: {}
+      set_images_mutation_params
 
       params['is_default'] = false unless params.key?('is_default')
 
@@ -109,10 +113,7 @@ module JobBoard
     put '/images' do
       halt 403 if guest?
 
-      param :infra, String, blank: true, required: true
-      param :name, String, blank: true, required: true
-      param :is_default, Boolean
-      param :tags, Hash, default: {}
+      set_images_mutation_params
 
       params['is_default'] = false unless params.key?('is_default')
 
@@ -126,9 +127,7 @@ module JobBoard
     delete '/images' do
       halt 403 if guest?
 
-      param :infra, String, blank: true, required: true
-      param :name, String, blank: true, required: true
-      param :tags, Hash, default: {}
+      set_images_mutation_params
 
       n_destroyed = JobBoard::Services::DeleteImages.run(params: params)
       halt 404 if n_destroyed == 0
