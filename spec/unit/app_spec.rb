@@ -40,7 +40,7 @@ describe JobBoard::App do
     end
 
     it 'creates a new image' do
-      post '/images?infra=test&name=whatever'
+      post '/images?infra=test&name=test-image'
       expect(last_response.status).to eql(201)
     end
   end
@@ -63,7 +63,7 @@ describe JobBoard::App do
   describe 'POST /images/search' do
     it 'returns empty dataset if no queries include "infra"' do
       post '/images/search',
-           %w(foo=test name=whatever).join("\n"),
+           %w(foo=test name=test-image).join("\n"),
            'CONTENT_TYPE' => 'text/uri-list'
 
       expect(last_response.status).to eql(200)
@@ -74,7 +74,7 @@ describe JobBoard::App do
 
     it 'returns an array of images' do
       post '/images/search',
-           %w(infra=test infra=test&name=whatever).join("\n"),
+           %w(infra=test infra=test&name=test-image).join("\n"),
            'CONTENT_TYPE' => 'text/uri-list'
 
       expect(last_response.status).to eql(200)
@@ -85,7 +85,7 @@ describe JobBoard::App do
 
     it 'returns the matching query' do
       post '/images/search',
-           %w(infra=test infra=test&name=whatever).join("\n"),
+           %w(infra=test infra=test&name=test-image).join("\n"),
            'CONTENT_TYPE' => 'text/uri-list'
 
       expect(last_response.status).to eql(200)
@@ -111,7 +111,7 @@ describe JobBoard::App do
     end
 
     it 'updates the updated image' do
-      put '/images?infra=test&name=whatever'
+      put '/images?infra=test&name=test-image'
       expect(last_response.status).to eql(200)
     end
   end
