@@ -89,7 +89,7 @@ GEM
     slop (3.6.0)
     thread_safe (0.3.5)
     tilt (2.0.5)
-    travis-config (1.0.9)
+    travis-config (1.0.11)
       hashr (~> 2.0.0)
     tzinfo (1.2.2)
       thread_safe (~> 0.1)
