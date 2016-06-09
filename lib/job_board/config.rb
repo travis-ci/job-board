@@ -3,7 +3,7 @@ require 'hashr'
 
 module JobBoard
   class Config < Travis::Config
-    extend Hashr::EnvDefaults
+    extend Hashr::Env
 
     def self.env
       ENV['ENV'] || ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'development'
