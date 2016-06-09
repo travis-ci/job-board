@@ -25,7 +25,7 @@ module JobBoard
         Sequel.extension :core_extensions, :pg_hstore
 
         %w(images).each do |table|
-          :"job_board__#{table}"
+          # "job_board__#{table}"
           Sequel.qualify(:job_board, table.to_sym)
           table.to_sym.qualify(:job_board)
         end
