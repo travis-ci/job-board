@@ -7,7 +7,7 @@ module JobBoard
 
       request_body.split(/\n|\r\n/).each do |line|
         images, params, limit = fetch_images_for_line(line)
-        return [images, params, limit] if !images.empty?
+        return [images, params, limit] unless images.empty?
       end
 
       [[], '', 1]
