@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'json'
 
 require_relative 'config'
@@ -130,7 +131,7 @@ module JobBoard
       set_images_mutation_params
 
       n_destroyed = JobBoard::Services::DeleteImages.run(params: params)
-      halt 404 if n_destroyed == 0
+      halt 404 if n_destroyed.zero?
 
       [204, {}, '']
     end

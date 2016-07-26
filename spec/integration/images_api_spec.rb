@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 describe 'Images API', integration: true do
   let(:auth) { %w(guest guest) }
   let(:auth_tokens) { %w(abc123 secret) }
@@ -17,7 +18,7 @@ describe 'Images API', integration: true do
           params: {
             'infra' => 'test',
             'name' => "test-image-#{n}",
-            'is_default' => (n == 0),
+            'is_default' => n.zero?,
             'tags' => {
               'foo' => 'bar',
               'production' => (n.even? ? 'nope' : 'yep')
@@ -94,7 +95,7 @@ describe 'Images API', integration: true do
           params: {
             'infra' => 'test',
             'name' => "test-image-#{n}",
-            'is_default' => (n == 0),
+            'is_default' => n.zero?,
             'tags' => {
               'foo' => 'bar',
               'production' => (n.even? ? 'nope' : 'yep')
@@ -234,7 +235,7 @@ describe 'Images API', integration: true do
           params: {
             'infra' => 'test',
             'name' => "test-image-#{n}",
-            'is_default' => (n == 0),
+            'is_default' => n.zero?,
             'tags' => {
               'foo' => 'bar',
               'production' => (n.even? ? 'nope' : 'yep')
@@ -312,7 +313,7 @@ describe 'Images API', integration: true do
           params: {
             'infra' => 'test',
             'name' => "test-image-#{n}",
-            'is_default' => (n == 0),
+            'is_default' => n.zero?,
             'tags' => {
               'foo' => 'bar',
               'production' => (n.even? ? 'nope' : 'yep')

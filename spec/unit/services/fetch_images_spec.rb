@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 class FakeImageQuery
   attr_reader :results, :wheres, :limit
   def initialize(results)

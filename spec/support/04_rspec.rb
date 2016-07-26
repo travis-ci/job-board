@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 integration_enabled = ENV['INTEGRATION_SPECS'] == '1'
 
 RSpec.configure do |c|
