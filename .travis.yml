@@ -25,4 +25,5 @@ before_install:
 
 before_script:
 - createdb job_board_test
-- pushd db && sqitch deploy && sqitch verify ; popd
+- sqitch deploy
+- sqitch verify
