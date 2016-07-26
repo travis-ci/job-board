@@ -6,6 +6,7 @@ cache:
   bundler: true
   directories:
   - ${HOME}/perl5
+  - ${HOME}/.cache
 
 addons:
   postgresql: 9.3
