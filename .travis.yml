@@ -12,7 +12,6 @@ addons:
     - debian-sid
     packages:
     - sqitch
-    - libdbd-pg-perl
 
 env:
   global:
