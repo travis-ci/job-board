@@ -1,4 +1,7 @@
+# frozen_string_literal: true
 source 'https://rubygems.org'
+
+ruby '2.3.1' if ENV.key?('DYNO')
 
 gem 'activesupport'
 gem 'codeclimate-test-reporter', group: %i(development test), require: nil

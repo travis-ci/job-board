@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module JobBoard
   module Services
     autoload :CreateImage, 'job_board/services/create_image'

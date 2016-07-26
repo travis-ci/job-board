@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 describe JobBoard::App do
   let(:image0) { build(:image) }
   let(:auth) { %w(guest guest) }
