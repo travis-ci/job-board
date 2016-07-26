@@ -17,6 +17,9 @@ env:
   - INTEGRATION_SPECS='0'
 
 before_script:
+- mkdir -p ~/bin
+- curl -L 'https://cpanmin.us/' -o ~/bin/cpanm
+- chmod +x ~/bin/cpanm
 - cpanm --quiet --notest 'App::Sqitch'
 - createdb job_board_test
 - pushd db && sqitch deploy && sqitch verify ; popd
