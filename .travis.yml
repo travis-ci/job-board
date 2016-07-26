@@ -12,7 +12,7 @@ addons:
 
 env:
   global:
-  - DATABASE_URL='postgres://job_board_test'
+  - DATABASE_URL='postgres://localhost:5432/job_board_test'
   - COVERAGE='1'
   matrix:
   - INTEGRATION_SPECS='1'

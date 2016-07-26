@@ -8,7 +8,7 @@ set -o errexit
 mkdir -p "${BINDIR}"
 
 if ! cpanm --version &>/dev/null ; then
-  curl -L 'https://cpanmin.us/' -o "${BINDIR}/cpanm"
+  curl -sL 'https://cpanmin.us/' -o "${BINDIR}/cpanm"
   chmod +x "${BINDIR}/cpanm"
   cpanm --local-lib=${PERL5DIR} 'local::lib'
 fi
