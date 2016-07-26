@@ -10,11 +10,13 @@ addons:
 
 env:
   global:
-  - DATABASE_URL='postgres://'
+  - DATABASE_URL='postgres://job_board_test'
   - COVERAGE='1'
   matrix:
   - INTEGRATION_SPECS='1'
   - INTEGRATION_SPECS='0'
 
 before_script:
-- psql < db/schema.sql
+- cpanm --quiet --notest 'App::Sqitch'
+- createdb job_board_test
+- pushd db && sqitch deploy && sqitch verify ; popd
