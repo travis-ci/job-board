@@ -14,7 +14,7 @@ describe 'Images API', integration: true do
       JobBoard::Models::Image.where(infra: 'test').delete
 
       3.times do |n|
-        JobBoard::Services::CreateImage.run(
+        created = JobBoard::Services::CreateImage.run(
           params: {
             'infra' => 'test',
             'name' => "test-image-#{n}",
@@ -25,6 +25,8 @@ describe 'Images API', integration: true do
             }
           }
         )
+        created.created_at += (300 * n)
+        created.save_changes
       end
     end
 
@@ -55,6 +57,9 @@ describe 'Images API', integration: true do
           response_body = JSON.parse(last_response.body)
           expect(response_body['data']).to_not be_nil
           expect(response_body['data'].length).to eql(count)
+          expect(response_body['data']).to eql(
+            response_body['data'].sort_by { |i| i['created_date'] }
+          )
           response_body['data'].each do |image|
             expect(image['tags']).to_not be_nil
             expect(image['tags']['foo']).to eql('bar')
@@ -91,7 +96,7 @@ describe 'Images API', integration: true do
       JobBoard::Models::Image.where(infra: 'test').delete
 
       3.times do |n|
-        JobBoard::Services::CreateImage.run(
+        created = JobBoard::Services::CreateImage.run(
           params: {
             'infra' => 'test',
             'name' => "test-image-#{n}",
@@ -102,6 +107,8 @@ describe 'Images API', integration: true do
             }
           }
         )
+        created.created_at += (300 * n)
+        created.save_changes
       end
     end
 
@@ -131,6 +138,9 @@ describe 'Images API', integration: true do
           expect(response_body['data']).to_not be_nil
           expect(response_body['data']).to_not be_empty
           expect(response_body['data'].length).to eql(count)
+          expect(response_body['data']).to eql(
+            response_body['data'].sort_by { |i| i['created_date'] }
+          )
         end
       end
     end
@@ -231,7 +241,7 @@ describe 'Images API', integration: true do
       JobBoard::Models::Image.where(infra: 'test').delete
 
       3.times do |n|
-        JobBoard::Services::CreateImage.run(
+        created = JobBoard::Services::CreateImage.run(
           params: {
             'infra' => 'test',
             'name' => "test-image-#{n}",
@@ -242,6 +252,8 @@ describe 'Images API', integration: true do
             }
           }
         )
+        created.created_at += (300 * n)
+        created.save_changes
       end
     end
 
@@ -309,7 +321,7 @@ describe 'Images API', integration: true do
       JobBoard::Models::Image.where(infra: 'test').delete
 
       3.times do |n|
-        JobBoard::Services::CreateImage.run(
+        created = JobBoard::Services::CreateImage.run(
           params: {
             'infra' => 'test',
             'name' => "test-image-#{n}",
@@ -320,6 +332,8 @@ describe 'Images API', integration: true do
             }
           }
         )
+        created.created_at += (300 * n)
+        created.save_changes
       end
     end
 
