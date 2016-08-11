@@ -1,8 +1,11 @@
+-- Deploy job-board:images to pg
+-- requires: appschema
+
 BEGIN;
 
-CREATE EXTENSION IF NOT EXISTS hstore;
+SET client_min_messages = 'warning';
 
-CREATE SCHEMA job_board;
+CREATE EXTENSION IF NOT EXISTS hstore;
 
 CREATE TABLE job_board.images (
   id serial PRIMARY KEY,
@@ -15,11 +18,5 @@ CREATE TABLE job_board.images (
 );
 
 CREATE UNIQUE INDEX images_is_default_infra ON job_board.images(infra, is_default) WHERE is_default IS true;
-
-CREATE INDEX images_on_infra ON job_board.images(infra);
-
-CREATE INDEX images_on_name ON job_board.images(name);
-
-CREATE INDEX images_on_tags ON job_board.images USING GIST (tags);
 
 COMMIT;

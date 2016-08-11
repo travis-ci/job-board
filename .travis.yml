@@ -4,17 +4,26 @@ rvm: 2.3.1
 
 cache:
   bundler: true
+  directories:
+  - ${HOME}/perl5
+  - ${HOME}/.cache
 
 addons:
   postgresql: 9.3
 
 env:
   global:
-  - DATABASE_URL='postgres://'
+  - DATABASE_URL='postgres://localhost:5432/job_board_test'
   - COVERAGE='1'
   matrix:
   - INTEGRATION_SPECS='1'
   - INTEGRATION_SPECS='0'
 
+before_install:
+- script/install-sqitch
+- eval "$(perl -I ~/perl5/lib/perl5/ '-Mlocal::lib')"
+
 before_script:
-- psql < db/schema.sql
+- createdb job_board_test
+- sqitch deploy
+- sqitch verify
