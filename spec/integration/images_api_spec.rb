@@ -21,7 +21,8 @@ describe 'Images API', integration: true do
             'is_default' => n.zero?,
             'tags' => {
               'foo' => 'bar',
-              'production' => (n.even? ? 'nope' : 'yep')
+              'production' => (n.even? ? 'nope' : 'yep'),
+              'last_in' => (n == 2 ? 'yep' : 'nope')
             }
           }
         )
@@ -68,6 +69,17 @@ describe 'Images API', integration: true do
       end
     end
 
+    context 'when multiple results match' do
+      it 'returns the most recently tagged image first' do
+        get '/images?infra=test&limit=2'
+        response_body = JSON.parse(last_response.body)
+        expect(response_body['data']).to_not be_nil
+        expect(response_body['data'].length).to eql(2)
+        expect(response_body['data'].fetch(0).fetch('tags'))
+          .to include('last_in' => 'yep')
+      end
+    end
+
     context 'when no infra param is provided' do
       it 'returns 400' do
         get '/images'
@@ -103,7 +115,8 @@ describe 'Images API', integration: true do
             'is_default' => n.zero?,
             'tags' => {
               'foo' => 'bar',
-              'production' => (n.even? ? 'nope' : 'yep')
+              'production' => (n.even? ? 'nope' : 'yep'),
+              'last_in' => (n == 2 ? 'yep' : 'nope')
             }
           }
         )
@@ -248,7 +261,8 @@ describe 'Images API', integration: true do
             'is_default' => n.zero?,
             'tags' => {
               'foo' => 'bar',
-              'production' => (n.even? ? 'nope' : 'yep')
+              'production' => (n.even? ? 'nope' : 'yep'),
+              'last_in' => (n == 2 ? 'yep' : 'nope')
             }
           }
         )
@@ -328,7 +342,8 @@ describe 'Images API', integration: true do
             'is_default' => n.zero?,
             'tags' => {
               'foo' => 'bar',
-              'production' => (n.even? ? 'nope' : 'yep')
+              'production' => (n.even? ? 'nope' : 'yep'),
+              'last_in' => (n == 2 ? 'yep' : 'nope')
             }
           }
         )
