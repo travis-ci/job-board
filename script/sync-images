@@ -54,7 +54,7 @@ __dump_src() {
   local tmpdir="${3}"
 
   echo "---> dumping to ${tmpdir}/dump.json"
-  curl -sSL "${src}/images?infra=${infra}&limit=100" > "${tmpdir}/dump.json"
+  curl -sSL "${src}/images?infra=${infra}&limit=1000" > "${tmpdir}/dump.json"
 }
 
 __load_dest() {
