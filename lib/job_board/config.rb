@@ -16,7 +16,8 @@ module JobBoard
 
     define auth: { tokens: '' },
            database: { url: '', sql_logging: false },
-           log_level: 'info'
+           log_level: 'info',
+           images_name_format: '.*'
 
     default(access: [:key])
   end
