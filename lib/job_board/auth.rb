@@ -1,14 +1,24 @@
 # frozen_string_literal: true
 require 'job_board'
 
+require 'rack/auth/basic'
+
 module JobBoard
-  class Auth
-    def authorized?(user, password)
-      return true if [user, password] == %w(guest guest)
-      auth_tokens.include?(password) || auth_tokens.include?([user, password])
+  class Auth < Rack::Auth::Basic
+    def initialize(app)
+      @app = app
+      @realm = 'job-board'
     end
 
     private
+
+    attr_reader :realm
+
+    def valid?(auth)
+      return true if auth.credentials == %w(guest guest)
+      auth_tokens.include?(auth.credentials.last) ||
+        auth_tokens.include?(auth.credentials)
+    end
 
     def auth_tokens
       @auth_tokens ||= build_auth_tokens

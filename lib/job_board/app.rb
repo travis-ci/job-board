@@ -17,18 +17,14 @@ module JobBoard
   class App < Sinatra::Base
     helpers Sinatra::Param
 
-    def self.auth
-      @auth ||= JobBoard::Auth.new
-    end
-
-    use Rack::Auth::Basic, 'job-board', &auth.method(:authorized?)
+    use JobBoard::Auth
     use Rack::Deflater
 
     before { content_type :json }
 
     helpers do
       def guest?
-        (env['REMOTE_USER'] || 'guest') == 'guest'
+        (env['REMOTE_USER'] || 'notset') == 'guest'
       end
 
       def set_images_mutation_params

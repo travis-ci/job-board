@@ -4,7 +4,9 @@ describe JobBoard::App do
   let(:auth) { %w(guest guest) }
 
   before do
-    authorize(*auth)
+    allow_any_instance_of(JobBoard::Auth).to receive(:auth_tokens)
+      .and_return(%w(secret))
+    basic_authorize(*auth)
     allow(JobBoard::Services::CreateImage).to receive(:run)
       .and_return(image0)
     allow(JobBoard::Services::FetchImages).to receive(:run)
