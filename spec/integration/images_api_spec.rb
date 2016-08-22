@@ -34,20 +34,20 @@ describe 'Images API', integration: true do
     end
 
     {
-      'with infra' => ['/images?infra=test&limit=10', 3],
+      'with infra' => ['/images?infra=test&limit=0', 3],
       'with infra & default limit' => ['/images?infra=test', 1],
       'with infra & name' =>
-        ['/images?infra=test&name=test-image-0&limit=10', 1],
+        ['/images?infra=test&name=test-image-0&limit=0', 1],
       'with infra & name regex' =>
-        ['/images?infra=test&name=test-.*&limit=10', 3],
+        ['/images?infra=test&name=test-.*&limit=0', 3],
       'with nonmatched conditions' =>
-        ['/images?infra=test&name=foo&limit=10', 0],
+        ['/images?infra=test&name=foo&limit=0', 0],
       'with infra & tags production:yep' =>
-        ['/images?infra=test&tags=production:yep&limit=10', 1],
+        ['/images?infra=test&tags=production:yep&limit=0', 1],
       'with infra & tags production:nope' =>
-        ['/images?infra=test&tags=production:nope&limit=10', 2],
+        ['/images?infra=test&tags=production:nope&limit=0', 2],
       'with infra & tags foo:bar' =>
-        ['/images?infra=test&tags=foo:bar&limit=10', 3]
+        ['/images?infra=test&tags=foo:bar&limit=0', 3]
     }.each do |desc, (path, count)|
       context desc do
         it 'returns 200' do
@@ -359,7 +359,7 @@ describe 'Images API', integration: true do
         ['/images?infra=test&name=test-image-0&limit=10', 204],
       'with infra, name, & tags production:yep' =>
         ['/images?infra=test&name=test-image-0' \
-         '&tags=production:yep&limit=10', 204]
+         '&tags=production:yep&limit=0', 204]
     }.each do |desc, (path, status)|
       context desc do
         it "returns #{status}" do
