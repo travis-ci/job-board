@@ -5,6 +5,7 @@ require 'travis/support/logging'
 
 module JobBoard
   autoload :App, 'job_board/app'
+  autoload :Auth, 'job_board/auth'
   autoload :Config, 'job_board/config'
   autoload :Models, 'job_board/models'
   autoload :Services, 'job_board/services'

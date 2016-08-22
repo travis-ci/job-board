@@ -2,21 +2,17 @@
 describe JobBoard::App do
   let(:image0) { build(:image) }
   let(:auth) { %w(guest guest) }
-  let(:auth_tokens) { %w(abc123 secret) }
 
   before do
-    JobBoard::App.instance_variable_set(:@auth_tokens, auth_tokens)
-    authorize(*auth)
+    allow_any_instance_of(JobBoard::Auth).to receive(:auth_tokens)
+      .and_return(%w(secret))
+    basic_authorize(*auth)
     allow(JobBoard::Services::CreateImage).to receive(:run)
       .and_return(image0)
     allow(JobBoard::Services::FetchImages).to receive(:run)
       .and_return(build_list(:image, 3))
     allow(JobBoard::Services::UpdateImage).to receive(:run)
       .and_return(image0)
-  end
-
-  it 'has some auth tokens' do
-    expect(described_class.send(:auth_tokens)).to_not be_nil
   end
 
   describe 'GET /' do

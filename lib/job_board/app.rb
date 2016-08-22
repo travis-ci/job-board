@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 require 'json'
 
+require_relative 'auth'
 require_relative 'config'
 require_relative 'models'
 require_relative 'image_searcher'
@@ -16,31 +17,14 @@ module JobBoard
   class App < Sinatra::Base
     helpers Sinatra::Param
 
-    class << self
-      def authorized?(user, password)
-        return true if [user, password] == %w(guest guest)
-        auth_tokens.include?(password)
-      end
-
-      def images_name_format
-        @images_name_format ||= /#{ENV['JOB_BOARD_IMAGES_NAME_FORMAT'] || '.*'}/
-      end
-
-      private
-
-      def auth_tokens
-        @auth_tokens ||= JobBoard.config.auth.tokens.split(':').map(&:strip)
-      end
-    end
-
-    use Rack::Auth::Basic, 'JobBoard Realm', &method(:authorized?)
+    use JobBoard::Auth
     use Rack::Deflater
 
     before { content_type :json }
 
     helpers do
       def guest?
-        (env['REMOTE_USER'] || 'guest') == 'guest'
+        (env['REMOTE_USER'] || 'notset') == 'guest'
       end
 
       def set_images_mutation_params
@@ -48,7 +32,11 @@ module JobBoard
         param :is_default, Boolean
         param :tags, Hash, default: {}
         param :name, String, blank: true, required: true,
-                             format: JobBoard::App.images_name_format
+                             format: images_name_format
+      end
+
+      def images_name_format
+        @images_name_format ||= /#{JobBoard.config.images_name_format}/
       end
     end
 
