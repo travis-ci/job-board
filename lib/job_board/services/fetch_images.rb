@@ -38,7 +38,7 @@ module JobBoard
             )
           )
         ).reverse_order(:created_at)
-        limit = params.fetch('limit', 1)
+        limit = params.fetch('limit', 0)
         query = query.limit(limit) unless limit.zero?
         query
       end
