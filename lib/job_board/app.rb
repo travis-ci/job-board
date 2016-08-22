@@ -48,7 +48,7 @@ module JobBoard
       param :infra, String, blank: true, required: true
       param :name, String, blank: true
       param :tags, Hash, default: {}
-      param :limit, Integer, default: 1
+      param :limit, Integer, default: 0
       param :is_default, Boolean, default: false
 
       images = JobBoard::Services::FetchImages.run(params: params)
