@@ -23,7 +23,8 @@ class FakeImageQuery
 end
 
 describe JobBoard::Services::FetchImages do
-  subject { described_class.new(params: { 'infra' => 'test' }) }
+  subject { described_class.new(params: params) }
+  let(:params) { { 'infra' => 'test' } }
   let(:image0) { build(:image) }
   let(:results) { build_list(:image, 3) }
 
@@ -62,6 +63,14 @@ describe JobBoard::Services::FetchImages do
 
       fetch_params = { 'infra' => 'test', 'limit' => 10 }
       expect(described_class.run(params: fetch_params)).to be_empty
+    end
+  end
+
+  context 'when limit is 0' do
+    let(:params) { { 'infra' => 'test', 'limit' => 0 } }
+
+    it 'builds a query without a limit clause' do
+      expect(subject.send(:build_query).sql.downcase).to_not include('limit')
     end
   end
 end

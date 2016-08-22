@@ -19,9 +19,7 @@ module JobBoard
       def run
         images = []
 
-        build_query.reverse_order(:created_at).limit(
-          params.fetch('limit')
-        ).each do |image|
+        build_query.each do |image|
           images << image.tap do |i|
             i['tags'] = i['tags'].to_hash if i['tags']
           end
@@ -33,13 +31,16 @@ module JobBoard
       private
 
       def build_query
-        with_tags_matching(
+        query = with_tags_matching(
           with_name_like(
             with_is_default(
               JobBoard::Models::Image.where(infra: infra)
             )
           )
-        )
+        ).reverse_order(:created_at)
+        limit = params.fetch('limit', 1)
+        query = query.limit(limit) unless limit.zero?
+        query
       end
 
       def with_is_default(image_query)
