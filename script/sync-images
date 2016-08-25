@@ -15,23 +15,30 @@
 set -o errexit
 
 main() {
-  if [[ $* =~ -h|help ]] ; then
-    __usage
-    exit 0
-  fi
+  case "$*" in
+    -h | --help)
+      __usage
+      exit 0
+      ;;
+  esac
+
+  : "${TMPDIR:=/tmp}"
 
   local src="$1"
   local dest="$2"
 
-  if [[ ! ${src} || ! ${dest} ]] ; then
+  if [[ ! ${src} || ! ${dest} ]]; then
     echo "ERROR: missing positional argument(s)" >&2
     __usage
     exit 1
   fi
 
+  __ensure_jq
+
   local infra="${INFRA:-gce}"
   local filter="${FILTER:-^travis-ci}"
-  local tmpdir="$(mktemp -d /var/tmp/job-board-sync.XXXXX)"
+  local tmpdir
+  tmpdir="$(mktemp -d /var/tmp/job-board-sync.XXXXX)"
 
   __dump_src "${src}" "${infra}" "${tmpdir}"
   __load_dest "${dest}" "${infra}" "${tmpdir}" "${filter}"
@@ -39,13 +46,14 @@ main() {
 }
 
 __usage() {
-  local script="$(basename "${0}")"
+  local script
+  script="$(basename "${0}")"
   awk "/^#\\+ / {
         sub(/#\\+ \\.?/, \"\", \$0) ;
         sub(/\\\${script}/, \"${script}\", \$0) ;
         print \$0
       }
-    " < "${0}"
+    " <"${0}"
 }
 
 __dump_src() {
@@ -54,7 +62,7 @@ __dump_src() {
   local tmpdir="${3}"
 
   echo "---> dumping to ${tmpdir}/dump.json"
-  curl -sSL "${src}/images?infra=${infra}&limit=1000" > "${tmpdir}/dump.json"
+  curl -sSL "${src}/images?infra=${infra}" >"${tmpdir}/dump.json"
 }
 
 __load_dest() {
@@ -64,12 +72,12 @@ __load_dest() {
   local filter="${4}"
 
   echo "---> loading from ${tmpdir}/dump.json"
-  for args in $(__json_to_qs "${filter}" < "${tmpdir}/dump.json") ; do
+  for args in $(__json_to_qs "${filter}" <"${tmpdir}/dump.json"); do
     (
       echo "syncing ${args}"
-      curl -fsSL -X PUT "${dest}/images?${args}"  ||  (
-      curl -fsSL -X POST "${dest}/images?${args}" || \
-        echo "ERROR: failed to sync ${args}"
+      curl -fsSL -X PUT "${dest}/images?${args}" || (
+        curl -fsSL -X POST "${dest}/images?${args}" \
+          || echo "ERROR: failed to sync ${args}"
       )
     ) 2>&1 | sed 's/^/     /'
   done
@@ -85,6 +93,19 @@ __json_to_qs() {
       "is_default=" + (.is_default | tostring),
       "tags=" + (.tags | to_entries | map(.key + ":" + .value) | join(","))
     ] | join("&")'
+
+}
+
+__ensure_jq() {
+  if jq --version; then
+    return
+  fi
+
+  mkdir -p "${TMPDIR}/jq-bin"
+  curl -sSL -o "${TMPDIR}/jq-bin/jq" \
+    "https://github.com/stedolan/jq/releases/download/jq-1.5/jq-linux64"
+  chmod +x "${TMPDIR}/jq-bin/jq"
+  export PATH="${TMPDIR}/jq-bin:${PATH}"
 }
 
 main "$@"
