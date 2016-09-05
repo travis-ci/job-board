@@ -17,6 +17,7 @@ module JobBoard
           infra: params.fetch('infra'),
           name: params.fetch('name'),
           is_default: params.fetch('is_default'),
+          is_active: params.fetch('is_active', false),
           tags: Sequel.hstore(params.fetch('tags'))
         )
       end

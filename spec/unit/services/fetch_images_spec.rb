@@ -33,7 +33,8 @@ describe JobBoard::Services::FetchImages do
   end
 
   it 'fetches images' do
-    expect(JobBoard::Models::Image).to receive(:where).with(infra: 'test')
+    expect(JobBoard::Models::Image).to receive(:where)
+      .with(infra: 'test', is_active: true)
       .and_return(FakeImageQuery.new(results))
 
     fetch_params = { 'infra' => 'test', 'limit' => 10 }
@@ -43,12 +44,13 @@ describe JobBoard::Services::FetchImages do
   context 'when tags are provided' do
     it 'extends the query to check tag set membership' do
       query = FakeImageQuery.new(results)
-      expect(JobBoard::Models::Image).to receive(:where).with(
-        infra: 'test'
-      ).and_return(query)
+      expect(JobBoard::Models::Image).to receive(:where)
+        .with(infra: 'test', is_active: true)
+        .and_return(query)
 
       fetch_params = {
-        'infra' => 'test', 'limit' => 10, 'tags' => { 'a' => 'b' }
+        'infra' => 'test', 'limit' => 10,
+        'tags' => { 'a' => 'b' }
       }
       expect(described_class.run(params: fetch_params)).to eql(results)
       expect(query.wheres).to include(['tags @> ?', Sequel.hstore('a' => 'b')])
@@ -57,9 +59,9 @@ describe JobBoard::Services::FetchImages do
 
   context 'when no images are found' do
     it 'returns no images' do
-      expect(JobBoard::Models::Image).to receive(:where).with(
-        infra: 'test'
-      ).and_return(FakeImageQuery.new([]))
+      expect(JobBoard::Models::Image).to receive(:where)
+        .with(infra: 'test', is_active: true)
+        .and_return(FakeImageQuery.new([]))
 
       fetch_params = { 'infra' => 'test', 'limit' => 10 }
       expect(described_class.run(params: fetch_params)).to be_empty

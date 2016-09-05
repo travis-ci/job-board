@@ -9,23 +9,20 @@ module JobBoard
         new(params: params).run
       end
 
-      attr_reader :params, :infra
+      attr_reader :params, :infra, :is_active
 
       def initialize(params: {})
         @params = params
         @infra = params.fetch('infra')
+        @is_active = params.fetch('is_active', true)
       end
 
       def run
-        images = []
-
-        build_query.each do |image|
-          images << image.tap do |i|
+        build_query.map do |image|
+          image.tap do |i|
             i['tags'] = i['tags'].to_hash if i['tags']
           end
         end
-
-        images
       end
 
       private
@@ -34,7 +31,7 @@ module JobBoard
         query = with_tags_matching(
           with_name_like(
             with_is_default(
-              JobBoard::Models::Image.where(infra: infra)
+              JobBoard::Models::Image.where(infra: infra, is_active: is_active)
             )
           )
         ).reverse_order(:created_at)

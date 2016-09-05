@@ -15,7 +15,10 @@ module JobBoard
       def run
         images = by_infra_and_name
         return nil if images.empty?
-        images.destroy
+        JobBoard::Models.db.transaction do
+          archive_images(images)
+          images.destroy
+        end
       end
 
       private
@@ -25,6 +28,16 @@ module JobBoard
           infra: params.fetch('infra'),
           name: params.fetch('name')
         )
+      end
+
+      def archive_images(images)
+        images.each do |image|
+          JobBoard::Models::ArchivedImage.create(
+            original_id: image.id,
+            name: image.name,
+            infra: image.infra
+          )
+        end
       end
     end
   end

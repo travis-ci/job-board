@@ -15,16 +15,17 @@ describe 'Images API', integration: true do
     before :each do
       JobBoard::Models::Image.where(infra: 'test').delete
 
-      3.times do |n|
+      5.times do |n|
         created = JobBoard::Services::CreateImage.run(
           params: {
             'infra' => 'test',
+            'is_active' => n.even?,
             'name' => "test-image-#{n}",
             'is_default' => n.zero?,
             'tags' => {
               'foo' => 'bar',
               'production' => (n.even? ? 'nope' : 'yep'),
-              'last_in' => (n == 2 ? 'yep' : 'nope')
+              'last_in' => (n == 4 ? 'yep' : 'nope')
             }
           }
         )
@@ -43,9 +44,9 @@ describe 'Images API', integration: true do
       'with nonmatched conditions' =>
         ['/images?infra=test&name=foo', 0],
       'with infra & tags production:yep' =>
-        ['/images?infra=test&tags=production:yep', 1],
+        ['/images?infra=test&tags=production:yep', 0],
       'with infra & tags production:nope' =>
-        ['/images?infra=test&tags=production:nope', 2],
+        ['/images?infra=test&tags=production:nope', 3],
       'with infra & tags foo:bar' =>
         ['/images?infra=test&tags=foo:bar', 3]
     }.each do |desc, (path, count)|
@@ -73,10 +74,10 @@ describe 'Images API', integration: true do
 
     context 'when multiple results match' do
       it 'returns the most recently tagged image first' do
-        get '/images?infra=test&limit=2'
+        get '/images?infra=test&limit=5'
         response_body = JSON.parse(last_response.body)
         expect(response_body['data']).to_not be_nil
-        expect(response_body['data'].length).to eql(2)
+        expect(response_body['data'].length).to eql(3)
         expect(response_body['data'].fetch(0).fetch('tags'))
           .to include('last_in' => 'yep')
       end
@@ -109,16 +110,17 @@ describe 'Images API', integration: true do
     before :each do
       JobBoard::Models::Image.where(infra: 'test').delete
 
-      3.times do |n|
+      5.times do |n|
         created = JobBoard::Services::CreateImage.run(
           params: {
             'infra' => 'test',
+            'is_active' => n.even?,
             'name' => "test-image-#{n}",
             'is_default' => n.zero?,
             'tags' => {
               'foo' => 'bar',
               'production' => (n.even? ? 'nope' : 'yep'),
-              'last_in' => (n == 2 ? 'yep' : 'nope')
+              'last_in' => (n == 4 ? 'yep' : 'nope')
             }
           }
         )
@@ -132,7 +134,7 @@ describe 'Images API', integration: true do
       'with infra & limit=3' =>
         [%w(infra=test&limit=3), 3],
       'with infra & tags' =>
-        [%w(infra=test&tags=foo:bar,production:yep), 1],
+        [%w(infra=test&tags=foo:bar,production:nope), 1],
       'with infra, tags, limit=3, & is_default=false' =>
         [%w(infra=test&tags=foo:bar&is_default=false&limit=3), 3],
       'with infra, tags, limit=3, & is_default=true' =>
@@ -255,16 +257,17 @@ describe 'Images API', integration: true do
     before :each do
       JobBoard::Models::Image.where(infra: 'test').delete
 
-      3.times do |n|
+      5.times do |n|
         created = JobBoard::Services::CreateImage.run(
           params: {
             'infra' => 'test',
+            'is_active' => n.even?,
             'name' => "test-image-#{n}",
             'is_default' => n.zero?,
             'tags' => {
               'foo' => 'bar',
               'production' => (n.even? ? 'nope' : 'yep'),
-              'last_in' => (n == 2 ? 'yep' : 'nope')
+              'last_in' => (n == 4 ? 'yep' : 'nope')
             }
           }
         )
@@ -330,22 +333,62 @@ describe 'Images API', integration: true do
     end
   end
 
+  describe 'PATCH /images' do
+    let(:auth) { %w(admin secret) }
+
+    before :each do
+      JobBoard::Models::Image.where(infra: 'test').delete
+
+      5.times do |n|
+        created = JobBoard::Services::CreateImage.run(
+          params: {
+            'infra' => 'test',
+            'is_active' => n.even?,
+            'name' => "test-image-#{n}",
+            'is_default' => n.zero?,
+            'tags' => {
+              'foo' => 'bar',
+              'production' => (n.even? ? 'nope' : 'yep'),
+              'last_in' => (n == 4 ? 'yep' : 'nope')
+            }
+          }
+        )
+        created.created_at += (300 * n)
+        created.save_changes
+      end
+    end
+
+    it 'updates is_active on matching images' do
+      get '/images?infra=test&name=test-image-1'
+      response_body = JSON.parse(last_response.body)
+      expect(response_body['data'].length).to eq(0)
+
+      patch '/images?infra=test&name=test-image-1&is_active=true'
+      expect(last_response.status).to eql(200)
+
+      get '/images?infra=test&name=test-image-1'
+      response_body = JSON.parse(last_response.body)
+      expect(response_body['data'].length).to eq(1)
+    end
+  end
+
   describe 'DELETE /images' do
     let(:auth) { %w(admin secret) }
 
     before :each do
       JobBoard::Models::Image.where(infra: 'test').delete
 
-      3.times do |n|
+      5.times do |n|
         created = JobBoard::Services::CreateImage.run(
           params: {
             'infra' => 'test',
+            'is_active' => n.even?,
             'name' => "test-image-#{n}",
             'is_default' => n.zero?,
             'tags' => {
               'foo' => 'bar',
               'production' => (n.even? ? 'nope' : 'yep'),
-              'last_in' => (n == 2 ? 'yep' : 'nope')
+              'last_in' => (n == 4 ? 'yep' : 'nope')
             }
           }
         )

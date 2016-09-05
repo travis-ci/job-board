@@ -5,6 +5,7 @@ require 'sequel/model'
 module JobBoard
   module Models
     autoload :Image, 'job_board/models/image'
+    autoload :ArchivedImage, 'job_board/models/archived_image'
 
     class << self
       def db
