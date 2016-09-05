@@ -417,6 +417,13 @@ describe 'Images API', integration: true do
           end.to change { JobBoard::Models::Image.count }.by(-1)
         end
 
+        it 'creates an archived image record for each deletion' do
+          expect do
+            delete path
+            expect(last_response.body).to be_empty
+          end.to change { JobBoard::Models::ArchivedImage.count }.by(1)
+        end
+
         context 'with guest auth' do
           let(:auth) { %w(guest guest) }
 
@@ -433,6 +440,43 @@ describe 'Images API', integration: true do
           end
         end
       end
+    end
+  end
+
+  describe 'GET /images/archived' do
+    let(:auth) { %w(admin secret) }
+
+    before :each do
+      JobBoard::Models::Image.where(infra: 'test').delete
+
+      5.times do |n|
+        created = JobBoard::Services::CreateImage.run(
+          params: {
+            'infra' => 'test',
+            'is_active' => n.even?,
+            'name' => "test-image-#{n}",
+            'is_default' => n.zero?,
+            'tags' => {
+              'foo' => 'bar',
+              'production' => (n.even? ? 'nope' : 'yep'),
+              'last_in' => (n == 4 ? 'yep' : 'nope')
+            }
+          }
+        )
+        created.created_at += (300 * n)
+        created.save_changes
+      end
+    end
+
+    it 'returns archived images' do
+      delete '/images?infra=test&name=test-image-0'
+      expect(last_response.status).to eq(204)
+
+      get '/images/archived?infra=test'
+      response_body = JSON.parse(last_response.body)
+
+      expect(response_body['data']).to_not be_nil
+      expect(response_body['data'].length).to be_positive
     end
   end
 end

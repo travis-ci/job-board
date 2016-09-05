@@ -5,14 +5,15 @@ require 'sequel'
 module JobBoard
   module Services
     class FetchImages
-      def self.run(params: {})
-        new(params: params).run
+      def self.run(params: {}, model: JobBoard::Models::Image)
+        new(params: params, model: model).run
       end
 
-      attr_reader :params, :infra, :is_active
+      attr_reader :params, :model, :infra, :is_active
 
-      def initialize(params: {})
+      def initialize(params: {}, model: JobBoard::Models::Image)
         @params = params
+        @model = model
         @infra = params.fetch('infra')
         @is_active = params.fetch('is_active', true)
       end
@@ -31,7 +32,7 @@ module JobBoard
         query = with_tags_matching(
           with_name_like(
             with_is_default(
-              JobBoard::Models::Image.where(infra: infra, is_active: is_active)
+              model.where(infra: infra, is_active: is_active)
             )
           )
         ).reverse_order(:created_at)

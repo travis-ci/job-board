@@ -14,7 +14,7 @@ module JobBoard
 
       def run
         images = by_infra_and_name
-        return nil if images.empty?
+        return 0 if images.empty?
         JobBoard::Models.db.transaction do
           archive_images(images)
           images.destroy
@@ -33,9 +33,7 @@ module JobBoard
       def archive_images(images)
         images.each do |image|
           JobBoard::Models::ArchivedImage.create(
-            original_id: image.id,
-            name: image.name,
-            infra: image.infra
+            image.to_hash.tap { |h| h[:original_id] = h.delete(:id) }
           )
         end
       end

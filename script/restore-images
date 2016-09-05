@@ -1,0 +1,56 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+libdir = File.expand_path('../../lib', __FILE__)
+$LOAD_PATH << libdir unless $LOAD_PATH.include?(libdir)
+
+USAGE = <<-EOF
+Usage: #{File.basename($PROGRAM_NAME)} <infra:name> [infra:name, ...]
+
+Restore images by infra:name from `archived_images` to `images` table.
+NOTE: Fails if a given infra:name has multiple results.
+EOF
+
+def main(argv: ARGV)
+  images = argv
+  if images.empty?
+    $stdout.puts USAGE, "\n", 'ERROR: Missing <infra:name> argument(s)'
+    return 1
+  end
+
+  if images.any? { |i| i =~ /-h|--help|help/ }
+    $stdout.puts USAGE
+    return 0
+  end
+
+  restore(images.map { |s| s.split(':', 2) }.to_h)
+end
+
+def restore(images)
+  require 'job_board'
+
+  failures = 0
+
+  run_restoration(images).each do |image, result|
+    if result.to_hash.key?(:error)
+      $stderr.puts "ERROR: #{image} #{result[:error].inspect}"
+      failures += 1
+    end
+  end
+
+  failures
+end
+
+def run_restoration(images)
+  images.map do |infra, name|
+    begin
+      result = JobBoard::Services::RestoreImage.run(
+        params: { 'infra' => infra, 'name' => name }
+      )
+      [name, result]
+    rescue => e
+      [name, { error: e }]
+    end
+  end
+end
+
+exit(main)

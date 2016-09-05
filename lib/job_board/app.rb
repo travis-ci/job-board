@@ -16,44 +16,24 @@ require 'sinatra/param'
 module JobBoard
   class App < Sinatra::Base
     helpers Sinatra::Param
+    helpers JobBoard::AppHelpers
 
     use JobBoard::Auth
     use Rack::Deflater
 
     before { content_type :json }
 
-    helpers do
-      def guest?
-        (env['REMOTE_USER'] || 'notset') == 'guest'
-      end
-
-      def set_images_mutation_params
-        param :infra, String, blank: true, required: true
-        param :is_default, Boolean
-        param :is_active, Boolean
-        param :tags, Hash, default: {}
-        param :name, String, blank: true, required: true,
-                             format: images_name_format
-      end
-
-      def images_name_format
-        @images_name_format ||= /#{JobBoard.config.images_name_format}/
-      end
+    get '/images' do
+      set_image_fetching_params
+      data = fetch_images(model: JobBoard::Models::Image)
+      status 200
+      json data: data,
+           meta: { limit: params.fetch('limit') }
     end
 
-    get '/images' do
-      param :infra, String, blank: true, required: true
-      param :name, String, blank: true
-      param :tags, Hash, default: {}
-      param :limit, Integer, default: 0
-      param :is_default, Boolean, default: false
-      param :is_active, Boolean, default: true
-
-      images = JobBoard::Services::FetchImages.run(params: params)
-      data = images.map(&:to_hash)
-
-      data = images_fields(data, fields) unless fields.empty?
-
+    get '/images/archived' do
+      set_image_fetching_params
+      data = fetch_images(model: JobBoard::Models::ArchivedImage)
       status 200
       json data: data,
            meta: { limit: params.fetch('limit') }
@@ -140,6 +120,13 @@ module JobBoard
       ((params['fields'] || {})['images'] || '').split(',').map do |key|
         key.strip.to_sym
       end
+    end
+
+    def fetch_images(model: nil)
+      images = JobBoard::Services::FetchImages.run(model: model, params: params)
+      data = images.map(&:to_hash)
+      data = images_fields(data, fields) unless fields.empty?
+      data
     end
 
     def image_searcher
