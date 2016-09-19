@@ -16,57 +16,27 @@ require 'sinatra/param'
 module JobBoard
   class App < Sinatra::Base
     helpers Sinatra::Param
+    helpers JobBoard::AppHelpers
 
     use JobBoard::Auth
     use Rack::Deflater
 
     before { content_type :json }
 
-    helpers do
-      def guest?
-        (env['REMOTE_USER'] || 'notset') == 'guest'
-      end
-
-      def set_images_mutation_params
-        param :infra, String, blank: true, required: true
-        param :is_default, Boolean
-        param :tags, Hash, default: {}
-        param :name, String, blank: true, required: true,
-                             format: images_name_format
-      end
-
-      def images_name_format
-        @images_name_format ||= /#{JobBoard.config.images_name_format}/
-      end
-    end
-
-    get '/' do
-      redirect to('/images'), 301
-    end
-
     get '/images' do
-      param :infra, String, blank: true, required: true
-      param :name, String, blank: true
-      param :tags, Hash, default: {}
-      param :limit, Integer, default: 0
-      param :is_default, Boolean, default: false
-
-      images = JobBoard::Services::FetchImages.run(params: params)
-      data = images.map(&:to_hash)
-
-      fields = (
-        (params['fields'] || {})['images'] || ''
-      ).split(',').map do |key|
-        key.strip.to_sym
-      end
-
-      data = images_fields(data, fields) unless fields.empty?
-
+      set_image_fetching_params
+      data = fetch_images(model: JobBoard::Models::Image)
       status 200
       json data: data,
-           meta: {
-             limit: params.fetch('limit')
-           }
+           meta: { limit: params.fetch('limit') }
+    end
+
+    get '/images/archived' do
+      set_image_fetching_params
+      data = fetch_images(model: JobBoard::Models::ArchivedImage)
+      status 200
+      json data: data,
+           meta: { limit: params.fetch('limit') }
     end
 
     # This is a POST-ish version of `GET /images` that accepts a body of
@@ -92,11 +62,30 @@ module JobBoard
       set_images_mutation_params
 
       params['is_default'] = false unless params.key?('is_default')
+      params['is_active'] = false unless params.key?('is_active')
 
       image = JobBoard::Services::CreateImage.run(params: params)
 
       status 201
       json data: [image.to_hash]
+    end
+
+    # This looks like a general-purpose PATCH updater, but in reality it is only
+    # used for updating `is_active`... for now.
+    patch '/images' do
+      halt 403 if guest?
+
+      param :infra, String, blank: true, required: true
+      param :name, String, blank: true, required: true
+      param :is_active, Boolean, blank: true, required: true
+
+      images = JobBoard::Services::ActivateImages.run(params: params)
+      data = images.map(&:to_hash)
+
+      data = images_fields(data, fields) unless fields.empty?
+
+      status 200
+      json data: data
     end
 
     put '/images' do
@@ -105,6 +94,7 @@ module JobBoard
       set_images_mutation_params
 
       params['is_default'] = false unless params.key?('is_default')
+      params['is_active'] = false unless params.key?('is_active')
 
       image = JobBoard::Services::UpdateImage.run(params: params)
       halt 404 if image.nil?
@@ -124,9 +114,20 @@ module JobBoard
       [204, {}, '']
     end
 
-    run! if app_file == $PROGRAM_NAME
-
     private
+
+    def fields
+      ((params['fields'] || {})['images'] || '').split(',').map do |key|
+        key.strip.to_sym
+      end
+    end
+
+    def fetch_images(model: nil)
+      images = JobBoard::Services::FetchImages.run(model: model, params: params)
+      data = images.map(&:to_hash)
+      data = images_fields(data, fields) unless fields.empty?
+      data
+    end
 
     def image_searcher
       @image_searcher ||= JobBoard::ImageSearcher.new

@@ -2,10 +2,10 @@
 
 BEGIN;
 
-DROP INDEX images_on_tags;
+DROP INDEX job_board.images_on_tags;
 
-DROP INDEX images_on_name;
+DROP INDEX job_board.images_on_name;
 
-DROP INDEX images_on_infra;
+DROP INDEX job_board.images_on_infra;
 
 COMMIT;

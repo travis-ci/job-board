@@ -15,14 +15,6 @@ describe JobBoard::App do
       .and_return(image0)
   end
 
-  describe 'GET /' do
-    it 'redirects to /images' do
-      get '/'
-      expect(last_response.status).to eql(301)
-      expect(URI(last_response.location).path).to eql('/images')
-    end
-  end
-
   describe 'POST /images' do
     let(:auth) { %w(admin secret) }
 

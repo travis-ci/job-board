@@ -17,9 +17,9 @@ task :routes do
   ENV['DATABASE_SQL_LOGGING'] = nil
   require 'job_board'
 
-  %w(GET POST PUT DELETE).each do |verb|
+  %w(GET POST PUT PATCH DELETE).each do |verb|
     (JobBoard::App.routes[verb] || []).each do |route|
-      printf "%8s -> ^#{route.first.inspect}$", verb
+      printf "%8s -> ^#{route.first.inspect}$\n", verb
     end
   end
 end

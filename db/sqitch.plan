@@ -5,3 +5,5 @@
 appschema 2016-07-26T01:46:16Z Dan Buch <dan@travis-ci.org> # Initial schema
 images [appschema] 2016-07-26T02:17:04Z Dan Buch <dan@travis-ci.org> # Adds the images table
 images_indices [appschema images] 2016-07-26T02:29:09Z Dan Buch <dan@travis-ci.org> # Adds indices for images table
+archived_images [appschema] 2016-09-04T22:59:29Z Dan Buch <dan@travis-ci.org> # Add separate table for archived images
+images_active [appschema images] 2016-09-04T23:28:26Z Dan Buch <dan@travis-ci.org> # Add active field to images records

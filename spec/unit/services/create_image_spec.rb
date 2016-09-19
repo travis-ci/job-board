@@ -9,6 +9,7 @@ describe JobBoard::Services::CreateImage do
       'infra' => 'test',
       'name' => 'whatever',
       'is_default' => false,
+      'is_active' => true,
       'tags' => { production: false }
     }
     expect(JobBoard::Models::Image).to receive(:create).with(
