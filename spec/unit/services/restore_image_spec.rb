@@ -18,11 +18,9 @@ describe JobBoard::Services::RestoreImage do
   it 'restores an image' do
     expect(JobBoard::Services::FetchImages).to receive(:run)
       .and_return([image])
-    expect(JobBoard::Models::Image).to receive(:create).with(
-      restore_params.symbolize_keys.merge(
-        tags: Sequel.hstore(restore_params['tags'])
-      )
-    )
+    expect(JobBoard::Services::CreateImage).to receive(:run)
+      .with(params: restore_params)
+      .and_return(image)
     expect(image).to receive(:destroy)
     described_class.run(params: restore_params)
   end
