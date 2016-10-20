@@ -13,6 +13,8 @@ gem 'puma'
 gem 'rack-ssl', require: false
 gem 'rack-test', group: %i(development test)
 gem 'rake'
+gem 'redis'
+gem 'redis-namespace'
 gem 'rspec', group: %i(development test)
 gem 'rubocop', group: %i(development test)
 gem 'sequel'

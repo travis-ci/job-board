@@ -1,10 +1,12 @@
 # frozen_string_literal: true
+require 'redis-namespace'
 require 'sequel'
 require 'sequel/model'
 
 module JobBoard
   module Models
     autoload :Image, 'job_board/models/image'
+    autoload :Job, 'job_board/models/job'
 
     class << self
       def db
@@ -23,7 +25,7 @@ module JobBoard
 
       def initdb!
         return if @initdb
-        Sequel.extension :core_extensions, :pg_hstore
+        Sequel.extension :core_extensions, :pg_hstore, :pg_json
 
         %w(images).each do |table|
           Sequel.qualify(:job_board, table.to_sym)
@@ -31,6 +33,17 @@ module JobBoard
         end
 
         @initdb = db['select now()']
+      end
+
+      def redis
+        @redis ||= Redis::Namespace.new(
+          :job_board, redis: Redis.new(
+            url: ENV.fetch(
+              ENV['REDIS_PROVIDER'] || ENV['REDIS_URL'] || '',
+              'redis://localhost:6379/0'
+            )
+          )
+        )
       end
     end
 

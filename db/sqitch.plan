@@ -5,3 +5,5 @@
 appschema 2016-07-26T01:46:16Z Dan Buch <dan@travis-ci.org> # Initial schema
 images [appschema] 2016-07-26T02:17:04Z Dan Buch <dan@travis-ci.org> # Adds the images table
 images_indices [appschema images] 2016-07-26T02:29:09Z Dan Buch <dan@travis-ci.org> # Adds indices for images table
+jobs [appschema] 2016-10-19T23:08:04Z Dan Buch <dan@travis-ci.org> # Adds the jobs table
+jobs_indices [appschema jobs] 2016-10-19T23:23:10Z Dan Buch <dan@travis-ci.org> # Adds indices for the jobs table
