@@ -7,6 +7,7 @@ module JobBoard
     autoload :DeleteImages, 'job_board/services/delete_images'
     autoload :FetchImages, 'job_board/services/fetch_images'
     autoload :FetchJob, 'job_board/services/fetch_job'
+    autoload :FetchJobScript, 'job_board/services/fetch_job_script'
     autoload :UpdateImage, 'job_board/services/update_image'
   end
 end

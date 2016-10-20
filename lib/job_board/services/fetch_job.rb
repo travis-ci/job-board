@@ -24,7 +24,7 @@ module JobBoard
           {
             name: 'main',
             encoding: 'base64',
-            content: Base64.encode64(fetch_build_script(job)).split.join
+            content: Base64.encode64(fetch_job_script(job)).split.join
           }
         ]
         job['job_state_url'] = JobBoard.config.job_state_url
@@ -33,11 +33,12 @@ module JobBoard
         job
       end
 
-      def fetch_build_script(_job)
-        "#!/bin/bash\necho nope\n"
+      def fetch_job_script(job)
+        JobBoard::Services::FetchJobScript.run(job: job)
       end
 
       def generate_jwt
+        # TODO: implement jwt generation
         'FAFAFAF.ABABABA.DADADAD'
       end
     end

@@ -6,6 +6,7 @@ ruby '2.3.1' if ENV.key?('DYNO')
 gem 'activesupport'
 gem 'codeclimate-test-reporter', group: %i(development test), require: nil
 gem 'factory_girl', group: %i(development test)
+gem 'faraday'
 gem 'jemalloc'
 gem 'pg'
 gem 'pry', require: false

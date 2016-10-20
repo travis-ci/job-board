@@ -24,7 +24,8 @@ module JobBoard
              ) == '1'
            },
            job_state_url: ENV.fetch('JOB_BOARD_JOB_STATE_URL', ''),
-           log_parts_url: ENV.fetch('JOB_BOARD_LOG_PARTS_URL', '')
+           log_parts_url: ENV.fetch('JOB_BOARD_LOG_PARTS_URL', ''),
+           build_api_url: ENV.fetch('JOB_BOARD_BUILD_API_URL', '')
 
     default(access: [:key])
   end

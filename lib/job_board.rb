@@ -21,4 +21,10 @@ module JobBoard
   end
 
   module_function :logger
+
+  def version
+    @version ||= `git rev-parse HEAD || echo fafafaf`.strip
+  end
+
+  module_function :version
 end
