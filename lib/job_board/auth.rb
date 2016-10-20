@@ -89,7 +89,7 @@ module JobBoard
 
     class Request < Rack::Auth::AbstractRequest
       def job_id
-        (/jobs\/(\d+)/.match(request.path_info) || [])[1]
+        (%r{jobs/(\d+)}.match(request.path_info) || [])[1]
       end
 
       def basic?
