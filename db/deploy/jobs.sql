@@ -7,8 +7,8 @@ SET client_min_messages = 'warning';
 
 CREATE TABLE job_board.jobs (
   id serial PRIMARY KEY,
-  job_id character varying(255) NOT NULL,
-  queue character varying(255) NOT NULL,
+  job_id text NOT NULL,
+  queue text NOT NULL,
   data json NOT NULL,
   created_at timestamp without time zone NOT NULL DEFAULT (now() at time zone 'UTC'),
   updated_at timestamp without time zone,
