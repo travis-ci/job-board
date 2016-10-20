@@ -19,18 +19,22 @@ module JobBoard
         job = {}
         db_job = JobBoard::Models::Job.first(job_id: job_id)
         return nil unless db_job
+
         job.merge!(db_job.data)
-        job['build_scripts'] = [
-          {
+        job.merge!(config.build.to_hash)
+        job.merge!(config.cache_options.to_hash) unless
+          config.cache_options.type.empty?
+
+        job.merge(
+          job_script: {
             name: 'main',
             encoding: 'base64',
             content: Base64.encode64(fetch_job_script(job)).split.join
-          }
-        ]
-        job['job_state_url'] = JobBoard.config.job_state_url
-        job['log_parts_url'] = JobBoard.config.log_parts_url
-        job['jwt'] = generate_jwt
-        job
+          },
+          job_state_url: JobBoard.config.job_state_url,
+          log_parts_url: JobBoard.config.log_parts_url,
+          jwt: generate_jwt
+        )
       end
 
       def fetch_job_script(job)
@@ -40,6 +44,10 @@ module JobBoard
       def generate_jwt
         # TODO: implement jwt generation
         'FAFAFAF.ABABABA.DADADAD'
+      end
+
+      def config
+        JobBoard.config
       end
     end
   end

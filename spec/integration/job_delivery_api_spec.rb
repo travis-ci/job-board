@@ -149,18 +149,17 @@ describe 'Job Delivery API', integration: true, job_delivery_api: true do
       expect(last_response.status).to eq(200)
     end
 
-    it 'includes build scripts' do
+    it 'includes a job script' do
       get "/jobs/#{job_id}", nil,
           'HTTP_FROM' => from
 
       response_body = JSON.parse(last_response.body)
-      expect(response_body['build_scripts']).to_not be_nil
-      expect(response_body['build_scripts'].length).to eq(1)
-      build_script = response_body['build_scripts'].fetch(0)
-      expect(build_script['name']).to eq('main')
-      expect(build_script['encoding']).to eq('base64')
-      expect(build_script['content'].length).to be_positive
-      expect(Base64.decode64(build_script['content'])).to match(/bash/)
+      expect(response_body['job_script']).to_not be_nil
+      job_script = response_body.fetch('job_script')
+      expect(job_script['name']).to eq('main')
+      expect(job_script['encoding']).to eq('base64')
+      expect(job_script['content'].length).to be_positive
+      expect(Base64.decode64(job_script['content'])).to match(/bash/)
     end
 
     it 'includes a job state URL' do
