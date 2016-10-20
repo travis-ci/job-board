@@ -58,9 +58,12 @@ module JobBoard
 
     def decode_jwt!(auth)
       auth.jwt_payload, auth.jwt_header = JWT.decode(
-        auth.params, secret, verify, algorithm: alg
+        auth.params, secret, verify,
+        algorithm: alg, verify_sub: true, 'sub' => auth.job_id
       )
       true
+    rescue JWT::InvalidSubError
+      false
     rescue JWT::DecodeError
       false
     rescue JWT::ExpiredSignature
@@ -86,7 +89,7 @@ module JobBoard
 
     class Request < Rack::Auth::AbstractRequest
       def job_id
-        (/jobs\/(\d+)/.match(request.path_info) || [])[0]
+        (/jobs\/(\d+)/.match(request.path_info) || [])[1]
       end
 
       def basic?
