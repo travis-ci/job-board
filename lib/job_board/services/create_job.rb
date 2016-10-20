@@ -31,9 +31,8 @@ module JobBoard
         end
       end
 
-      def assign_queue(_job)
-        # TODO: implement queue assignment
-        'gce'
+      def assign_queue(job)
+        JobBoard::Services::FetchQueue.run(job: job)
       end
     end
   end

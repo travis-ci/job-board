@@ -1,27 +1,21 @@
 # frozen_string_literal: true
-require 'json'
-
 require_relative 'auth'
-require_relative 'config'
-require_relative 'models'
 require_relative 'image_searcher'
+require_relative 'services'
 
-require 'rack/auth/basic'
-require 'rack/deflater'
-require 'sequel'
 require 'sinatra/base'
 require 'sinatra/json'
 require 'sinatra/param'
 
 module JobBoard
-  class App < Sinatra::Base
+  class ImagesAPI < Sinatra::Base
     helpers Sinatra::Param
 
     use JobBoard::Auth
-    use Rack::Deflater
 
     before { content_type :json }
 
+    # FIXME: factor out these helpers
     helpers do
       def guest?
         (env['REMOTE_USER'] || 'notset') == 'guest'
@@ -38,54 +32,6 @@ module JobBoard
       def images_name_format
         @images_name_format ||= /#{JobBoard.config.images_name_format}/
       end
-
-      def job_delivery_api_enabled?
-        JobBoard.config.job_delivery_api.enabled
-      end
-    end
-
-    post '/jobs' do
-      param :queue, String, blank: true, required: true
-      param :count, Integer, default: 1
-
-      halt 404, JSON.dump(
-        '@type' => 'error', error: 'no'
-      ) unless job_delivery_api_enabled?
-
-      halt 412, JSON.dump(
-        '@type' => 'error', error: 'missing from header'
-      ) unless request.env.key?('HTTP_FROM')
-
-      json JobBoard::Services::AllocateJobs.run(
-        count: params[:count],
-        from: request.env.fetch('HTTP_FROM'),
-        jobs: JSON.parse(request.body.read).fetch('jobs'),
-        queue: params[:queue]
-      ).merge(
-        '@count' => params[:count],
-        '@queue' => params[:queue]
-      )
-    end
-
-    post '/jobs/add' do
-      halt 404, JSON.dump(
-        '@type' => 'error', error: 'no'
-      ) unless job_delivery_api_enabled?
-
-      status 201
-      headers 'Content-Length' => 0
-      JobBoard::Services::CreateJob.run(
-        params: JSON.parse(request.body.read)
-      )
-      ''
-    end
-
-    get '/jobs/:job_id' do
-      json JobBoard::Services::FetchJob.run(job_id: params.fetch('job_id'))
-    end
-
-    get '/' do
-      redirect to('/images'), 301
     end
 
     get '/images' do
@@ -167,8 +113,6 @@ module JobBoard
 
       [204, {}, '']
     end
-
-    run! if app_file == $PROGRAM_NAME
 
     private
 

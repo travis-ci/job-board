@@ -20,7 +20,8 @@ module RackTestBits
   include Rack::Test::Methods
 
   def app
-    JobBoard::App
+    Rack::URLMap.new('/jobs' => JobBoard::JobDeliveryAPI,
+                     '/images' => JobBoard::ImagesAPI)
   end
 end
 
@@ -31,11 +32,9 @@ FactoryGirl.define do
 end
 
 integration_enabled = ENV['INTEGRATION_SPECS'] == '1'
-job_delivery_api_enabled = ENV['JOB_BOARD_JOB_DELIVERY_API_ENABLED'] == '1'
 
 RSpec.configure do |c|
   c.include RackTestBits
   c.include FactoryGirl::Syntax::Methods
   c.filter_run_excluding(integration: true) unless integration_enabled
-  c.filter_run_excluding(job_delivery_api: true) unless job_delivery_api_enabled
 end

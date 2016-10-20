@@ -14,4 +14,6 @@ unless %w(development test).include?(ENV['RACK_ENV'] || 'bogus')
   use Rack::SSL
 end
 
-run JobBoard::App
+use Rack::Deflater
+run Rack::URLMap.new('/jobs' => JobBoard::JobDeliveryAPI,
+                     '/images' => JobBoard::ImagesAPI)

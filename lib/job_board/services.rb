@@ -6,9 +6,11 @@ module JobBoard
     autoload :CreateJWT, 'job_board/services/create_jwt'
     autoload :CreateJob, 'job_board/services/create_job'
     autoload :DeleteImages, 'job_board/services/delete_images'
+    autoload :DeleteJob, 'job_board/services/delete_job'
     autoload :FetchImages, 'job_board/services/fetch_images'
     autoload :FetchJob, 'job_board/services/fetch_job'
     autoload :FetchJobScript, 'job_board/services/fetch_job_script'
+    autoload :FetchQueue, 'job_board/services/fetch_queue'
     autoload :UpdateImage, 'job_board/services/update_image'
   end
 end

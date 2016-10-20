@@ -30,7 +30,8 @@ module JobBoard
           },
           job_state_url: JobBoard.config.job_state_url,
           log_parts_url: JobBoard.config.log_parts_url,
-          jwt: generate_jwt(job)
+          jwt: generate_jwt(job),
+          image_name: assign_image_name(job)
         )
       end
 
@@ -40,6 +41,11 @@ module JobBoard
 
       def generate_jwt(job)
         JobBoard::Services::CreateJWT.run(job_id: job.fetch('id'))
+      end
+
+      def assign_image_name(_job)
+        # TODO: implement image name assignment
+        'default'
       end
 
       def config

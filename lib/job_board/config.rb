@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 require 'hashr'
+require 'openssl'
 require 'travis/config'
 
 module JobBoard
@@ -12,6 +13,14 @@ module JobBoard
 
     def env
       self.class.env
+    end
+
+    def jwt_public_key
+      @jwt_public_key ||= begin
+        OpenSSL::PKey::RSA.new(jwt_private_key).public_key
+      rescue
+        nil
+      end
     end
 
     define(
@@ -45,11 +54,6 @@ module JobBoard
         sql_logging: false
       },
       images_name_format: '.*',
-      job_delivery_api: {
-        enabled: ENV.fetch(
-          'JOB_BOARD_JOB_DELIVERY_API_ENABLED', '0'
-        ) == '1'
-      },
       job_max_duration: ENV.fetch('JOB_BOARD_JOB_MAX_DURATION', '10800'),
       job_state_url: ENV.fetch('JOB_BOARD_JOB_STATE_URL', ''),
       jwt_private_key: ENV.fetch('JOB_BOARD_JWT_PRIVATE_KEY', ''),

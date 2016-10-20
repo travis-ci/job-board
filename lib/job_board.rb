@@ -4,9 +4,11 @@ require 'travis/support/logger'
 require 'travis/support/logging'
 
 module JobBoard
-  autoload :App, 'job_board/app'
   autoload :Auth, 'job_board/auth'
   autoload :Config, 'job_board/config'
+  autoload :ImagesAPI, 'job_board/images_api'
+  autoload :JWTJobIDAuth, 'job_board/jwt_job_id_auth'
+  autoload :JobDeliveryAPI, 'job_board/job_delivery_api'
   autoload :Models, 'job_board/models'
   autoload :Services, 'job_board/services'
 
