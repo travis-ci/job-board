@@ -1,6 +1,6 @@
 # frozen_string_literal: true
-require 'travis/config'
 require 'hashr'
+require 'travis/config'
 
 module JobBoard
   class Config < Travis::Config
@@ -50,7 +50,9 @@ module JobBoard
           'JOB_BOARD_JOB_DELIVERY_API_ENABLED', '0'
         ) == '1'
       },
+      job_max_duration: ENV.fetch('JOB_BOARD_JOB_MAX_DURATION', '10800'),
       job_state_url: ENV.fetch('JOB_BOARD_JOB_STATE_URL', ''),
+      jwt_private_key: ENV.fetch('JOB_BOARD_JWT_PRIVATE_KEY', ''),
       log_level: 'info',
       log_parts_url: ENV.fetch('JOB_BOARD_LOG_PARTS_URL', '')
     )

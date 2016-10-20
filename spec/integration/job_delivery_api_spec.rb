@@ -10,6 +10,8 @@ describe 'Job Delivery API', integration: true, job_delivery_api: true do
       .to receive(:assign_queue).and_return('lel')
     allow_any_instance_of(JobBoard::Services::FetchJob)
       .to receive(:fetch_job_script).and_return("#!/bin/bash\necho flah\n")
+    allow_any_instance_of(JobBoard::Services::FetchJob)
+      .to receive(:generate_jwt).and_return('FAFAFAF.BABABAB.DADADAD')
     authorize(*auth)
   end
 

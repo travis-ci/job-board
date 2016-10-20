@@ -28,6 +28,7 @@ GEM
     i18n (0.7.0)
     jemalloc (1.0.1)
     json (2.0.1)
+    jwt (1.5.6)
     method_source (0.8.2)
     minitest (5.9.0)
     multi_json (1.12.1)
@@ -110,6 +111,7 @@ DEPENDENCIES
   factory_girl
   faraday
   jemalloc
+  jwt
   pg
   pry
   puma

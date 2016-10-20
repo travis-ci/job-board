@@ -8,6 +8,7 @@ gem 'codeclimate-test-reporter', group: %i(development test), require: nil
 gem 'factory_girl', group: %i(development test)
 gem 'faraday'
 gem 'jemalloc'
+gem 'jwt'
 gem 'pg'
 gem 'pry', require: false
 gem 'puma'

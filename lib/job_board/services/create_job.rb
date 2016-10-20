@@ -1,16 +1,14 @@
 # frozen_string_literal: true
+require_relative 'service'
+
 module JobBoard
   module Services
-    class CreateJob
-      def self.run(params: {})
-        new(params: params).run
-      end
-
-      attr_reader :params
-
+    class CreateJob < Service
       def initialize(params: {})
         @params = params
       end
+
+      attr_reader :params
 
       def run
         job_id = params.fetch('id')
@@ -34,7 +32,7 @@ module JobBoard
       end
 
       def assign_queue(_job)
-        # TODO: implementation
+        # TODO: implement queue assignment
         'gce'
       end
     end

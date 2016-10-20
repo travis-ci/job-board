@@ -1,19 +1,16 @@
 # frozen_string_literal: true
 require 'base64'
 require 'job_board'
+require_relative 'service'
 
 module JobBoard
   module Services
-    class FetchJob
-      def self.run(job_id: '')
-        new(job_id: job_id).run
-      end
-
-      attr_reader :job_id
-
+    class FetchJob < Service
       def initialize(job_id: '')
         @job_id = job_id
       end
+
+      attr_reader :job_id
 
       def run
         job = {}
@@ -33,7 +30,7 @@ module JobBoard
           },
           job_state_url: JobBoard.config.job_state_url,
           log_parts_url: JobBoard.config.log_parts_url,
-          jwt: generate_jwt
+          jwt: generate_jwt(job)
         )
       end
 
@@ -41,9 +38,8 @@ module JobBoard
         JobBoard::Services::FetchJobScript.run(job: job)
       end
 
-      def generate_jwt
-        # TODO: implement jwt generation
-        'FAFAFAF.ABABABA.DADADAD'
+      def generate_jwt(job)
+        JobBoard::Services::CreateJWT.run(job_id: job.fetch('id'))
       end
 
       def config
