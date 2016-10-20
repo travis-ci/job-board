@@ -20,7 +20,6 @@ env:
   - COVERAGE='1'
   matrix:
   - INTEGRATION_SPECS='1'
-  - INTEGRATION_SPECS='1' JOB_BOARD_JOB_DELIVERY_API_ENABLED='true'
   - INTEGRATION_SPECS='0'
 
 before_install:
