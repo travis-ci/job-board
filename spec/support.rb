@@ -20,8 +20,7 @@ module RackTestBits
   include Rack::Test::Methods
 
   def app
-    Rack::URLMap.new('/jobs' => JobBoard::JobDeliveryAPI,
-                     '/images' => JobBoard::ImagesAPI)
+    JobBoard::App
   end
 end
 

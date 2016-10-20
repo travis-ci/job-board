@@ -11,8 +11,6 @@ module JobBoard
   class JobDeliveryAPI < Sinatra::Base
     helpers Sinatra::Param
 
-    use JobBoard::JWTJobIDAuth
-
     before { content_type :json }
 
     # FIXME: factor out these helpers
@@ -54,7 +52,9 @@ module JobBoard
     end
 
     post '/jobs/add' do
-      JobBoard::Services::CreateJob.run(params: JSON.parse(request.body.read))
+      JobBoard::Services::CreateOrUpdateJob.run(
+        params: JSON.parse(request.body.read)
+      )
       [201, { 'Content-Length' => '0' }, '']
     end
 
@@ -65,20 +65,8 @@ module JobBoard
     end
 
     delete '/jobs/:job_id' do
-      auth_response = jwt_auther.call(request.env)
-      halt(auth_response[0], auth_response[2]) unless
-        request.env.fetch('job_board.jwt.job_id', '') == params.fetch('job_id')
       JobBoard::Services::DeleteJob.run(job_id: params.fetch('job_id'))
       [204, {}, '']
-    end
-
-    private
-
-    def jwt_auther
-      @jwt_auther ||= JobBoard::JWTJobIDAuth.new(
-        ->(_env) { [500, {}, 'oh no'] },
-        JobBoard.config.jwt_public_key, 'RS512'
-      )
     end
   end
 end

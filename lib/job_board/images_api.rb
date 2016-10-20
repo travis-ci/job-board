@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-require_relative 'auth'
 require_relative 'image_searcher'
 require_relative 'services'
 
@@ -10,8 +9,6 @@ require 'sinatra/param'
 module JobBoard
   class ImagesAPI < Sinatra::Base
     helpers Sinatra::Param
-
-    use JobBoard::Auth
 
     before { content_type :json }
 

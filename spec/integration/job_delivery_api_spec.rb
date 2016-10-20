@@ -4,15 +4,15 @@ describe 'Job Delivery API', integration: true do
   let(:auth_tokens) { %w(abc123 secret) }
 
   before do
-    allow_any_instance_of(JobBoard::JWTJobIDAuth).to receive(:alg)
+    allow_any_instance_of(JobBoard::Auth).to receive(:alg)
       .and_return('none')
-    allow_any_instance_of(JobBoard::JWTJobIDAuth).to receive(:secret)
+    allow_any_instance_of(JobBoard::Auth).to receive(:secret)
       .and_return(nil)
-    allow_any_instance_of(JobBoard::JWTJobIDAuth).to receive(:verify)
+    allow_any_instance_of(JobBoard::Auth).to receive(:verify)
       .and_return(false)
     allow_any_instance_of(JobBoard::Auth).to receive(:auth_tokens)
       .and_return(auth_tokens)
-    allow_any_instance_of(JobBoard::Services::CreateJob)
+    allow_any_instance_of(JobBoard::Services::CreateOrUpdateJob)
       .to receive(:assign_queue).and_return('lel')
     allow_any_instance_of(JobBoard::Services::FetchJob)
       .to receive(:fetch_job_script).and_return("#!/bin/bash\necho flah\n")
@@ -31,7 +31,7 @@ describe 'Job Delivery API', integration: true do
       JobBoard::Models.redis.srem('queues', 'lel')
 
       3.times do |n|
-        JobBoard::Services::CreateJob.run(
+        JobBoard::Services::CreateOrUpdateJob.run(
           params: {
             'id' => "#{Time.now.to_i}#{n}"
           }
@@ -135,7 +135,7 @@ describe 'Job Delivery API', integration: true do
         conn.srem('queues', 'lel')
       end
 
-      JobBoard::Services::CreateJob.run(
+      JobBoard::Services::CreateOrUpdateJob.run(
         params: {
           '@type' => 'job',
           'id' => job_id,
@@ -199,7 +199,7 @@ describe 'Job Delivery API', integration: true do
 
     before :each do
       JobBoard::Models::Job.where(job_id: job_id).delete
-      JobBoard::Services::CreateJob.run(
+      JobBoard::Services::CreateOrUpdateJob.run(
         params: {
           'id' => job_id
         }

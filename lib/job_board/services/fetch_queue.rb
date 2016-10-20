@@ -4,7 +4,7 @@ require_relative 'service'
 module JobBoard
   module Services
     class FetchQueue < Service
-      def initialize(job: job)
+      def initialize(job: {})
         @job = job
       end
 

@@ -4,7 +4,7 @@ describe 'Images API', integration: true do
   let(:auth_tokens) { %w(abc123 secret) }
 
   before do
-    allow_any_instance_of(JobBoard::App).to receive(:images_name_format)
+    allow_any_instance_of(JobBoard::ImagesAPI).to receive(:images_name_format)
       .and_return(/^test-im.*/)
     allow_any_instance_of(JobBoard::Auth).to receive(:auth_tokens)
       .and_return(auth_tokens)
