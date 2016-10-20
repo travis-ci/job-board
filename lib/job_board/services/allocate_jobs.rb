@@ -30,7 +30,6 @@ module JobBoard
         end
 
         loop do
-          allocated = nil
           break if avail.length + unavail.length >= count
           allocated = redis.lpop("queue:#{queue}")
           unless allocated.nil?
