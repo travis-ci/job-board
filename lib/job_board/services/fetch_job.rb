@@ -47,7 +47,7 @@ module JobBoard
       end
 
       def fetch_job_script(job)
-        JobBoard::Services::FetchJobScript.run(job: job)
+        JobBoard::Services::FetchJobScript.run(job_data: job.data)
       end
 
       def generate_jwt(job)

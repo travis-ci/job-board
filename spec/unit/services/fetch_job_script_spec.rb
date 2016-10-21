@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 describe JobBoard::Services::FetchJobScript do
-  let :job do
+  let :job_data do
     {
       'type' => 'test',
       'config' => {
@@ -47,7 +47,7 @@ describe JobBoard::Services::FetchJobScript do
   end
 
   it 'fetches a script' do
-    script = described_class.run(job: job)
+    script = described_class.run(job_data: job_data)
     expect(script.length).to be_positive
     expect(script).to match(/bash/)
   end

@@ -19,11 +19,11 @@ module JobBoard
         end
       end
 
-      def initialize(job: {})
-        @job = job
+      def initialize(job_data: {})
+        @job_data = job_data
       end
 
-      attr_reader :job, :site
+      attr_reader :job_data, :site
 
       def run
         response = self.class.build_api_conn.post do |req|
@@ -31,13 +31,13 @@ module JobBoard
           req.headers['User-Agent'] = "job-board/#{JobBoard.version}"
           req.headers['Authorization'] = "token #{self.class.build_uri.password}"
           req.headers['Content-Type'] = 'application/json'
-          req.body = JSON.dump(job.data)
+          req.body = JSON.dump(job_data)
         end
 
         if response.status > 299
           log level: :error, msg: 'build script error',
               status: response.status, body: response.body,
-              job: JSON.dump(job)
+              job_data: JSON.dump(job_data)
           return BuildScriptError.new(response.body)
         end
 
