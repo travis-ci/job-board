@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+require 'addressable/uri'
 require 'faraday'
 
 require_relative 'service'
@@ -12,7 +13,7 @@ module JobBoard
         end
 
         def build_uri
-          @build_uri ||= URI(JobBoard.config.build_api_url)
+          @build_uri ||= Addressable::URI.parse(JobBoard.config.build_api_url)
         end
       end
 
@@ -26,7 +27,7 @@ module JobBoard
         response = self.class.build_api_conn.post do |req|
           req.url '/script'
           req.headers['User-Agent'] = "job-board/#{JobBoard.version}"
-          req.headers['Authorization'] = "token #{self.class.build_uri.user}"
+          req.headers['Authorization'] = "token #{self.class.build_uri.password}"
           req.headers['Content-Type'] = 'application/json'
           req.body = JSON.dump(job)
         end
