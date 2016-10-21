@@ -39,9 +39,8 @@ module JobBoard
         @redis ||= Redis::Namespace.new(
           :job_board, redis: Redis.new(
             url: ENV.fetch(
-              ENV['REDIS_PROVIDER'] || ENV['REDIS_URL'] || '',
-              'redis://localhost:6379/0'
-            )
+              ENV['REDIS_PROVIDER'] || '', nil
+            ) || ENV['REDIS_URL'] || 'redis://localhost:6379/0'
           )
         )
       end
