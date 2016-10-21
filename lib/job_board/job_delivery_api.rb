@@ -40,32 +40,39 @@ module JobBoard
         '@type' => 'error', error: 'missing from header'
       ) unless request.env.key?('HTTP_FROM')
 
-      json JobBoard::Services::AllocateJobs.run(
+      from = request.env.fetch('HTTP_FROM')
+
+      body = JobBoard::Services::AllocateJobs.run(
         count: params[:count],
-        from: request.env.fetch('HTTP_FROM'),
+        from: from,
         jobs: JSON.parse(request.body.read).fetch('jobs'),
         queue: params[:queue]
       ).merge(
         '@count' => params[:count],
         '@queue' => params[:queue]
       )
+      $stdout.puts %(msg=allocated queue=#{params[:queue]} ) +
+                   %(count=#{params[:count]} from=#{from})
+      json body
     end
 
     post '/jobs/add' do
-      JobBoard::Services::CreateOrUpdateJob.run(
-        params: JSON.parse(request.body.read)
-      )
+      job = JSON.parse(request.body.read)
+      JobBoard::Services::CreateOrUpdateJob.run(params: job)
+      $stdout.puts %(msg=added job_id=#{job.fetch('id')})
       [201, { 'Content-Length' => '0' }, '']
     end
 
     get '/jobs/:job_id' do
       job = JobBoard::Services::FetchJob.run(job_id: params.fetch('job_id'))
       halt 404, JSON.dump('@type' => 'error', error: 'no such job') if job.nil?
+      $stdout.puts %(msg=fetched job_id=#{params.fetch('job_id')})
       json job
     end
 
     delete '/jobs/:job_id' do
       JobBoard::Services::DeleteJob.run(job_id: params.fetch('job_id'))
+      $stdout.puts %(msg=deleted job_id=#{params.fetch('job_id')})
       [204, {}, '']
     end
   end
