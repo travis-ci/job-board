@@ -33,7 +33,8 @@ module JobBoard
         end
 
         if response.status > 299
-          $stderr.puts "ERROR: build script error #{response.status} #{response.body}"
+          log level: :error, msg: 'build script error',
+              status: response.status, body: response.body.inspect
           return ''
         end
 
