@@ -11,6 +11,8 @@ module JobBoard
       attr_reader :job
 
       def run
+        # HACK: everything is gce!
+        return 'gce'
         # TODO: implement proper queue selection via databass
         send("select_os_#{job.fetch('os', 'linux')}")
       rescue
