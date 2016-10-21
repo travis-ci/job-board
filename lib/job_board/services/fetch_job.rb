@@ -19,21 +19,21 @@ module JobBoard
       def run
         return nil if job_id.empty? || site.empty?
 
-        job = {}
+        job_data = {}
         db_job = JobBoard::Models::Job.first(job_id: job_id, site: site)
         return nil unless db_job
 
-        job.merge!(db_job.data.fetch('data'))
-        job.merge!(config.build.to_hash)
+        job_data.merge!(db_job.data.fetch('data'))
+        job_data.merge!(config.build.to_hash)
         # job.merge!(config.cache_options.to_hash) unless
         #   config.cache_options.type.empty?
 
-        job_script_content = fetch_job_script(job)
+        job_script_content = fetch_job_script(job_data)
         return job_script_content if job_script_content.is_a?(
           JobBoard::Services::FetchJobScript::BuildScriptError
         )
 
-        job.merge(
+        job_data.merge(
           job_script: {
             name: 'main',
             encoding: 'base64',
@@ -41,20 +41,24 @@ module JobBoard
           },
           job_state_url: job_id_url('job_state_%{site}_url'),
           log_parts_url: job_id_url('log_parts_%{site}_url'),
-          jwt: generate_jwt(job),
-          image_name: assign_image_name(job)
+          jwt: generate_jwt(job_data),
+          image_name: assign_image_name(job_data)
         )
       end
 
-      def fetch_job_script(job)
-        JobBoard::Services::FetchJobScript.run(job_data: job)
+      def fetch_job_script(job_data)
+        log msg: 'fetching job script', job_id: job_data['id'], site: site
+        JobBoard::Services::FetchJobScript.run(job_data: job_data)
       end
 
-      def generate_jwt(job)
-        JobBoard::Services::CreateJWT.run(job_id: job.fetch('id'), site: site)
+      def generate_jwt(job_data)
+        log msg: 'creating jwt', job_id: job_data['id'], site: site
+        JobBoard::Services::CreateJWT.run(
+          job_id: job_data.fetch('id'), site: site
+        )
       end
 
-      def assign_image_name(_job)
+      def assign_image_name(_job_data)
         # TODO: implement image name assignment
         'default'
       end
