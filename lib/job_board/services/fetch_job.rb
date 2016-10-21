@@ -35,7 +35,7 @@ module JobBoard
           JobBoard::Services::FetchJobScript::BuildScriptError
         )
 
-        job_data.merge(
+        job_data['data'].merge!(
           job_script: {
             name: 'main',
             encoding: 'base64',
@@ -46,6 +46,7 @@ module JobBoard
           jwt: generate_jwt(job_data.fetch('id')),
           image_name: assign_image_name(job_data)
         )
+        job_data
       end
 
       def fetch_job_script(job_id, job_data_data)

@@ -85,7 +85,7 @@ module JobBoard
         upstream_error: job.message
       ) if job.is_a?(JobBoard::Services::FetchJobScript::BuildScriptError)
       log msg: :fetched, job_id: job_id, site: site
-      json job
+      json job.fetch('data')
     end
 
     delete '/jobs/:job_id' do
