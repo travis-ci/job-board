@@ -23,12 +23,14 @@ module JobBoard
         db_job = JobBoard::Models::Job.first(job_id: job_id, site: site)
         return nil unless db_job
 
-        job_data.merge!(db_job.data.fetch('data'))
+        job_data.merge!(db_job.data)
         job_data.merge!(config.build.to_hash)
         # job.merge!(config.cache_options.to_hash) unless
         #   config.cache_options.type.empty?
 
-        job_script_content = fetch_job_script(job_data)
+        job_script_content = fetch_job_script(
+          job_data.fetch('id'), job_data.fetch('data')
+        )
         return job_script_content if job_script_content.is_a?(
           JobBoard::Services::FetchJobScript::BuildScriptError
         )
@@ -41,20 +43,20 @@ module JobBoard
           },
           job_state_url: job_id_url('job_state_%{site}_url'),
           log_parts_url: job_id_url('log_parts_%{site}_url'),
-          jwt: generate_jwt(job_data),
+          jwt: generate_jwt(job_data.fetch('id')),
           image_name: assign_image_name(job_data)
         )
       end
 
-      def fetch_job_script(job_data)
-        log msg: 'fetching job script', job_id: job_data['id'], site: site
-        JobBoard::Services::FetchJobScript.run(job_data: job_data)
+      def fetch_job_script(job_id, job_data_data)
+        log msg: 'fetching job script', job_id: job_id, site: site
+        JobBoard::Services::FetchJobScript.run(job_data: job_data_data)
       end
 
-      def generate_jwt(job_data)
-        log msg: 'creating jwt', job_id: job_data['id'], site: site
+      def generate_jwt(job_id)
+        log msg: 'creating jwt', job_id: job_id, site: site
         JobBoard::Services::CreateJWT.run(
-          job_id: job_data.fetch('id'), site: site
+          job_id: job_id, site: site
         )
       end
 
