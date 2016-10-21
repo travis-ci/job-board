@@ -23,6 +23,9 @@ module JobBoard
         db_job = JobBoard::Models::Job.first(job_id: job_id, site: site)
         return nil unless db_job
 
+        job_script_content = fetch_job_script(job)
+        return nil if job_script_content.empty?
+
         job.merge!(db_job.data)
         job.merge!(config.build.to_hash)
         job.merge!(config.cache_options.to_hash) unless
@@ -32,7 +35,7 @@ module JobBoard
           job_script: {
             name: 'main',
             encoding: 'base64',
-            content: Base64.encode64(fetch_job_script(job)).split.join
+            content: Base64.encode64(job_script_content).split.join
           },
           job_state_url: job_id_url('job_state_%{site}_url'),
           log_parts_url: job_id_url('log_parts_%{site}_url'),
