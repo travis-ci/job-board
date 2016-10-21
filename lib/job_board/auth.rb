@@ -36,7 +36,11 @@ module JobBoard
         return @app.call(env)
       end
 
-      decode_jwt!(auth)
+      begin
+        decode_jwt!(auth)
+      rescue JWT::DecodeError => e
+        $stderr.puts "WARN: ignoring failure to decode JWT: #{e}"
+      end
 
       if bearer_valid?(auth)
         env['jwt.header'] = auth.jwt_header
@@ -71,9 +75,6 @@ module JobBoard
         auth.params, secret, verify,
         algorithm: alg, verify_sub: true, 'sub' => auth.job_id
       )
-      true
-    rescue JWT::DecodeError
-      false
     end
 
     def auth_tokens
