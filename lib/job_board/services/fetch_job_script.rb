@@ -15,7 +15,9 @@ module JobBoard
         end
 
         def build_uri
-          @build_uri ||= Addressable::URI.parse(JobBoard.config.build_api_url)
+          @build_uri ||= Addressable::URI.parse(
+            JobBoard.config.build_api_url
+          )
         end
       end
 
@@ -28,8 +30,8 @@ module JobBoard
       def run
         response = self.class.build_api_conn.post do |req|
           req.url '/script'
-          req.headers['User-Agent'] = "job-board/#{JobBoard.version}"
-          req.headers['Authorization'] = "token #{self.class.build_uri.password}"
+          req.headers['User-Agent'] = user_agent
+          req.headers['Authorization'] = auth_header
           req.headers['Content-Type'] = 'application/json'
           req.body = JSON.dump(job_data)
         end
@@ -42,6 +44,14 @@ module JobBoard
         end
 
         response.body
+      end
+
+      def user_agent
+        "job-board/#{JobBoard.version}"
+      end
+
+      def auth_header
+        "token #{self.class.build_uri.password}"
       end
     end
   end
