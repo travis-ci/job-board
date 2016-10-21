@@ -25,8 +25,8 @@ module JobBoard
 
         job.merge!(db_job.data)
         job.merge!(config.build.to_hash)
-        job.merge!(config.cache_options.to_hash) unless
-          config.cache_options.type.empty?
+        # job.merge!(config.cache_options.to_hash) unless
+        #   config.cache_options.type.empty?
 
         job_script_content = fetch_job_script(job)
         return job_script_content if job_script_content.is_a?(
@@ -47,7 +47,7 @@ module JobBoard
       end
 
       def fetch_job_script(job)
-        JobBoard::Services::FetchJobScript.run(job_data: job.data)
+        JobBoard::Services::FetchJobScript.run(job_data: job)
       end
 
       def generate_jwt(job)
