@@ -1,28 +1,28 @@
 # frozen_string_literal: true
+
+require_relative 'service'
+
 module JobBoard
   module Services
-    class AllocateJobs
-      def self.run(jobs: [], count: 1, from: '', queue: '')
-        new(jobs: jobs, count: count, from: from, queue: queue).run
-      end
-
-      def initialize(jobs: [], count: 1, from: '', queue: '')
+    class AllocateJobs < Service
+      def initialize(jobs: [], count: 1, from: '', queue: '', site: '')
         @count = count
         @from = from
         @jobs = jobs
         @queue = queue
+        @site = site
       end
 
-      attr_reader :jobs, :count, :from, :queue
+      attr_reader :jobs, :count, :from, :queue, :site
 
       def run
-        redis.sadd('queues', queue)
-        redis.sadd('workers', from)
+        redis.sadd("queues:#{site}", queue)
+        redis.sadd("workers:#{site}", from)
 
         avail = []
         unavail = []
         jobs.each do |job_id|
-          if redis.sismember("worker:#{from}", job_id)
+          if redis.sismember("worker:#{site}:#{from}", job_id)
             avail << job_id
             next
           end
@@ -31,9 +31,9 @@ module JobBoard
 
         loop do
           break if avail.length + unavail.length >= count
-          allocated = redis.lpop("queue:#{queue}")
+          allocated = redis.lpop("queue:#{site}:#{queue}")
           unless allocated.nil?
-            redis.sadd("worker:#{from}", allocated)
+            redis.sadd("worker:#{site}:#{from}", allocated)
             avail << allocated
           end
           break if allocated.nil?

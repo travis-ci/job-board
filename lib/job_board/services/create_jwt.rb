@@ -16,12 +16,13 @@ module JobBoard
         end
       end
 
-      def initialize(job_id: '')
+      def initialize(job_id: '', site: '')
         @job_id = job_id
+        @site = site
         @alg = 'RS512'
       end
 
-      attr_reader :alg, :job_id
+      attr_reader :alg, :job_id, :site
 
       def run
         JWT.encode(payload, private_key, alg)
@@ -31,7 +32,8 @@ module JobBoard
         {
           iss: "job-board/#{JobBoard.version}",
           sub: job_id,
-          exp: (Time.now.utc + self.class.job_max_duration).to_i
+          exp: (Time.now.utc + self.class.job_max_duration).to_i,
+          site: site
         }
       end
 

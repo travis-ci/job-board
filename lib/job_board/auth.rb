@@ -6,20 +6,30 @@ require 'rack/auth/abstract/request'
 
 module JobBoard
   class Auth < Rack::Auth::AbstractHandler
-    def initialize(app, secret = nil, alg = 'RS512')
+    def initialize(app, secret: nil, alg: 'RS512', site_paths: /.*/)
       @app = app
       @alg = alg
-      @secret = secret
+      @secret = secret || JobBoard.config.jwt_public_key
+      @site_paths = site_paths
       @verify = true
     end
 
-    attr_reader :alg, :secret, :verify
+    attr_reader :alg, :secret, :verify, :site_paths
 
     def call(env)
       auth = Request.new(env)
 
+      return [
+        412,
+        { 'Content-Type' => 'application/json' },
+        JSON.dump('@type' => 'error', error: 'missing Travis-Site header')
+      ] if site_paths =~ auth.request.path_info &&
+           !env.key?('HTTP_TRAVIS_SITE')
+
       return unauthorized unless auth.provided?
       return bad_request unless auth.basic? || auth.bearer?
+
+      env['travis.site'] = env.fetch('HTTP_TRAVIS_SITE', '?')
 
       if basic_valid?(auth)
         env['REMOTE_USER'] = auth.basic_username
@@ -62,11 +72,7 @@ module JobBoard
         algorithm: alg, verify_sub: true, 'sub' => auth.job_id
       )
       true
-    rescue JWT::InvalidSubError
-      false
     rescue JWT::DecodeError
-      false
-    rescue JWT::ExpiredSignature
       false
     end
 

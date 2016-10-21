@@ -41,38 +41,46 @@ module JobBoard
       ) unless request.env.key?('HTTP_FROM')
 
       from = request.env.fetch('HTTP_FROM')
+      site = request.env.fetch('travis.site')
 
       body = JobBoard::Services::AllocateJobs.run(
         count: params[:count],
         from: from,
         jobs: JSON.parse(request.body.read).fetch('jobs'),
-        queue: params[:queue]
+        queue: params[:queue],
+        site: site
       ).merge(
         '@count' => params[:count],
         '@queue' => params[:queue]
       )
       $stdout.puts %(msg=allocated queue=#{params[:queue]} ) +
-                   %(count=#{params[:count]} from=#{from})
+                   %(count=#{params[:count]} from=#{from} site=#{site})
       json body
     end
 
     post '/jobs/add' do
       job = JSON.parse(request.body.read)
-      JobBoard::Services::CreateOrUpdateJob.run(params: job)
-      $stdout.puts %(msg=added job_id=#{job.fetch('id')})
+      site = request.env.fetch('travis.site')
+      db_job = JobBoard::Services::CreateOrUpdateJob.run(job: job, site: site)
+      halt 400, JSON.dump('@type' => 'error', error: 'what') if db_job.nil?
+      $stdout.puts %(msg=added job_id=#{job.fetch('id')} site=#{site})
       [201, { 'Content-Length' => '0' }, '']
     end
 
     get '/jobs/:job_id' do
-      job = JobBoard::Services::FetchJob.run(job_id: params.fetch('job_id'))
+      job_id = params.fetch('job_id')
+      site = request.env.fetch('travis.site')
+      job = JobBoard::Services::FetchJob.run(job_id: job_id, site: site)
       halt 404, JSON.dump('@type' => 'error', error: 'no such job') if job.nil?
-      $stdout.puts %(msg=fetched job_id=#{params.fetch('job_id')})
+      $stdout.puts %(msg=fetched job_id=#{job_id} site=#{site})
       json job
     end
 
     delete '/jobs/:job_id' do
-      JobBoard::Services::DeleteJob.run(job_id: params.fetch('job_id'))
-      $stdout.puts %(msg=deleted job_id=#{params.fetch('job_id')})
+      job_id = params.fetch('job_id')
+      site = request.env.fetch('travis.site')
+      JobBoard::Services::DeleteJob.run(job_id: job_id, site: site)
+      $stdout.puts %(msg=deleted job_id=#{job_id} site=#{site})
       [204, {}, '']
     end
   end

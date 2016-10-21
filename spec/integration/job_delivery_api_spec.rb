@@ -2,6 +2,8 @@
 describe 'Job Delivery API', integration: true do
   let(:auth) { %w(guest guest) }
   let(:auth_tokens) { %w(abc123 secret) }
+  let(:from) { 'worker@localhost' }
+  let(:site) { 'test' }
 
   before do
     allow_any_instance_of(JobBoard::Auth).to receive(:alg)
@@ -22,39 +24,44 @@ describe 'Job Delivery API', integration: true do
       .to receive(:private_key).and_return(nil)
     allow_any_instance_of(JobBoard::Services::CreateJWT)
       .to receive(:alg).and_return('none')
+    JobBoard.config[:"job_state_#{site}_url"] = 'http://test.example.org'
+    JobBoard.config[:"log_parts_#{site}_url"] = 'http://test.example.org'
   end
 
   describe 'POST /jobs' do
     before :each do
-      JobBoard::Models::Job.where(queue: 'lel').delete
-      JobBoard::Models.redis.del('queue:lel')
-      JobBoard::Models.redis.srem('queues', 'lel')
+      JobBoard::Models::Job.where(queue: 'lel', site: site).delete
+      JobBoard::Models.redis.del("queue:#{site}:lel")
+      JobBoard::Models.redis.srem("queues:#{site}", 'lel')
 
       3.times do |n|
         JobBoard::Services::CreateOrUpdateJob.run(
-          params: {
+          job: {
             'id' => "#{Time.now.to_i}#{n}"
-          }
+          },
+          site: site
         )
       end
       authorize(*auth)
     end
 
     after :each do
-      JobBoard::Models::Job.where(queue: 'lel').delete
+      JobBoard::Models::Job.where(queue: 'lel', site: site).delete
     end
 
     it 'returns 200' do
       post '/jobs?queue=lel&count=3', JSON.dump(jobs: []),
            'HTTP_CONTENT_TYPE' => 'application/json',
-           'HTTP_FROM' => 'worker+test@localhost'
+           'HTTP_FROM' => from,
+           'HTTP_TRAVIS_SITE' => site
       expect(last_response.status).to eq(200)
     end
 
     it 'includes count metadata' do
       post '/jobs?queue=lel&count=3', JSON.dump(jobs: []),
            'HTTP_CONTENT_TYPE' => 'application/json',
-           'HTTP_FROM' => 'worker+test@localhost'
+           'HTTP_FROM' => from,
+           'HTTP_TRAVIS_SITE' => site
       response_body = JSON.parse(last_response.body)
       expect(response_body['@count']).to eq(3)
     end
@@ -62,7 +69,8 @@ describe 'Job Delivery API', integration: true do
     it 'includes queue metadata' do
       post '/jobs?queue=lel&count=3', JSON.dump(jobs: []),
            'HTTP_CONTENT_TYPE' => 'application/json',
-           'HTTP_FROM' => 'worker+test@localhost'
+           'HTTP_FROM' => from,
+           'HTTP_TRAVIS_SITE' => site
       response_body = JSON.parse(last_response.body)
       expect(response_body['@queue']).to eq('lel')
     end
@@ -70,7 +78,8 @@ describe 'Job Delivery API', integration: true do
     it 'returns the expected number of jobs' do
       post '/jobs?queue=lel&count=3', JSON.dump(jobs: []),
            'HTTP_CONTENT_TYPE' => 'application/json',
-           'HTTP_FROM' => 'worker+test@localhost'
+           'HTTP_FROM' => from,
+           'HTTP_TRAVIS_SITE' => site
       response_body = JSON.parse(last_response.body)
       expect(response_body['jobs']).to_not be_nil
       expect(response_body['jobs'].length).to eq(3)
@@ -89,38 +98,43 @@ describe 'Job Delivery API', integration: true do
     end
 
     before :each do
-      JobBoard::Models::Job.where(queue: 'lel').delete
-      JobBoard::Models.redis.del('queue:lel')
-      JobBoard::Models.redis.srem('queues', 'lel')
+      JobBoard::Models::Job.where(queue: 'lel', site: site).delete
+      JobBoard::Models.redis.del("queue:#{site}:lel")
+      JobBoard::Models.redis.srem("queues:#{site}", 'lel')
       authorize(*auth)
     end
 
     after :each do
-      JobBoard::Models::Job.where(queue: 'lel').delete
+      JobBoard::Models::Job.where(queue: 'lel', site: site).delete
     end
 
     it 'returns 201' do
       post '/jobs/add', JSON.dump(job),
-           'HTTP_CONTENT_TYPE' => 'application/json'
+           'HTTP_CONTENT_TYPE' => 'application/json',
+           'HTTP_TRAVIS_SITE' => site
       expect(last_response.status).to eq(201)
     end
 
     it 'responds with nothing' do
       post '/jobs/add', JSON.dump(job),
-           'HTTP_CONTENT_TYPE' => 'application/json'
+           'HTTP_CONTENT_TYPE' => 'application/json',
+           'HTTP_TRAVIS_SITE' => site
       expect(last_response.body.length).to eq(0)
     end
 
     it 'adds the job to the database' do
       post '/jobs/add', JSON.dump(job),
-           'HTTP_CONTENT_TYPE' => 'application/json'
-      expect(JobBoard::Models::Job.where(queue: 'lel').count).to eq(1)
+           'HTTP_CONTENT_TYPE' => 'application/json',
+           'HTTP_TRAVIS_SITE' => site
+      expect(JobBoard::Models::Job.where(queue: 'lel', site: site).count)
+        .to eq(1)
     end
 
     it 'adds the job to the assigned queue' do
       post '/jobs/add', JSON.dump(job),
-           'HTTP_CONTENT_TYPE' => 'application/json'
-      expect(JobBoard::Models.redis.llen('queue:lel')).to eq(1)
+           'HTTP_CONTENT_TYPE' => 'application/json',
+           'HTTP_TRAVIS_SITE' => site
+      expect(JobBoard::Models.redis.llen("queue:#{site}:lel")).to eq(1)
     end
   end
 
@@ -129,19 +143,20 @@ describe 'Job Delivery API', integration: true do
     let(:from) { 'worker+test@localhost' }
 
     before :each do
-      JobBoard::Models::Job.where(queue: 'lel').delete
+      JobBoard::Models::Job.where(queue: 'lel', site: site).delete
       JobBoard::Models.redis.multi do |conn|
-        conn.del('queue:lel')
-        conn.srem('queues', 'lel')
+        conn.del("queue:#{site}:lel")
+        conn.srem("queues:#{site}", 'lel')
       end
 
       JobBoard::Services::CreateOrUpdateJob.run(
-        params: {
+        job: {
           '@type' => 'job',
           'id' => job_id,
           'language' => 'pythorn',
           'os' => 'mcohess'
-        }
+        },
+        site: site
       )
 
       JobBoard::Services::AllocateJobs.run(
@@ -154,16 +169,18 @@ describe 'Job Delivery API', integration: true do
     end
 
     after :each do
-      JobBoard::Models::Job.where(queue: 'lel').delete
+      JobBoard::Models::Job.where(queue: 'lel', site: site).delete
     end
 
     it 'responds 200' do
-      get "/jobs/#{job_id}", nil, 'HTTP_FROM' => from
+      get "/jobs/#{job_id}", nil,
+          'HTTP_FROM' => from, 'HTTP_TRAVIS_SITE' => site
       expect(last_response.status).to eq(200)
     end
 
     it 'includes a job script' do
-      get "/jobs/#{job_id}", nil, 'HTTP_FROM' => from
+      get "/jobs/#{job_id}", nil,
+          'HTTP_FROM' => from, 'HTTP_TRAVIS_SITE' => site
       response_body = JSON.parse(last_response.body)
       expect(response_body['job_script']).to_not be_nil
       job_script = response_body.fetch('job_script')
@@ -174,19 +191,22 @@ describe 'Job Delivery API', integration: true do
     end
 
     it 'includes a job state URL' do
-      get "/jobs/#{job_id}", nil, 'HTTP_FROM' => from
+      get "/jobs/#{job_id}", nil,
+          'HTTP_FROM' => from, 'HTTP_TRAVIS_SITE' => site
       response_body = JSON.parse(last_response.body)
       expect(response_body['job_state_url']).to_not be_nil
     end
 
     it 'includes a log parts URL' do
-      get "/jobs/#{job_id}", nil, 'HTTP_FROM' => from
+      get "/jobs/#{job_id}", nil,
+          'HTTP_FROM' => from, 'HTTP_TRAVIS_SITE' => site
       response_body = JSON.parse(last_response.body)
       expect(response_body['log_parts_url']).to_not be_nil
     end
 
     it 'includes a JWT' do
-      get "/jobs/#{job_id}", nil, 'HTTP_FROM' => from
+      get "/jobs/#{job_id}", nil,
+          'HTTP_FROM' => from, 'HTTP_TRAVIS_SITE' => site
       response_body = JSON.parse(last_response.body)
       expect(response_body['jwt']).to_not be_nil
     end
@@ -194,28 +214,30 @@ describe 'Job Delivery API', integration: true do
 
   describe 'DELETE /jobs/:job_id' do
     let(:job_id) { Time.now.to_i.to_s }
-    let(:from) { 'worker+test@localhost' }
     let(:jwt) { JobBoard::Services::CreateJWT.run(job_id: job_id) }
 
     before :each do
-      JobBoard::Models::Job.where(job_id: job_id).delete
+      JobBoard::Models::Job.where(job_id: job_id, site: site).delete
       JobBoard::Services::CreateOrUpdateJob.run(
-        params: {
+        job: {
           'id' => job_id
-        }
+        },
+        site: site
       )
     end
 
     after :each do
-      JobBoard::Models::Job.where(job_id: job_id).delete
+      JobBoard::Models::Job.where(job_id: job_id, site: site).delete
     end
 
     it 'deletes a job' do
       delete "/jobs/#{job_id}", nil,
              'HTTP_FROM' => from,
-             'HTTP_AUTHORIZATION' => "Bearer #{jwt}"
+             'HTTP_AUTHORIZATION' => "Bearer #{jwt}",
+             'HTTP_TRAVIS_SITE' => site
       expect(last_response.status).to eq(204)
-      expect(JobBoard::Models::Job.where(job_id: job_id).count).to be_zero
+      expect(JobBoard::Models::Job.where(job_id: job_id, site: site).count)
+        .to be_zero
     end
   end
 end

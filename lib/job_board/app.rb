@@ -9,7 +9,7 @@ require 'sinatra/base'
 module JobBoard
   class App < Sinatra::Base
     use Rack::Deflater
-    use JobBoard::Auth
+    use JobBoard::Auth, site_paths: %r{^/jobs.+}
     use JobBoard::JobDeliveryAPI
     use JobBoard::ImagesAPI
   end

@@ -6,15 +6,18 @@ require_relative 'service'
 module JobBoard
   module Services
     class FetchJob < Service
-      def initialize(job_id: '')
-        @job_id = job_id
+      def initialize(job_id: '', site: '')
+        @job_id = job_id.to_s
+        @site = site.to_s
       end
 
-      attr_reader :job_id
+      attr_reader :job_id, :site
 
       def run
+        return nil if job_id.empty? || site.empty?
+
         job = {}
-        db_job = JobBoard::Models::Job.first(job_id: job_id)
+        db_job = JobBoard::Models::Job.first(job_id: job_id, site: site)
         return nil unless db_job
 
         job.merge!(db_job.data)
@@ -28,8 +31,8 @@ module JobBoard
             encoding: 'base64',
             content: Base64.encode64(fetch_job_script(job)).split.join
           },
-          job_state_url: JobBoard.config.job_state_url,
-          log_parts_url: JobBoard.config.log_parts_url,
+          job_state_url: JobBoard.config.fetch(:"job_state_#{site}_url"),
+          log_parts_url: JobBoard.config.fetch(:"log_parts_#{site}_url"),
           jwt: generate_jwt(job),
           image_name: assign_image_name(job)
         )
@@ -40,7 +43,7 @@ module JobBoard
       end
 
       def generate_jwt(job)
-        JobBoard::Services::CreateJWT.run(job_id: job.fetch('id'))
+        JobBoard::Services::CreateJWT.run(job_id: job.fetch('id'), site: site)
       end
 
       def assign_image_name(_job)

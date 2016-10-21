@@ -1,14 +1,12 @@
 # frozen_string_literal: true
 require 'faraday'
 
+require_relative 'service'
+
 module JobBoard
   module Services
-    class FetchJobScript
+    class FetchJobScript < Service
       class << self
-        def run(job: {})
-          new(job: job).run
-        end
-
         def build_api_conn
           @build_api_conn ||= Faraday.new(url: build_uri.to_s)
         end
@@ -22,7 +20,7 @@ module JobBoard
         @job = job
       end
 
-      attr_reader :job
+      attr_reader :job, :site
 
       def run
         response = self.class.build_api_conn.post do |req|
