@@ -8,7 +8,7 @@ module JobBoard
       def initialize(jobs: [], count: 1, from: '', queue: '', site: '')
         @count = count
         @from = from
-        @jobs = jobs
+        @jobs = jobs || []
         @queue = queue
         @site = site
       end
