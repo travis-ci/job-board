@@ -1,4 +1,6 @@
 # frozen_string_literal: true
+require 'logger'
+
 require 'redis-namespace'
 require 'sequel'
 require 'sequel/model'

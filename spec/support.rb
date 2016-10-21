@@ -13,8 +13,11 @@ ENV['DATABASE_URL'] = 'mock://' unless ENV['INTEGRATION_SPECS'] == '1'
 ENV['DATABASE_SQL_LOGGING'] = nil
 
 require 'job_board'
+require 'l2met_log'
 require 'rack/test'
 require 'factory_girl'
+
+L2metLog.default_log_level = :fatal
 
 module RackTestBits
   include Rack::Test::Methods

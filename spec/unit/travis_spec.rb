@@ -11,6 +11,5 @@ describe Travis do
 
   it 'has a compatibility shim for #logger' do
     expect(subject).to respond_to(:logger)
-    expect(subject.logger).to_not be_nil
   end
 end

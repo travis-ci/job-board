@@ -7,7 +7,7 @@ module Travis
   module_function :config
 
   def logger
-    ::JobBoard.logger
+    nil
   end
 
   module_function :logger

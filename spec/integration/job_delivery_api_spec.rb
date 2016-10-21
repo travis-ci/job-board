@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 describe 'Job Delivery API', integration: true do
-  let(:auth) { %w(guest guest) }
+  let(:guest_auth) { %w(guest guest) }
+  let(:admin_auth) { %w(important secret) }
   let(:auth_tokens) { %w(abc123 secret) }
   let(:from) { 'worker@localhost' }
   let(:site) { 'test' }
@@ -42,14 +43,23 @@ describe 'Job Delivery API', integration: true do
           site: site
         )
       end
-      authorize(*auth)
     end
 
     after :each do
       JobBoard::Models::Job.where(queue: 'lel', site: site).delete
     end
 
+    it 'rejects guest auth' do
+      authorize(*guest_auth)
+      post '/jobs?queue=lel&count=3', JSON.dump(jobs: []),
+           'HTTP_CONTENT_TYPE' => 'application/json',
+           'HTTP_FROM' => from,
+           'HTTP_TRAVIS_SITE' => site
+      expect(last_response.status).to eq(403)
+    end
+
     it 'returns 200' do
+      authorize(*admin_auth)
       post '/jobs?queue=lel&count=3', JSON.dump(jobs: []),
            'HTTP_CONTENT_TYPE' => 'application/json',
            'HTTP_FROM' => from,
@@ -58,6 +68,7 @@ describe 'Job Delivery API', integration: true do
     end
 
     it 'includes count metadata' do
+      authorize(*admin_auth)
       post '/jobs?queue=lel&count=3', JSON.dump(jobs: []),
            'HTTP_CONTENT_TYPE' => 'application/json',
            'HTTP_FROM' => from,
@@ -67,6 +78,7 @@ describe 'Job Delivery API', integration: true do
     end
 
     it 'includes queue metadata' do
+      authorize(*admin_auth)
       post '/jobs?queue=lel&count=3', JSON.dump(jobs: []),
            'HTTP_CONTENT_TYPE' => 'application/json',
            'HTTP_FROM' => from,
@@ -76,6 +88,7 @@ describe 'Job Delivery API', integration: true do
     end
 
     it 'returns the expected number of jobs' do
+      authorize(*admin_auth)
       post '/jobs?queue=lel&count=3', JSON.dump(jobs: []),
            'HTTP_CONTENT_TYPE' => 'application/json',
            'HTTP_FROM' => from,
@@ -101,14 +114,22 @@ describe 'Job Delivery API', integration: true do
       JobBoard::Models::Job.where(queue: 'lel', site: site).delete
       JobBoard::Models.redis.del("queue:#{site}:lel")
       JobBoard::Models.redis.srem("queues:#{site}", 'lel')
-      authorize(*auth)
     end
 
     after :each do
       JobBoard::Models::Job.where(queue: 'lel', site: site).delete
     end
 
+    it 'rejects guest auth' do
+      authorize(*guest_auth)
+      post '/jobs/add', JSON.dump(job),
+           'HTTP_CONTENT_TYPE' => 'application/json',
+           'HTTP_TRAVIS_SITE' => site
+      expect(last_response.status).to eq(403)
+    end
+
     it 'returns 201' do
+      authorize(*admin_auth)
       post '/jobs/add', JSON.dump(job),
            'HTTP_CONTENT_TYPE' => 'application/json',
            'HTTP_TRAVIS_SITE' => site
@@ -116,6 +137,7 @@ describe 'Job Delivery API', integration: true do
     end
 
     it 'responds with nothing' do
+      authorize(*admin_auth)
       post '/jobs/add', JSON.dump(job),
            'HTTP_CONTENT_TYPE' => 'application/json',
            'HTTP_TRAVIS_SITE' => site
@@ -123,6 +145,7 @@ describe 'Job Delivery API', integration: true do
     end
 
     it 'adds the job to the database' do
+      authorize(*admin_auth)
       post '/jobs/add', JSON.dump(job),
            'HTTP_CONTENT_TYPE' => 'application/json',
            'HTTP_TRAVIS_SITE' => site
@@ -131,6 +154,7 @@ describe 'Job Delivery API', integration: true do
     end
 
     it 'adds the job to the assigned queue' do
+      authorize(*admin_auth)
       post '/jobs/add', JSON.dump(job),
            'HTTP_CONTENT_TYPE' => 'application/json',
            'HTTP_TRAVIS_SITE' => site
@@ -165,20 +189,28 @@ describe 'Job Delivery API', integration: true do
         jobs: [],
         queue: 'lel'
       )
-      authorize(*auth)
     end
 
     after :each do
       JobBoard::Models::Job.where(queue: 'lel', site: site).delete
     end
 
+    it 'rejects guest auth' do
+      authorize(*guest_auth)
+      get "/jobs/#{job_id}", nil,
+          'HTTP_FROM' => from, 'HTTP_TRAVIS_SITE' => site
+      expect(last_response.status).to eq(403)
+    end
+
     it 'responds 200' do
+      authorize(*admin_auth)
       get "/jobs/#{job_id}", nil,
           'HTTP_FROM' => from, 'HTTP_TRAVIS_SITE' => site
       expect(last_response.status).to eq(200)
     end
 
     it 'includes a job script' do
+      authorize(*admin_auth)
       get "/jobs/#{job_id}", nil,
           'HTTP_FROM' => from, 'HTTP_TRAVIS_SITE' => site
       response_body = JSON.parse(last_response.body)
@@ -191,6 +223,7 @@ describe 'Job Delivery API', integration: true do
     end
 
     it 'includes a job state URL' do
+      authorize(*admin_auth)
       get "/jobs/#{job_id}", nil,
           'HTTP_FROM' => from, 'HTTP_TRAVIS_SITE' => site
       response_body = JSON.parse(last_response.body)
@@ -198,6 +231,7 @@ describe 'Job Delivery API', integration: true do
     end
 
     it 'includes a log parts URL' do
+      authorize(*admin_auth)
       get "/jobs/#{job_id}", nil,
           'HTTP_FROM' => from, 'HTTP_TRAVIS_SITE' => site
       response_body = JSON.parse(last_response.body)
@@ -205,6 +239,7 @@ describe 'Job Delivery API', integration: true do
     end
 
     it 'includes a JWT' do
+      authorize(*admin_auth)
       get "/jobs/#{job_id}", nil,
           'HTTP_FROM' => from, 'HTTP_TRAVIS_SITE' => site
       response_body = JSON.parse(last_response.body)
@@ -228,6 +263,14 @@ describe 'Job Delivery API', integration: true do
 
     after :each do
       JobBoard::Models::Job.where(job_id: job_id, site: site).delete
+    end
+
+    it 'rejects guest auth' do
+      authorize(*guest_auth)
+      delete "/jobs/#{job_id}", nil,
+             'HTTP_FROM' => from,
+             'HTTP_TRAVIS_SITE' => site
+      expect(last_response.status).to eq(403)
     end
 
     it 'deletes a job' do

@@ -2,6 +2,7 @@
 require 'json'
 
 require_relative 'services'
+require_relative '../l2met_log'
 
 require 'sinatra/base'
 require 'sinatra/json'
@@ -15,6 +16,8 @@ module JobBoard
 
     # FIXME: factor out these helpers
     helpers do
+      include L2metLog
+
       def guest?
         (env['REMOTE_USER'] || 'notset') == 'guest'
       end
@@ -30,6 +33,10 @@ module JobBoard
       def images_name_format
         @images_name_format ||= /#{JobBoard.config.images_name_format}/
       end
+    end
+
+    before '/jobs*' do
+      halt 403, JSON.dump('@type' => 'error', error: 'just no') if guest?
     end
 
     post '/jobs' do
@@ -53,8 +60,8 @@ module JobBoard
         '@count' => params[:count],
         '@queue' => params[:queue]
       )
-      $stdout.puts %(msg=allocated queue=#{params[:queue]} ) +
-                   %(count=#{params[:count]} from=#{from} site=#{site})
+      log msg: :allocated, queue: params[:queue],
+          count: params[:count], from: from, site: site
       json body
     end
 
@@ -63,7 +70,7 @@ module JobBoard
       site = request.env.fetch('travis.site')
       db_job = JobBoard::Services::CreateOrUpdateJob.run(job: job, site: site)
       halt 400, JSON.dump('@type' => 'error', error: 'what') if db_job.nil?
-      $stdout.puts %(msg=added job_id=#{job.fetch('id')} site=#{site})
+      log msg: :added, job_id: job.fetch('id'), site: site
       [201, { 'Content-Length' => '0' }, '']
     end
 
@@ -72,7 +79,7 @@ module JobBoard
       site = request.env.fetch('travis.site')
       job = JobBoard::Services::FetchJob.run(job_id: job_id, site: site)
       halt 404, JSON.dump('@type' => 'error', error: 'no such job') if job.nil?
-      $stdout.puts %(msg=fetched job_id=#{job_id} site=#{site})
+      log msg: :fetched, job_id: job_id, site: site
       json job
     end
 
@@ -80,7 +87,7 @@ module JobBoard
       job_id = params.fetch('job_id')
       site = request.env.fetch('travis.site')
       JobBoard::Services::DeleteJob.run(job_id: job_id, site: site)
-      $stdout.puts %(msg=deleted job_id=#{job_id} site=#{site})
+      log msg: :deleted, job_id: job_id, site: site
       [204, {}, '']
     end
   end
