@@ -1,7 +1,10 @@
 # frozen_string_literal: true
 require 'base64'
+
 require 'job_board'
 require_relative 'service'
+
+require 'addressable/template'
 
 module JobBoard
   module Services
@@ -31,8 +34,8 @@ module JobBoard
             encoding: 'base64',
             content: Base64.encode64(fetch_job_script(job)).split.join
           },
-          job_state_url: JobBoard.config.fetch(:"job_state_#{site}_url"),
-          log_parts_url: JobBoard.config.fetch(:"log_parts_#{site}_url"),
+          job_state_url: job_id_url('job_state_%{site}_url'),
+          log_parts_url: job_id_url('log_parts_%{site}_url'),
           jwt: generate_jwt(job),
           image_name: assign_image_name(job)
         )
@@ -53,6 +56,12 @@ module JobBoard
 
       def config
         JobBoard.config
+      end
+
+      def job_id_url(key)
+        Addressable::Template.new(
+          JobBoard.config.fetch(:"#{key % { site: site }}")
+        ).partial_expand('job_id' => job_id).pattern
       end
     end
   end
