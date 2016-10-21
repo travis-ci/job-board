@@ -7,6 +7,8 @@ require_relative 'service'
 module JobBoard
   module Services
     class FetchJobScript < Service
+      BuildScriptError = Class.new(StandardError)
+
       class << self
         def build_api_conn
           @build_api_conn ||= Faraday.new(url: build_uri.to_s)
@@ -34,8 +36,8 @@ module JobBoard
 
         if response.status > 299
           log level: :error, msg: 'build script error',
-              status: response.status, body: response.body.inspect
-          return ''
+              status: response.status, body: response.body
+          raise BuildScriptError, response.body
         end
 
         response.body

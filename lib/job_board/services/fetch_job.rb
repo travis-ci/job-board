@@ -24,7 +24,6 @@ module JobBoard
         return nil unless db_job
 
         job_script_content = fetch_job_script(job)
-        return nil if job_script_content.empty?
 
         job.merge!(db_job.data)
         job.merge!(config.build.to_hash)
