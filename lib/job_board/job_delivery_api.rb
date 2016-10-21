@@ -79,6 +79,8 @@ module JobBoard
       site = request.env.fetch('travis.site')
       job = JobBoard::Services::FetchJob.run(job_id: job_id, site: site)
       halt 404, JSON.dump('@type' => 'error', error: 'no such job') if job.nil?
+      halt 424, JSON.dump('@type' => 'error', error: job.message) if
+        job.is_a?(JobBoard::Services::FetchJobScript::BuildScriptError)
       log msg: :fetched, job_id: job_id, site: site
       json job
     end

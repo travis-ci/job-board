@@ -37,7 +37,7 @@ module JobBoard
         if response.status > 299
           log level: :error, msg: 'build script error',
               status: response.status, body: response.body
-          raise BuildScriptError, response.body
+          return BuildScriptError.new(response.body)
         end
 
         response.body
