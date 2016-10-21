@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+require_relative 'auth'
 require_relative 'image_searcher'
 require_relative 'services'
 
@@ -12,11 +13,8 @@ module JobBoard
 
     before { content_type :json }
 
-    # FIXME: factor out these helpers
     helpers do
-      def guest?
-        (env['REMOTE_USER'] || 'notset') == 'guest'
-      end
+      include JobBoard::Auth::GuestDetect
 
       def set_images_mutation_params
         param :infra, String, blank: true, required: true

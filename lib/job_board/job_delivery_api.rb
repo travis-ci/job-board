@@ -1,8 +1,9 @@
 # frozen_string_literal: true
 require 'json'
 
-require_relative 'services'
 require_relative '../l2met_log'
+require_relative 'auth'
+require_relative 'services'
 
 require 'sinatra/base'
 require 'sinatra/json'
@@ -14,25 +15,9 @@ module JobBoard
 
     before { content_type :json }
 
-    # FIXME: factor out these helpers
     helpers do
       include L2metLog
-
-      def guest?
-        (env['REMOTE_USER'] || 'notset') == 'guest'
-      end
-
-      def set_images_mutation_params
-        param :infra, String, blank: true, required: true
-        param :is_default, Boolean
-        param :tags, Hash, default: {}
-        param :name, String, blank: true, required: true,
-                             format: images_name_format
-      end
-
-      def images_name_format
-        @images_name_format ||= /#{JobBoard.config.images_name_format}/
-      end
+      include JobBoard::Auth::GuestDetect
     end
 
     before '/jobs*' do

@@ -6,6 +6,12 @@ require 'rack/auth/abstract/request'
 
 module JobBoard
   class Auth < Rack::Auth::AbstractHandler
+    module GuestDetect
+      def guest?
+        (env['REMOTE_USER'] || 'notset') == 'guest'
+      end
+    end
+
     def initialize(app, secret: nil, alg: 'RS512', site_paths: /.*/)
       @app = app
       @alg = alg
