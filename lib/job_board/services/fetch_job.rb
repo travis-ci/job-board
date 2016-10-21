@@ -23,15 +23,15 @@ module JobBoard
         db_job = JobBoard::Models::Job.first(job_id: job_id, site: site)
         return nil unless db_job
 
-        job_script_content = fetch_job_script(job)
-        return job_script_content if job_script_content.is_a?(
-          JobBoard::Services::FetchJobScript::BuildScriptError
-        )
-
         job.merge!(db_job.data)
         job.merge!(config.build.to_hash)
         job.merge!(config.cache_options.to_hash) unless
           config.cache_options.type.empty?
+
+        job_script_content = fetch_job_script(job)
+        return job_script_content if job_script_content.is_a?(
+          JobBoard::Services::FetchJobScript::BuildScriptError
+        )
 
         job.merge(
           job_script: {
