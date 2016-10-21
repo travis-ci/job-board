@@ -22,7 +22,7 @@ module JobBoard
       return [
         412,
         { 'Content-Type' => 'application/json' },
-        JSON.dump('@type' => 'error', error: 'missing Travis-Site header')
+        [JSON.dump('@type' => 'error', error: 'missing Travis-Site header')]
       ] if site_paths =~ auth.request.path_info &&
            !env.key?('HTTP_TRAVIS_SITE')
 
