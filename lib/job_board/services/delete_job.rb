@@ -18,9 +18,10 @@ module JobBoard
 
           redis.lrem("queue:#{site}:#{job.queue}", 1, job_id)
           workers = redis.smembers("workers:#{site}")
-          redis.multi do |_conn|
+          redis.multi do |conn|
             workers.each do |worker|
-              redis.srem("worker:#{site}:#{worker}", job_id)
+              conn.srem("worker:#{site}:#{worker}:idx", job_id)
+              conn.lrem("worker:#{site}:#{worker}", 1, job_id)
             end
           end
 

@@ -48,7 +48,7 @@ module JobBoard
       def create_new(job_id, site, queue, data)
         JobBoard::Models.redis.multi do |conn|
           conn.sadd("queues:#{site}", queue)
-          conn.rpush(
+          conn.lpush(
             "queue:#{site}:#{queue}",
             job_id
           )

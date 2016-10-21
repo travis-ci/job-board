@@ -60,7 +60,8 @@ module JobBoard
       jwt_private_key: ENV.fetch('JOB_BOARD_JWT_PRIVATE_KEY', ''),
       log_level: 'info',
       log_parts_com_url: ENV.fetch('JOB_BOARD_LOG_PARTS_COM_URL', ''),
-      log_parts_org_url: ENV.fetch('JOB_BOARD_LOG_PARTS_ORG_URL', '')
+      log_parts_org_url: ENV.fetch('JOB_BOARD_LOG_PARTS_ORG_URL', ''),
+      worker_ttl: Integer(ENV.fetch('JOB_BOARD_WORKER_TTL', '120'))
     )
 
     default(access: [:key])

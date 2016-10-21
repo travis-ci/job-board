@@ -16,13 +16,15 @@ module JobBoard
       attr_reader :jobs, :count, :from, :queue, :site
 
       def run
-        redis.sadd("queues:#{site}", queue)
-        redis.sadd("workers:#{site}", from)
+        redis.multi do |conn|
+          conn.sadd("queues:#{site}", queue)
+          conn.sadd("workers:#{site}", from)
+        end
 
         avail = []
         unavail = []
         jobs.each do |job_id|
-          if redis.sismember("worker:#{site}:#{from}", job_id)
+          if redis.sismember(worker_index_set_key, job_id)
             avail << job_id
             next
           end
@@ -31,9 +33,16 @@ module JobBoard
 
         loop do
           break if avail.length + unavail.length >= count
-          allocated = redis.lpop("queue:#{site}:#{queue}")
+          allocated = redis.rpoplpush(
+            queue_key,
+            worker_queue_list_key
+          )
           unless allocated.nil?
-            redis.sadd("worker:#{site}:#{from}", allocated)
+            redis.multi do |conn|
+              conn.sadd(worker_index_set_key, allocated)
+              conn.expire(worker_index_set_key, ttl)
+              conn.expire(worker_queue_list_key, ttl)
+            end
             avail << allocated
           end
           break if allocated.nil?
@@ -46,6 +55,22 @@ module JobBoard
       end
 
       private
+
+      def worker_index_set_key
+        "#{worker_queue_list_key}:idx"
+      end
+
+      def worker_queue_list_key
+        "worker:#{site}:#{from}"
+      end
+
+      def queue_key
+        "queue:#{site}:#{queue}"
+      end
+
+      def ttl
+        JobBoard.config.worker_ttl
+      end
 
       def redis
         JobBoard::Models.redis
