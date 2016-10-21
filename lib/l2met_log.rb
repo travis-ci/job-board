@@ -27,9 +27,7 @@ module L2metLog
     data[:time] ||= Time.now.utc
     result = nil
     name = nil
-    if data.key?(:measure)
-      name = "#{ENV['APP_NAME']}.#{data.delete(:measure)}"
-    end
+    name = "#{ENV['APP_NAME']}.#{data.delete(:measure)}" if data.key?(:measure)
     if block_given?
       start = Time.now
       result = yield
