@@ -28,7 +28,7 @@ module L2metLog
     result = nil
     name = nil
     if data.key?(:measure)
-      name = data.delete(:measure).insert(0, ENV['APP_NAME'] + '.')
+      name = "#{ENV['APP_NAME']}.#{data.delete(:measure)}"
     end
     if block_given?
       start = Time.now
