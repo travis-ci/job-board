@@ -1,14 +1,19 @@
 # frozen_string_literal: true
 require 'base64'
-require 'jwt'
+require 'openssl'
+
 require_relative 'service'
+
+require 'jwt'
 
 module JobBoard
   module Services
     class CreateJWT < Service
       class << self
         def private_key
-          @private_key ||= Base64.decode64(JobBoard.config.jwt_private_key)
+          @private_key ||= OpenSSL::PKey::RSA.new(
+            Base64.decode64(JobBoard.config.jwt_private_key)
+          )
         end
 
         def job_max_duration
