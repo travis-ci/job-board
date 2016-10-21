@@ -108,8 +108,13 @@ describe 'Job Delivery API', integration: true do
       {
         '@type' => 'job',
         'id' => Time.now.to_i.to_s,
-        'language' => 'rubby',
-        'os' => 'lanerks'
+        'data' => {
+          'queue' => 'builds.lel',
+          'config' => {
+            'language' => 'rubby',
+            'os' => 'lanerks'
+          }
+        }
       }
     end
 

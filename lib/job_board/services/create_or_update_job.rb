@@ -15,7 +15,6 @@ module JobBoard
         return nil if site.empty? || job.nil? || job.empty?
 
         job_id = job.fetch('id')
-        queue = assign_queue(job)
 
         JobBoard::Models.db.transaction do
           db_job = JobBoard::Models::Job.first(job_id: job_id.to_s)
@@ -35,6 +34,17 @@ module JobBoard
         end
       end
 
+      def queue
+        return @queue if @queue
+        @queue = job.fetch('data').fetch('queue', nil)
+        if @queue.nil?
+          @queue = assign_queue
+          log level: :warn, msg: 'nil queue from scheduler', new: @queue
+        end
+
+        @queue = @queue.sub(/^builds\./, '')
+      end
+
       def create_new(job_id, site, queue, data)
         JobBoard::Models.redis.multi do |conn|
           conn.sadd("queues:#{site}", queue)
@@ -52,7 +62,7 @@ module JobBoard
         )
       end
 
-      def assign_queue(job)
+      def assign_queue
         JobBoard::Services::FetchQueue.run(job: job)
       end
     end
