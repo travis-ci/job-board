@@ -31,7 +31,7 @@ module JobBoard
           req.headers['User-Agent'] = "job-board/#{JobBoard.version}"
           req.headers['Authorization'] = "token #{self.class.build_uri.password}"
           req.headers['Content-Type'] = 'application/json'
-          req.body = JSON.dump(job)
+          req.body = JSON.dump(job.data)
         end
 
         if response.status > 299
