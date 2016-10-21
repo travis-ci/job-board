@@ -15,7 +15,7 @@ module JobBoard
         queue = assign_queue(params)
 
         JobBoard::Models.db.transaction do
-          job = JobBoard::Models::Job.first(job_id: job_id)
+          job = JobBoard::Models::Job.first(job_id: job_id.to_s)
           if job.nil?
             create_new(job_id, queue, Sequel.pg_json(params))
           else
