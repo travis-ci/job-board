@@ -23,7 +23,7 @@ module JobBoard
         db_job = JobBoard::Models::Job.first(job_id: job_id, site: site)
         return nil unless db_job
 
-        job.merge!(db_job.data)
+        job.merge!(db_job.data.fetch('data'))
         job.merge!(config.build.to_hash)
         # job.merge!(config.cache_options.to_hash) unless
         #   config.cache_options.type.empty?

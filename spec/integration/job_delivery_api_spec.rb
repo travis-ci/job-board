@@ -38,7 +38,10 @@ describe 'Job Delivery API', integration: true do
       3.times do |n|
         JobBoard::Services::CreateOrUpdateJob.run(
           job: {
-            'id' => "#{Time.now.to_i}#{n}"
+            'id' => "#{Time.now.to_i}#{n}",
+            'data' => {
+              'language' => 'rubby'
+            }
           },
           site: site
         )
@@ -177,8 +180,10 @@ describe 'Job Delivery API', integration: true do
         job: {
           '@type' => 'job',
           'id' => job_id,
-          'language' => 'pythorn',
-          'os' => 'mcohess'
+          'data' => {
+            'language' => 'pythorn',
+            'os' => 'mcohess'
+          }
         },
         site: site
       )
@@ -255,7 +260,11 @@ describe 'Job Delivery API', integration: true do
       JobBoard::Models::Job.where(job_id: job_id, site: site).delete
       JobBoard::Services::CreateOrUpdateJob.run(
         job: {
-          'id' => job_id
+          'id' => job_id,
+          'data' => {
+            'language' => 'rubby',
+            'os' => 'mcohess'
+          }
         },
         site: site
       )
