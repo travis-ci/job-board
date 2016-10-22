@@ -19,11 +19,11 @@ module JobBoard
       def run
         return nil if job_id.empty? || site.empty?
 
-        job = { 'id' => job_id }
+        job = {}
         db_job = JobBoard::Models::Job.first(job_id: job_id, site: site)
         return nil unless db_job
 
-        job['data'] = db_job.data
+        job.merge!(db_job.data)
 
         job_script_content = fetch_job_script(
           job['data'].merge(config.build.to_hash)
