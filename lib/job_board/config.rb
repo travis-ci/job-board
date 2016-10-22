@@ -37,18 +37,6 @@ module JobBoard
         }
       },
       build_api_url: ENV.fetch('JOB_BOARD_BUILD_API_URL', ''),
-      cache_options: {
-        type: '',
-        fetch_timeout: 300,
-        push_timeout: 300,
-        s3: {
-          scheme: '',
-          region: '',
-          bucket: '',
-          access_key_id: '',
-          secret_access_key: ''
-        }
-      },
       database: {
         url: '',
         sql_logging: false
