@@ -39,6 +39,7 @@ module JobBoard
       return bad_request unless auth.basic? || auth.bearer?
 
       env['travis.site'] = env.fetch('HTTP_TRAVIS_SITE', '?')
+      env['travis.infra'] = env.fetch('HTTP_TRAVIS_INFRASTRUCTURE', '')
 
       if basic_valid?(auth)
         env['REMOTE_USER'] = auth.basic_username

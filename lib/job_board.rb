@@ -6,7 +6,9 @@ module JobBoard
   autoload :Auth, 'job_board/auth'
   autoload :Config, 'job_board/config'
   autoload :ImagesAPI, 'job_board/images_api'
+  autoload :ImagesQuery, 'job_board/images_query'
   autoload :JobDeliveryAPI, 'job_board/job_delivery_api'
+  autoload :JobQueriesTransformer, 'job_board/job_queries_transformer'
   autoload :Models, 'job_board/models'
   autoload :Services, 'job_board/services'
 

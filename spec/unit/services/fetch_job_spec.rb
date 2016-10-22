@@ -13,20 +13,22 @@ describe JobBoard::Services::FetchJob do
       'id' => job_id,
       'queue' => queue,
       'data' => {
-        'language' => 'rubby',
-        'os' => 'lannix'
+        'config' => {
+          'language' => 'rubby',
+          'os' => 'lannix'
+        }
       }
     }
   end
 
   let :job_script_data do
     {
-      'language' => 'rubby',
-      'os' => 'lannix',
+      'config' => {
+        'language' => 'rubby',
+        'os' => 'lannix'
+      },
       'paranoid' => paranoid
-    }.merge(
-      config.fetch(:build)
-    )
+    }.merge(config.fetch(:build))
   end
 
   let :config do

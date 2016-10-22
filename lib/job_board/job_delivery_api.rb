@@ -62,14 +62,17 @@ module JobBoard
     get '/jobs/:job_id' do
       job_id = params.fetch('job_id')
       site = request.env.fetch('travis.site')
-      job = JobBoard::Services::FetchJob.run(job_id: job_id, site: site)
+      infra = request.env.fetch('travis.infra', '')
+      job = JobBoard::Services::FetchJob.run(
+        job_id: job_id, site: site, infra: infra
+      )
       halt 404, JSON.dump('@type' => 'error', error: 'no such job') if job.nil?
       halt 424, JSON.dump(
         '@type' => 'error',
         error: 'job script fetch error',
         upstream_error: job.message
       ) if job.is_a?(JobBoard::Services::FetchJobScript::BuildScriptError)
-      log msg: :fetched, job_id: job_id, site: site
+      log msg: :fetched, job_id: job_id, site: site, infra: infra
       json job
     end
 

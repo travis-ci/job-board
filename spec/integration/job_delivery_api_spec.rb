@@ -186,8 +186,22 @@ describe 'Job Delivery API', integration: true do
           '@type' => 'job',
           'id' => job_id,
           'data' => {
-            'language' => 'pythorn',
-            'os' => 'mcohess'
+            'vm_type' => 'default',
+            'queue' => 'builds.lel',
+            'config' => {
+              'os' => 'mcohess',
+              'language' => 'pythorn'
+            },
+            'job' => {
+              'id' => job_id
+            },
+            'repository' => {
+              'slug' => 'testy/testersons'
+            },
+            'timeouts' => {
+              'hard_limit' => 10_800,
+              'log_silence' => 900
+            }
           }
         },
         site: site
@@ -238,9 +252,10 @@ describe 'Job Delivery API', integration: true do
           'HTTP_FROM' => from, 'HTTP_TRAVIS_SITE' => site
       response_body = JSON.parse(last_response.body)
       expect(response_body['data']).to_not be_nil
-      data = response_body.fetch('data')
-      expect(data['language']).to eq('pythorn')
-      expect(data['os']).to eq('mcohess')
+      expect(response_body['data']['config']).to_not be_nil
+      config = response_body.fetch('data').fetch('config')
+      expect(config['language']).to eq('pythorn')
+      expect(config['os']).to eq('mcohess')
     end
 
     %w(job_state_url log_parts_url jwt @type).each do |key|

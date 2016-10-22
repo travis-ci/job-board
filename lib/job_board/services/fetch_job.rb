@@ -3,18 +3,20 @@ require 'base64'
 
 require 'job_board'
 require_relative 'service'
+require_relative '../job_queries_transformer'
 
 require 'addressable/template'
 
 module JobBoard
   module Services
     class FetchJob < Service
-      def initialize(job_id: '', site: '')
+      def initialize(job_id: '', site: '', infra: '')
         @job_id = job_id.to_s
         @site = site.to_s
+        @infra = infra.to_s
       end
 
-      attr_reader :job_id, :site
+      attr_reader :job_id, :site, :infra
 
       def run
         return nil if job_id.empty? || site.empty?
@@ -51,25 +53,34 @@ module JobBoard
       end
 
       def fetch_db_job
-        log msg: 'fetching job from database', job_id: job_id, site: site
+        log msg: 'fetching job from database',
+            job_id: job_id, site: site, infra: infra
         JobBoard::Models::Job.first(job_id: job_id, site: site)
       end
 
       def fetch_job_script(job_data)
-        log msg: 'fetching job script', job_id: job_id, site: site
+        log msg: 'fetching job script',
+            job_id: job_id, site: site, infra: infra
         JobBoard::Services::FetchJobScript.run(job_data: job_data)
       end
 
       def generate_jwt
-        log msg: 'creating jwt', job_id: job_id, site: site
+        log msg: 'creating jwt',
+            job_id: job_id, site: site, infra: infra
         JobBoard::Services::CreateJWT.run(
           job_id: job_id, site: site
         )
       end
 
-      def fetch_image_name(_job)
-        log msg: 'fetching image name', job_id: job_id, site: site
-        # TODO: implement image name assignment
+      def fetch_image_name(job)
+        log msg: 'fetching image name',
+            job_id: job_id, site: site, infra: infra
+        JobBoard::JobQueriesTransformer.new(
+          job_data_config: job.fetch('data').fetch('config'), infra: infra
+        ).queries.each do |query|
+          images = JobBoard::Services::FetchImages.run(query: query.to_hash)
+          return images.fetch(0).name unless images.empty?
+        end
         'default'
       end
 
