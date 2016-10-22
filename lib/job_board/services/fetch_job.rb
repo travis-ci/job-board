@@ -23,10 +23,10 @@ module JobBoard
         db_job = JobBoard::Models::Job.first(job_id: job_id, site: site)
         return nil unless db_job
 
-        job['data'] = db_job.data.merge(config.build.to_hash)
+        job['data'] = db_job.data
 
         job_script_content = fetch_job_script(
-          job.fetch('id'), job.fetch('data')
+          job['data'].merge(config.build.to_hash)
         )
         return job_script_content if job_script_content.is_a?(
           JobBoard::Services::FetchJobScript::BuildScriptError
@@ -46,12 +46,12 @@ module JobBoard
         job.merge('@type' => 'job_board_job')
       end
 
-      def fetch_job_script(job_id, job_data)
+      def fetch_job_script(job_data)
         log msg: 'fetching job script', job_id: job_id, site: site
         JobBoard::Services::FetchJobScript.run(job_data: job_data)
       end
 
-      def generate_jwt(job_id)
+      def generate_jwt
         log msg: 'creating jwt', job_id: job_id, site: site
         JobBoard::Services::CreateJWT.run(
           job_id: job_id, site: site
