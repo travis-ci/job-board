@@ -45,7 +45,7 @@ module JobBoard
       begin
         decode_jwt!(auth)
       rescue JWT::DecodeError => e
-        $stderr.puts "WARN: ignoring failure to decode JWT: #{e}"
+        return unauthorized
       end
 
       if bearer_valid?(auth)
