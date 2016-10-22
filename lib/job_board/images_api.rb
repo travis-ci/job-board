@@ -36,7 +36,7 @@ module JobBoard
       param :limit, Integer, default: 0
       param :is_default, Boolean, default: false
 
-      images = JobBoard::Services::FetchImages.run(params: params)
+      images = JobBoard::Services::FetchImages.run(query: params)
       data = images.map(&:to_hash)
 
       fields = (

@@ -50,7 +50,7 @@ module JobBoard
     end
 
     def fetch_images(params)
-      images = ::JobBoard::Services::FetchImages.run(params: params)
+      images = ::JobBoard::Services::FetchImages.run(query: params)
       log level: :debug, msg: 'found',
           images: images.inspect, params: params.inspect
       images

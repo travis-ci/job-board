@@ -23,35 +23,37 @@ class FakeImageQuery
 end
 
 describe JobBoard::Services::FetchImages do
-  subject { described_class.new(params: params) }
-  let(:params) { { 'infra' => 'test' } }
+  subject { described_class.new(query: query) }
+  let(:query) { { 'infra' => 'test' } }
   let(:image0) { build(:image) }
   let(:results) { build_list(:image, 3) }
 
-  it 'has params' do
-    expect(subject.params).to_not be_nil
+  it 'has query' do
+    expect(subject.query).to_not be_nil
   end
 
   it 'fetches images' do
     expect(JobBoard::Models::Image).to receive(:where).with(infra: 'test')
       .and_return(FakeImageQuery.new(results))
 
-    fetch_params = { 'infra' => 'test', 'limit' => 10 }
-    expect(described_class.run(params: fetch_params)).to eql(results)
+    fetch_query = { 'infra' => 'test', 'limit' => 10 }
+    expect(described_class.run(query: fetch_query)).to eql(results)
   end
 
   context 'when tags are provided' do
     it 'extends the query to check tag set membership' do
-      query = FakeImageQuery.new(results)
+      database_query = FakeImageQuery.new(results)
       expect(JobBoard::Models::Image).to receive(:where).with(
         infra: 'test'
-      ).and_return(query)
+      ).and_return(database_query)
 
-      fetch_params = {
+      fetch_query = {
         'infra' => 'test', 'limit' => 10, 'tags' => { 'a' => 'b' }
       }
-      expect(described_class.run(params: fetch_params)).to eql(results)
-      expect(query.wheres).to include(['tags @> ?', Sequel.hstore('a' => 'b')])
+      expect(described_class.run(query: fetch_query)).to eql(results)
+      expect(database_query.wheres).to include(
+        ['tags @> ?', Sequel.hstore('a' => 'b')]
+      )
     end
   end
 
@@ -61,16 +63,17 @@ describe JobBoard::Services::FetchImages do
         infra: 'test'
       ).and_return(FakeImageQuery.new([]))
 
-      fetch_params = { 'infra' => 'test', 'limit' => 10 }
-      expect(described_class.run(params: fetch_params)).to be_empty
+      fetch_query = { 'infra' => 'test', 'limit' => 10 }
+      expect(described_class.run(query: fetch_query)).to be_empty
     end
   end
 
   context 'when limit is 0' do
-    let(:params) { { 'infra' => 'test', 'limit' => 0 } }
+    let(:query) { { 'infra' => 'test', 'limit' => 0 } }
 
     it 'builds a query without a limit clause' do
-      expect(subject.send(:build_query).sql.downcase).to_not include('limit')
+      expect(subject.send(:build_database_query).sql.downcase)
+        .to_not include('limit')
     end
   end
 end
