@@ -20,13 +20,17 @@ module JobBoard
         return nil if job_id.empty? || site.empty?
 
         job = {}
-        db_job = JobBoard::Models::Job.first(job_id: job_id, site: site)
+        db_job = fetch_db_job
         return nil unless db_job
 
         job.merge!(db_job.data)
 
         job_script_content = fetch_job_script(
-          job['data'].merge(config.build.to_hash)
+          job.fetch('data').merge(
+            config.build.to_hash.merge(
+              'paranoid' => paranoid?(db_job.queue)
+            )
+          )
         )
         return job_script_content if job_script_content.is_a?(
           JobBoard::Services::FetchJobScript::BuildScriptError
@@ -41,9 +45,14 @@ module JobBoard
           job_state_url: job_id_url('job_state_%{site}_url'),
           log_parts_url: job_id_url('log_parts_%{site}_url'),
           jwt: generate_jwt,
-          image_name: assign_image_name(job)
+          image_name: fetch_image_name(job)
         )
         job.merge('@type' => 'job_board_job')
+      end
+
+      def fetch_db_job
+        log msg: 'fetching job from database', job_id: job_id, site: site
+        JobBoard::Models::Job.first(job_id: job_id, site: site)
       end
 
       def fetch_job_script(job_data)
@@ -58,9 +67,14 @@ module JobBoard
         )
       end
 
-      def assign_image_name(_job)
+      def fetch_image_name(_job)
+        log msg: 'fetching image name', job_id: job_id, site: site
         # TODO: implement image name assignment
         'default'
+      end
+
+      def paranoid?(queue)
+        config.paranoid_queue_names.include?(queue)
       end
 
       def config
@@ -69,7 +83,7 @@ module JobBoard
 
       def job_id_url(key)
         Addressable::Template.new(
-          JobBoard.config.fetch(:"#{key % { site: site }}")
+          config.fetch(:"#{key % { site: site }}")
         ).partial_expand('job_id' => job_id).pattern
       end
     end

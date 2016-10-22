@@ -1,11 +1,14 @@
 # frozen_string_literal: true
 require 'job_board'
+require_relative '../l2met_log'
 
 require 'rack/auth/abstract/handler'
 require 'rack/auth/abstract/request'
 
 module JobBoard
   class Auth < Rack::Auth::AbstractHandler
+    include L2metLog
+
     module GuestDetect
       def guest?
         (env['REMOTE_USER'] || 'notset') == 'guest'
@@ -45,6 +48,7 @@ module JobBoard
       begin
         decode_jwt!(auth)
       rescue JWT::DecodeError => e
+        log level: :warn, msg: 'failed to decode jwt', error: e.to_s
         return unauthorized
       end
 

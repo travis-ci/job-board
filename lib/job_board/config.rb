@@ -23,12 +23,15 @@ module JobBoard
       end
     end
 
+    def paranoid_queue_names
+      @paranoid_queue_names ||= paranoid_queues.split(',').map(&:strip)
+    end
+
     define(
       auth: {
         tokens: ''
       },
       build: {
-        paranoid: true,
         fix_resolv_conf: false,
         fix_etc_hosts: false,
         hosts: {
@@ -49,6 +52,7 @@ module JobBoard
       log_level: 'info',
       log_parts_com_url: ENV.fetch('JOB_BOARD_LOG_PARTS_COM_URL', ''),
       log_parts_org_url: ENV.fetch('JOB_BOARD_LOG_PARTS_ORG_URL', ''),
+      paranoid_queues: ENV.fetch('JOB_BOARD_PARANOID_QUEUES', 'docker,ec2'),
       worker_ttl: Integer(ENV.fetch('JOB_BOARD_WORKER_TTL', '120'))
     )
 
