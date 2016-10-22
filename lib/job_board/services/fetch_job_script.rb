@@ -21,13 +21,20 @@ module JobBoard
         end
       end
 
-      def initialize(job_data: {})
+      def initialize(job_data: {}, caching_enabled: true, cache_ttl: 3600)
         @job_data = job_data
+        @caching_enabled = caching_enabled
+        @cache_ttl = cache_ttl
       end
 
-      attr_reader :job_data, :site
+      attr_reader :job_data, :site, :caching_enabled, :cache_ttl
 
       def run
+        if caching_enabled
+          cached_script = fetch_cached
+          return cached_script unless cached_script.nil?
+        end
+
         response = self.class.build_api_conn.post do |req|
           req.url '/script'
           req.headers['User-Agent'] = user_agent
@@ -43,7 +50,9 @@ module JobBoard
           return BuildScriptError.new(response.body)
         end
 
-        response.body
+        script = response.body
+        store_cached(script) if caching_enabled
+        script
       end
 
       def user_agent
@@ -52,6 +61,28 @@ module JobBoard
 
       def auth_header
         "token #{self.class.build_uri.password}"
+      end
+
+      def fetch_cached
+        value = JobBoard::Models.redis.get(cache_key)
+        return nil unless value
+        Base64.decode64(value)
+      end
+
+      def store_cached(script)
+        JobBoard::Models.redis.setex(
+          cache_key, cache_ttl, Base64.encode64(script)
+        )
+      end
+
+      def cache_key
+        "job_scripts:#{job_data_signature}"
+      end
+
+      def job_data_signature
+        @job_data_signature ||= Digest::SHA256.hexdigest(
+          JSON.dump(job_data).scan(/./).sort.join('')
+        )
       end
     end
   end
