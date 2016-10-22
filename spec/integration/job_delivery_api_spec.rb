@@ -232,28 +232,14 @@ describe 'Job Delivery API', integration: true do
       expect(Base64.decode64(job_script['content'])).to match(/bash/)
     end
 
-    it 'includes a job state URL' do
-      authorize(*admin_auth)
-      get "/jobs/#{job_id}", nil,
-          'HTTP_FROM' => from, 'HTTP_TRAVIS_SITE' => site
-      response_body = JSON.parse(last_response.body)
-      expect(response_body['job_state_url']).to_not be_nil
-    end
-
-    it 'includes a log parts URL' do
-      authorize(*admin_auth)
-      get "/jobs/#{job_id}", nil,
-          'HTTP_FROM' => from, 'HTTP_TRAVIS_SITE' => site
-      response_body = JSON.parse(last_response.body)
-      expect(response_body['log_parts_url']).to_not be_nil
-    end
-
-    it 'includes a JWT' do
-      authorize(*admin_auth)
-      get "/jobs/#{job_id}", nil,
-          'HTTP_FROM' => from, 'HTTP_TRAVIS_SITE' => site
-      response_body = JSON.parse(last_response.body)
-      expect(response_body['jwt']).to_not be_nil
+    %w(job_state_url log_parts_url jwt data @type).each do |key|
+      it "includes a #{key.inspect} key" do
+        authorize(*admin_auth)
+        get "/jobs/#{job_id}", nil,
+            'HTTP_FROM' => from, 'HTTP_TRAVIS_SITE' => site
+        response_body = JSON.parse(last_response.body)
+        expect(response_body[key]).to_not be_nil
+      end
     end
   end
 

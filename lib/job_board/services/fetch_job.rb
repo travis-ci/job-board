@@ -19,23 +19,20 @@ module JobBoard
       def run
         return nil if job_id.empty? || site.empty?
 
-        job_data = {}
+        job = { 'id' => job_id }
         db_job = JobBoard::Models::Job.first(job_id: job_id, site: site)
         return nil unless db_job
 
-        job_data.merge!(db_job.data)
-        job_data.merge!(config.build.to_hash)
-        # job.merge!(config.cache_options.to_hash) unless
-        #   config.cache_options.type.empty?
+        job['data'] = db_job.data.merge(config.build.to_hash)
 
         job_script_content = fetch_job_script(
-          job_data.fetch('id'), job_data.fetch('data')
+          job.fetch('id'), job.fetch('data')
         )
         return job_script_content if job_script_content.is_a?(
           JobBoard::Services::FetchJobScript::BuildScriptError
         )
 
-        job_data['data'].merge!(
+        job.merge!(
           job_script: {
             name: 'main',
             encoding: 'base64',
@@ -43,15 +40,15 @@ module JobBoard
           },
           job_state_url: job_id_url('job_state_%{site}_url'),
           log_parts_url: job_id_url('log_parts_%{site}_url'),
-          jwt: generate_jwt(job_data.fetch('id')),
-          image_name: assign_image_name(job_data)
+          jwt: generate_jwt(job.fetch('id')),
+          image_name: assign_image_name(job)
         )
-        job_data
+        job.merge('@type' => 'job_board_job')
       end
 
-      def fetch_job_script(job_id, job_data_data)
+      def fetch_job_script(job_id, job_data)
         log msg: 'fetching job script', job_id: job_id, site: site
-        JobBoard::Services::FetchJobScript.run(job_data: job_data_data)
+        JobBoard::Services::FetchJobScript.run(job_data: job_data)
       end
 
       def generate_jwt(job_id)
@@ -61,7 +58,7 @@ module JobBoard
         )
       end
 
-      def assign_image_name(_job_data)
+      def assign_image_name(_job)
         # TODO: implement image name assignment
         'default'
       end
