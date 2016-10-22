@@ -40,7 +40,7 @@ module JobBoard
           },
           job_state_url: job_id_url('job_state_%{site}_url'),
           log_parts_url: job_id_url('log_parts_%{site}_url'),
-          jwt: generate_jwt(job.fetch('id')),
+          jwt: generate_jwt,
           image_name: assign_image_name(job)
         )
         job.merge('@type' => 'job_board_job')
