@@ -7,6 +7,7 @@ gem 'activesupport'
 gem 'addressable'
 gem 'codeclimate-test-reporter', group: %i(development test), require: nil
 gem 'factory_girl', group: %i(development test)
+gem 'fakeredis', group: %i(development test), require: false
 gem 'faraday'
 gem 'jemalloc'
 gem 'jwt'

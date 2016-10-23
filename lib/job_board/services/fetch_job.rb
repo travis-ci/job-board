@@ -9,7 +9,9 @@ require 'addressable/template'
 
 module JobBoard
   module Services
-    class FetchJob < Service
+    class FetchJob
+      extend Service
+
       def initialize(job_id: '', site: '', infra: '')
         @job_id = job_id.to_s
         @site = site.to_s

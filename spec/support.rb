@@ -16,6 +16,7 @@ require 'job_board'
 require 'l2met_log'
 require 'rack/test'
 require 'factory_girl'
+require 'fakeredis/rspec'
 
 L2metLog.default_log_level = :fatal
 

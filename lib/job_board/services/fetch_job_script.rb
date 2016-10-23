@@ -6,7 +6,9 @@ require_relative 'service'
 
 module JobBoard
   module Services
-    class FetchJobScript < Service
+    class FetchJobScript
+      extend Service
+
       BuildScriptError = Class.new(StandardError)
 
       class << self
@@ -64,13 +66,13 @@ module JobBoard
       end
 
       def fetch_cached
-        value = JobBoard::Models.redis.get(cache_key)
+        value = JobBoard.redis.get(cache_key)
         return nil unless value
         Base64.decode64(value)
       end
 
       def store_cached(script)
-        JobBoard::Models.redis.setex(
+        JobBoard.redis.setex(
           cache_key, cache_ttl, Base64.encode64(script)
         )
       end

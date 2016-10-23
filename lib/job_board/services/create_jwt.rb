@@ -8,7 +8,9 @@ require 'jwt'
 
 module JobBoard
   module Services
-    class CreateJWT < Service
+    class CreateJWT
+      extend Service
+
       class << self
         def private_key
           @private_key ||= OpenSSL::PKey::RSA.new(

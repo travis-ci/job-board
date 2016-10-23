@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 require 'logger'
 
-require 'redis-namespace'
 require 'sequel'
 require 'sequel/model'
 
@@ -35,16 +34,6 @@ module JobBoard
         end
 
         @initdb = db['select now()']
-      end
-
-      def redis
-        @redis ||= Redis::Namespace.new(
-          :job_board, redis: Redis.new(
-            url: ENV.fetch(
-              ENV['REDIS_PROVIDER'] || '', nil
-            ) || ENV['REDIS_URL'] || 'redis://localhost:6379/0'
-          )
-        )
       end
     end
 

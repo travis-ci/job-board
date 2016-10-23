@@ -18,7 +18,7 @@ describe JobBoard::Services::CreateOrUpdateJob do
     end
 
     it 'accepts scheduler assigned queue' do
-      expect(subject.queue).to eq('rad')
+      expect(subject.send(:queue)).to eq('rad')
     end
   end
 
@@ -39,7 +39,7 @@ describe JobBoard::Services::CreateOrUpdateJob do
     end
 
     it 'assigns queue locally' do
-      expect(subject.queue).to eq('meh')
+      expect(subject.send(:queue)).to eq('meh')
     end
   end
 end

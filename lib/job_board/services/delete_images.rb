@@ -1,10 +1,10 @@
 # frozen_string_literal: true
+require_relative 'service'
+
 module JobBoard
   module Services
     class DeleteImages
-      def self.run(params: {})
-        new(params: params).run
-      end
+      extend Service
 
       attr_reader :params
 

@@ -32,15 +32,25 @@ describe 'Job Delivery API', integration: true do
   describe 'POST /jobs' do
     before :each do
       JobBoard::Models::Job.where(queue: 'lel', site: site).delete
-      JobBoard::Models.redis.del("queue:#{site}:lel")
-      JobBoard::Models.redis.srem("queues:#{site}", 'lel')
+      JobBoard.redis.del("queue:#{site}:lel")
+      JobBoard.redis.srem("queues:#{site}", 'lel')
 
       3.times do |n|
+        job_id = "#{Time.now.to_i}#{n}"
+
         JobBoard::Services::CreateOrUpdateJob.run(
           job: {
-            'id' => "#{Time.now.to_i}#{n}",
+            'id' => job_id,
             'data' => {
-              'language' => 'rubby'
+              'config' => {
+                'language' => 'rubby'
+              },
+              'job' => {
+                'id' => job_id
+              },
+              'repository' => {
+                'slug' => 'very/test'
+              }
             }
           },
           site: site
@@ -104,15 +114,22 @@ describe 'Job Delivery API', integration: true do
   end
 
   describe 'POST /jobs/add' do
+    let(:job_id) { Time.now.to_i.to_s }
     let :job do
       {
         '@type' => 'job',
-        'id' => Time.now.to_i.to_s,
+        'id' => job_id,
         'data' => {
           'queue' => 'builds.lel',
           'config' => {
             'language' => 'rubby',
             'os' => 'lanerks'
+          },
+          'job' => {
+            'id' => job_id
+          },
+          'repository' => {
+            'slug' => 'very/test'
           }
         }
       }
@@ -120,8 +137,8 @@ describe 'Job Delivery API', integration: true do
 
     before :each do
       JobBoard::Models::Job.where(queue: 'lel', site: site).delete
-      JobBoard::Models.redis.del("queue:#{site}:lel")
-      JobBoard::Models.redis.srem("queues:#{site}", 'lel')
+      JobBoard.redis.del("queue:#{site}:lel")
+      JobBoard.redis.srem("queues:#{site}", 'lel')
     end
 
     after :each do
@@ -166,7 +183,7 @@ describe 'Job Delivery API', integration: true do
       post '/jobs/add', JSON.dump(job),
            'HTTP_CONTENT_TYPE' => 'application/json',
            'HTTP_TRAVIS_SITE' => site
-      expect(JobBoard::Models.redis.llen("queue:#{site}:lel")).to eq(1)
+      expect(JobBoard.redis.llen("queue:#{site}:lel")).to eq(1)
     end
   end
 
@@ -176,7 +193,7 @@ describe 'Job Delivery API', integration: true do
 
     before :each do
       JobBoard::Models::Job.where(queue: 'lel', site: site).delete
-      JobBoard::Models.redis.multi do |conn|
+      JobBoard.redis.multi do |conn|
         conn.del("queue:#{site}:lel")
         conn.srem("queues:#{site}", 'lel')
       end
@@ -211,7 +228,8 @@ describe 'Job Delivery API', integration: true do
         count: 1,
         from: from,
         jobs: [],
-        queue: 'lel'
+        queue: 'lel',
+        site: site
       )
     end
 
@@ -279,8 +297,16 @@ describe 'Job Delivery API', integration: true do
         job: {
           'id' => job_id,
           'data' => {
-            'language' => 'rubby',
-            'os' => 'mcohess'
+            'config' => {
+              'language' => 'rubby',
+              'os' => 'mcohess'
+            },
+            'job' => {
+              'id' => job_id
+            },
+            'repository' => {
+              'slug' => 'very/test'
+            }
           }
         },
         site: site

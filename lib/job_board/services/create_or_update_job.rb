@@ -3,7 +3,9 @@ require_relative 'service'
 
 module JobBoard
   module Services
-    class CreateOrUpdateJob < Service
+    class CreateOrUpdateJob
+      extend Service
+
       def initialize(job: {}, site: '')
         @job = job
         @site = site.to_s
@@ -14,16 +16,17 @@ module JobBoard
       def run
         return nil if site.empty? || job.nil? || job.empty?
 
+        @job = cleaned
         job_id = job.fetch('id')
 
-        JobBoard::Models.db.transaction do
-          db_job = JobBoard::Models::Job.first(job_id: job_id.to_s)
-          if db_job.nil?
-            return create_new(
-              job_id, site, queue,
-              Sequel::Postgres::JSONHash.new(job.to_hash)
-            ).to_hash
-          else
+        db_job = JobBoard::Models::Job.first(job_id: job_id.to_s)
+        if db_job.nil?
+          return create_new(
+            job_id, site, queue,
+            Sequel::Postgres::JSONHash.new(job.to_hash)
+          ).to_hash
+        else
+          transaction do
             db_job.set_all(
               queue: queue, site: site,
               data: Sequel::Postgres::JSONHash.new(job.to_hash)
@@ -32,6 +35,34 @@ module JobBoard
             db_job.to_hash
           end
         end
+      end
+
+      private
+
+      def cleaned
+        job_copy = Marshal.load(Marshal.dump(job))
+        data = job_copy.fetch('data')
+        data.reject! do |k, _|
+          %w(
+            cache_settings
+            env_vars
+            source
+            ssh_key
+          ).include?(k)
+        end
+
+        data.fetch('config').reject! do |k, _|
+          !%w(
+            dist
+            group
+            language
+            os
+          ).include?(k)
+        end
+
+        data.fetch('job').reject! { |k, _| k != 'id' }
+        data.fetch('repository').reject! { |k, _| k != 'slug' }
+        job_copy
       end
 
       def queue
@@ -46,24 +77,29 @@ module JobBoard
       end
 
       def create_new(job_id, site, queue, data)
-        JobBoard::Models.redis.multi do |conn|
-          conn.sadd("queues:#{site}", queue)
-          conn.lpush(
-            "queue:#{site}:#{queue}",
-            job_id
+        transaction do
+          JobBoard::JobQueue.new(
+            name: queue,
+            site: site
+          ).add(
+            job_id: job_id
+          )
+
+          JobBoard::Models::Job.create(
+            data: data,
+            job_id: job_id,
+            queue: queue,
+            site: site
           )
         end
-
-        JobBoard::Models::Job.create(
-          data: data,
-          job_id: job_id,
-          queue: queue,
-          site: site
-        )
       end
 
       def assign_queue
         JobBoard::Services::FetchQueue.run(job: job)
+      end
+
+      def transaction(&block)
+        JobBoard::Models.db.transaction(&block)
       end
     end
   end

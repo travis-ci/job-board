@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 require 'job_board'
+require_relative 'service'
+
 require 'sequel'
 
 module JobBoard
   module Services
     class FetchImages
-      def self.run(query: {})
-        new(query: query).run
-      end
+      extend Service
 
       attr_reader :query, :infra
 

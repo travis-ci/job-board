@@ -1,0 +1,16 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+libdir = File.expand_path('../../lib', __FILE__)
+$LOAD_PATH.unshift(libdir) unless $LOAD_PATH.include?(libdir)
+
+require 'json'
+require_relative '../lib/job_board'
+begin
+  stats = JobBoard::JobQueueReconciler.new.reconcile!
+  $stdout.puts JSON.pretty_generate(stats)
+  exit 0
+rescue => e
+  $stderr.puts e
+  $stderr.puts e.backtrace.join("\n")
+  exit 1
+end

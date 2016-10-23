@@ -1,10 +1,12 @@
 # frozen_string_literal: true
+require_relative 'service'
+
+require 'sequel'
+
 module JobBoard
   module Services
     class CreateImage
-      def self.run(params: {})
-        new(params: params).run
-      end
+      extend Service
 
       attr_reader :params
 

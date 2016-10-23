@@ -3,10 +3,12 @@ require_relative '../../l2met_log'
 
 module JobBoard
   module Services
-    class Service
-      include L2metLog
+    module Service
+      def self.extended(class_type)
+        class_type.send(:include, L2metLog)
+      end
 
-      def self.run(*args)
+      def run(*args)
         new(*args).run
       end
     end
