@@ -64,6 +64,42 @@ module JobBoard
       end
     end
 
+    def add(job_id: '')
+      raise Invalid, 'missing job id' if job_id.to_s.empty?
+      redis.lpush(queue_key, job_id.to_s)
+    end
+
+    def remove(job_id: '')
+      raise Invalid, 'missing job id' if job_id.empty?
+
+      result = redis.lrem(queue_key, 1, job_id)
+      workers = redis.smembers("workers:#{site}")
+      redis.multi do |conn|
+        workers.each do |worker|
+          conn.srem("worker:#{site}:#{worker}:idx", job_id)
+          conn.lrem("worker:#{site}:#{worker}", 1, job_id)
+        end
+        conn.hdel(queue_job_claims_key, job_id)
+        conn.hdel(queue_job_claim_timestamps_key, job_id)
+      end
+      result
+    end
+
+    def claim(worker: '')
+      claimed = redis.rpoplpush(
+        queue_key, worker_queue_list_key(worker: worker)
+      )
+      return nil if claimed.nil?
+
+      refresh_claims!(
+        worker: worker,
+        claimed: redis.smembers(
+          worker_index_set_key(worker: worker)
+        ) + [claimed]
+      )
+      claimed
+    end
+
     def check_claims(worker: '', job_ids: [])
       claimed = []
 
@@ -88,57 +124,21 @@ module JobBoard
       claimed
     end
 
-    def claim(worker: '')
-      claimed = redis.rpoplpush(
-        queue_key, worker_queue_list_key(worker: worker)
-      )
-      return nil if claimed.nil?
+    private
 
-      worker_job_ids = redis.smembers(worker_index_set_key(worker: worker))
-
-      claimed_map = (worker_job_ids + [claimed]).map do |job_id|
-        [job_id, worker]
-      end
-
-      claim_timestamps_map = claimed_map.map do |job_id, _|
-        [job_id, now]
-      end
-
+    def refresh_claims!(worker: '', claimed: [])
+      claimed_map = claimed.map { |job_id| [job_id, worker] }
       redis.multi do |conn|
         conn.sadd(worker_index_set_key(worker: worker), claimed)
         conn.expire(worker_index_set_key(worker: worker), ttl)
         conn.expire(worker_queue_list_key(worker: worker), ttl)
         conn.hmset(queue_job_claims_key, claimed_map.flatten)
         conn.hmset(
-          queue_job_claim_timestamps_key, claim_timestamps_map.flatten
+          queue_job_claim_timestamps_key,
+          claimed_map.map { |job_id, _| [job_id, now] }.flatten
         )
       end
-
-      claimed
     end
-
-    def remove(job_id: '')
-      raise Invalid, 'missing job id' if job_id.empty?
-
-      result = redis.lrem(queue_key, 1, job_id)
-      workers = redis.smembers("workers:#{site}")
-      redis.multi do |conn|
-        workers.each do |worker|
-          conn.srem("worker:#{site}:#{worker}:idx", job_id)
-          conn.lrem("worker:#{site}:#{worker}", 1, job_id)
-        end
-        conn.hdel(queue_job_claims_key, job_id)
-        conn.hdel(queue_job_claim_timestamps_key, job_id)
-      end
-      result
-    end
-
-    def add(job_id: '')
-      raise Invalid, 'missing job id' if job_id.to_s.empty?
-      redis.lpush(queue_key, job_id.to_s)
-    end
-
-    private
 
     def now
       Time.now.utc.iso8601(7)

@@ -24,10 +24,6 @@ module JobBoard
           job.delete
         end
       end
-
-      def redis
-        JobBoard.redis
-      end
     end
   end
 end

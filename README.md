@@ -13,7 +13,7 @@ historically used as a test bed for per-job HTTP querying across various worker
 infrastructures.
 
 For a detailed explanation of the APIs provided by **job-board**, and the
-behaviors expected from consumers, please consult see the [API section](#API)
+behaviors expected from consumers, please consult see the [API section](#api)
 below.
 
 ## Status
@@ -34,7 +34,8 @@ providers in worker may be configured to select images via HTTP queries to
 job-board, although this API is slated for eventual removal as the job delivery
 API provides the same data in the job payload.
 * **gcloud-cleanup** ([github](https://github.com/travis-ci/gcloud-cleanup)):
-  gcloud-cleanup queries job-board over HTTP, and deletes old images from it
+  gcloud-cleanup queries job-board over HTTP, and deletes images from GCE that
+are no longer registered with job-board.
 
 ## API
 
@@ -43,13 +44,11 @@ API provides the same data in the job payload.
 #### Unique source identifier (`${UNIQUE_ID}`)
 
 The `${UNIQUE_ID}` string used in the `From:` header is intended to be a unique
-identifier.  As the value of `${UNIQUE_ID}` must be in the form of
-`${SOMETHING}@${SOMETHING}` (like an email address) in order to be a valid `From:`
-header.  In the case of Worker communicating with Job Board, the scope of
-uniqueness we need is limited to "one Worker", which is used on the Job Board
-side as a way to track job IDs claimed by Workers.  In implementation terms,
-each Worker has a redis set that includes the job IDs Job Board expects it is
-actively processing.
+identifier for purposes of a given Worker communicating with Job Board.  The
+scope of uniqueness we need is limited to "one Worker", which is used on the Job
+Board side as a way to track job IDs claimed by Workers.  In implementation
+terms, each Worker has a redis set that includes the job IDs Job Board expects
+it is actively processing.
 
 ```
 worker+${SHA}@${PID}.${HOSTNAME}
@@ -59,13 +58,12 @@ worker+${SHA}@${PID}.${HOSTNAME}
 
 A given Worker's [Processor
 Pool](https://github.com/travis-ci/worker/blob/9aed935dc3e67df7d4793560d08fc5947982e249/processor_pool.go)
-will have an HTTP Job Queue that is responsible for repeatedly placing `POST
-/jobs` requests  to Job Board for purposes of transferring state information
-about the actively executing jobs and claiming any jobs that are available for
-delivery.
+has an HTTP Job Queue that is responsible for repeatedly placing `POST /jobs`
+requests  to Job Board for purposes of transferring state information about the
+actively executing jobs and claiming any jobs that are available for delivery.
 
 Any job IDs that are successfully claimed are consumed by one of the
-ProcessorPool's processors, at which point the skeletal Job is "hydrated" via a
+Processor Pool's processors, at which point the skeletal Job is "hydrated" via a
 `GET /jobs/:job_id` request and job processing continues.
 
 If any subsequent response from `POST /jobs` states that an active job has
@@ -78,7 +76,7 @@ should only come *from* the Job State API.
 This resource is intended to act as a "heartbeat" where a given Worker's
 Processor Pool sends a list of job IDs it is actively executing and expects to
 receive back a list of job IDs that are confirmed to be claimed by the
-requesting Worker or are available for claim as `"jobs"`.
+requesting Worker or are available for claim.
 
 As shown below, the `count` query param is optional, but the `queue` query
 param is required.
@@ -176,10 +174,10 @@ If the `Authorization` header is invalid, `403`.
 
 This resource is intended to be used by
 [scheduler](https://github.com/travis-ci/travis-scheduler) to add to the pool
-of jobs available for delivery.  It is the rough equivalent of Scheduler
+of jobs available for delivery.  It is the rough equivalent of scheduler
 "enqueueing" a job to RabbitMQ.  The reason why this isn't a `PUT` is because
-the Scheduler representation of a job has significantly less information in it
-than the representation returned by `GET /jobs/:job_id`.
+the scheduler representation of a job has significantly less information in it
+than the representation returned by `GET /jobs/{job_id}`.
 
 ##### Request
 
@@ -207,7 +205,7 @@ Content-Length: 0
 ```
 
 If the request is valid but the job already exists, the request acts as an
-update, and will alter all persistested fields except for the job id:
+update, and will alter all persisted fields except for the job id:
 
 ```
 HTTP/1.1 204 No Content

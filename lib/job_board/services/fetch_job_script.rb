@@ -73,7 +73,7 @@ module JobBoard
 
       def store_cached(script)
         JobBoard.redis.setex(
-          cache_key, cache_ttl, Base64.encode64(script)
+          cache_key, cache_ttl, Base64.encode64(script).split.join('')
         )
       end
 
