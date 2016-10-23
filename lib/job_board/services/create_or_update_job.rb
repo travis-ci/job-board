@@ -22,14 +22,17 @@ module JobBoard
         db_job = JobBoard::Models::Job.first(job_id: job_id.to_s)
         if db_job.nil?
           return create_new(
-            job_id, site, queue,
-            Sequel::Postgres::JSONHash.new(job.to_hash)
+            data: Sequel::Postgres::JSONHash.new(job.to_hash),
+            job_id: job_id,
+            queue: queue,
+            site: site
           ).to_hash
         else
           transaction do
             db_job.set_all(
-              queue: queue, site: site,
-              data: Sequel::Postgres::JSONHash.new(job.to_hash)
+              data: Sequel::Postgres::JSONHash.new(job.to_hash),
+              queue: queue,
+              site: site
             )
             db_job.save_changes
             db_job.to_hash
@@ -76,7 +79,7 @@ module JobBoard
         @queue = @queue.sub(/^builds\./, '')
       end
 
-      def create_new(job_id, site, queue, data)
+      def create_new(job_id: '', site: '', queue: '', data: {})
         transaction do
           JobBoard::JobQueue.new(
             name: queue,
