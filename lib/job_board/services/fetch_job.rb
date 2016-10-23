@@ -51,7 +51,7 @@ module JobBoard
           jwt: generate_jwt,
           image_name: fetch_image_name(job)
         )
-        job.merge('@type' => 'job_board_job')
+        cleaned(job.merge('@type' => 'job_board_job'))
       end
 
       def fetch_db_job
@@ -84,6 +84,32 @@ module JobBoard
           return images.fetch(0).name unless images.empty?
         end
         'default'
+      end
+
+      def cleaned(job)
+        job_copy = Marshal.load(Marshal.dump(job))
+        data = job_copy.fetch('data', {})
+        data.reject! do |k, _|
+          %w(
+            cache_settings
+            env_vars
+            source
+            ssh_key
+          ).include?(k)
+        end
+
+        data.fetch('config', {}).reject! do |k, _|
+          !%w(
+            dist
+            group
+            language
+            os
+          ).include?(k)
+        end
+
+        data.fetch('job', {}).reject! { |k, _| k != 'id' }
+        data.fetch('repository', {}).reject! { |k, _| k != 'slug' }
+        job_copy
       end
 
       def paranoid?(queue)

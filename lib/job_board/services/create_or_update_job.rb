@@ -16,7 +16,6 @@ module JobBoard
       def run
         return nil if site.empty? || job.nil? || job.empty?
 
-        @job = cleaned
         job_id = job.fetch('id')
 
         db_job = JobBoard::Models::Job.first(job_id: job_id.to_s)
@@ -41,32 +40,6 @@ module JobBoard
       end
 
       private
-
-      def cleaned
-        job_copy = Marshal.load(Marshal.dump(job))
-        data = job_copy.fetch('data')
-        data.reject! do |k, _|
-          %w(
-            cache_settings
-            env_vars
-            source
-            ssh_key
-          ).include?(k)
-        end
-
-        data.fetch('config').reject! do |k, _|
-          !%w(
-            dist
-            group
-            language
-            os
-          ).include?(k)
-        end
-
-        data.fetch('job').reject! { |k, _| k != 'id' }
-        data.fetch('repository').reject! { |k, _| k != 'slug' }
-        job_copy
-      end
 
       def queue
         return @queue if @queue
