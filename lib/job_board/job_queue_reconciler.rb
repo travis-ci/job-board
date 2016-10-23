@@ -1,8 +1,11 @@
 # frozen_string_literal: true
 require 'job_board'
+require_relative '../l2met_log'
 
 module JobBoard
   class JobQueueReconciler
+    include L2metLog
+
     def initialize(redis: nil)
       @redis = redis || JobBoard.redis
     end
@@ -10,6 +13,7 @@ module JobBoard
     attr_reader :redis
 
     def reconcile!
+      log msg: 'starting reconciliation process'
       start_time = Time.now
       stats = { sites: {} }
 
@@ -19,13 +23,19 @@ module JobBoard
           queues: {}
         }
 
+        log msg: 'reconciling', site: site
         reclaimed, claimed = reconcile_site!(site)
+
+        log msg: 'reclaimed jobs', site: site, n: reclaimed
+        log msg: 'setting worker claimed jobs', site: site
         stats[:sites][site][:reclaimed] = reclaimed
         stats[:sites][site][:workers].merge!(claimed)
 
+        log msg: 'fetching queue stats', site: site
         stats[:sites][site][:queues].merge!(measure(site))
       end
 
+      log msg: 'finished with reconciliation process'
       stats.merge(time: "#{Time.now - start_time}s")
     end
 
