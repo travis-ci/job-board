@@ -48,7 +48,7 @@ module JobBoard
       redis.smembers("workers:#{site}").each do |worker|
         if redis.exists("worker:#{site}:#{worker}")
           claimed[worker] = {
-            claimed: redis.scard("worker:#{site}:#{worker}").sort
+            claimed: redis.llen("worker:#{site}:#{worker}")
           }
         else
           redis.smembers("queues:#{site}").each do |name|
