@@ -7,8 +7,9 @@ module JobBoard
 
     def self.for_worker(redis: nil, worker: '', site: '')
       redis ||= JobBoard.redis
-      raise Invalid, 'unknown worker' unless
-        redis.sismember("workers:#{site}", worker)
+      unless redis.sismember("workers:#{site}", worker)
+        raise Invalid, 'unknown worker'
+      end
       redis.lrange("worker:#{site}:#{worker}", 0, -1)
     end
 
@@ -25,8 +26,9 @@ module JobBoard
 
     def self.for_queue(redis: nil, site: '', name: '')
       redis ||= JobBoard.redis
-      raise Invalid, 'unknown queue' unless
-        redis.sismember("queues:#{site}", name)
+      unless redis.sismember("queues:#{site}", name)
+        raise Invalid, 'unknown queue'
+      end
 
       results = {}
       redis.hgetall("queue:#{site}:#{name}:claims").each do |job_id, worker|

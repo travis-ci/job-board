@@ -36,9 +36,12 @@ module JobBoard
             )
           )
         )
-        return job_script_content if job_script_content.is_a?(
+
+        if job_script_content.is_a?(
           JobBoard::Services::FetchJobScript::BuildScriptError
         )
+          return job_script_content
+        end
 
         job.merge!(
           job_script: {

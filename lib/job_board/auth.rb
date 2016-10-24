@@ -1,4 +1,6 @@
 # frozen_string_literal: true
+require 'base64'
+
 require 'job_board'
 require_relative '../l2met_log'
 
@@ -93,8 +95,9 @@ module JobBoard
     end
 
     def build_auth_tokens
-      return raw_auth_tokens.split(':').map(&:strip) unless
-      raw_auth_tokens.include?(',')
+      unless raw_auth_tokens.include?(',')
+        return raw_auth_tokens.split(':').map(&:strip)
+      end
 
       raw_auth_tokens.split(',').map do |pair|
         pair.split(':').map(&:strip)
@@ -119,7 +122,7 @@ module JobBoard
       end
 
       def basic_credentials
-        @basic_credentials ||= params.unpack('m*').first.split(/:/, 2)
+        @basic_credentials ||= Base64.decode64(params).split(/:/, 2)
       end
 
       def basic_username

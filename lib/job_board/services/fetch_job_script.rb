@@ -1,8 +1,10 @@
 # frozen_string_literal: true
-require 'addressable/uri'
-require 'faraday'
+require 'base64'
 
 require_relative 'service'
+
+require 'addressable/uri'
+require 'faraday'
 
 module JobBoard
   module Services
@@ -73,7 +75,7 @@ module JobBoard
 
       def store_cached(script)
         JobBoard.redis.setex(
-          cache_key, cache_ttl, Base64.encode64(script).split.join('')
+          cache_key, cache_ttl, Base64.strict_encode64(script)
         )
       end
 
