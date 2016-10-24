@@ -44,7 +44,7 @@ describe JobBoard::JobQueue do
     end
 
     it 'can remove a job id' do
-      expect(subject.remove(job_id: '0')).to be_nil
+      expect(subject.remove(job_id: '0')).to eq(0)
     end
 
     it 'can add a job id' do
