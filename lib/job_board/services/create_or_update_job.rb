@@ -27,15 +27,13 @@ module JobBoard
             site: site
           ).to_hash
         else
-          transaction do
-            db_job.set_all(
-              data: Sequel::Postgres::JSONHash.new(job.to_hash),
-              queue: queue,
-              site: site
-            )
-            db_job.save_changes
-            db_job.to_hash
-          end
+          db_job.set_all(
+            data: Sequel::Postgres::JSONHash.new(job.to_hash),
+            queue: queue,
+            site: site
+          )
+          db_job.save_changes
+          db_job.to_hash
         end
       end
 
@@ -53,29 +51,23 @@ module JobBoard
       end
 
       def create_new(job_id: '', site: '', queue: '', data: {})
-        transaction do
-          JobBoard::JobQueue.new(
-            name: queue,
-            site: site
-          ).add(
-            job_id: job_id
-          )
+        JobBoard::JobQueue.new(
+          name: queue,
+          site: site
+        ).add(
+          job_id: job_id
+        )
 
-          JobBoard::Models::Job.create(
-            data: data,
-            job_id: job_id,
-            queue: queue,
-            site: site
-          )
-        end
+        JobBoard::Models::Job.create(
+          data: data,
+          job_id: job_id,
+          queue: queue,
+          site: site
+        )
       end
 
       def assign_queue
         JobBoard::Services::FetchQueue.run(job: job)
-      end
-
-      def transaction(&block)
-        JobBoard::Models.db.transaction(&block)
       end
     end
   end
