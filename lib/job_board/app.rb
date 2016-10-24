@@ -18,8 +18,18 @@ module JobBoard
       [
         200,
         { 'Content-Type' => 'application/json' },
-        '{"greeting":"hello, human 👋!"}'
+        JSON.dump(
+          greeting: 'hello, human 👋!',
+          pong: JobBoard.redis.ping.to_s,
+          now: pg_now
+        )
       ]
+    end
+
+    def pg_now
+      JobBoard::Models.db[
+        %(select now() at time zone 'UTC' as now)
+      ].first.fetch(:now).utc.iso8601
     end
   end
 end
