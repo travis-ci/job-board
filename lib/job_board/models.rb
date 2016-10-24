@@ -16,9 +16,9 @@ module JobBoard
       end
 
       def db_logger
-        @db_logger ||= (
+        @db_logger ||= begin
           JobBoard.config.database.sql_logging ? Logger.new($stdout) : nil
-        )
+        end
       end
 
       def initdb!
