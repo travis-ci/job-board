@@ -3,8 +3,6 @@
 
 BEGIN;
 
-SET client_min_messages = 'warning';
-
 CREATE EXTENSION IF NOT EXISTS hstore;
 
 CREATE TABLE job_board.images (

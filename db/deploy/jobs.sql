@@ -3,8 +3,6 @@
 
 BEGIN;
 
-SET client_min_messages = 'warning';
-
 CREATE TABLE job_board.jobs (
   id serial PRIMARY KEY,
   job_id text NOT NULL,
