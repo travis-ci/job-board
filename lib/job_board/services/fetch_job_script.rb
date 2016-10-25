@@ -84,9 +84,7 @@ module JobBoard
       end
 
       def job_data_signature
-        @job_data_signature ||= Digest::SHA256.hexdigest(
-          JSON.dump(job_data).scan(/./).sort.join('')
-        )
+        @job_data_signature ||= Digest::SHA256.hexdigest(JSON.dump(job_data))
       end
     end
   end
