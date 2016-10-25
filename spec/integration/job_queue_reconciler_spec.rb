@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
 describe JobBoard::JobQueueReconciler do
-  let(:job_queue) { JobBoard::JobQueue.new(name: name, site: site) }
-  let(:name) { 'lel' }
+  let :job_queue do
+    JobBoard::JobQueue.new(queue_name: queue_name, site: site)
+  end
+  let(:queue_name) { 'lel' }
   let(:site) { 'test' }
 
   before do

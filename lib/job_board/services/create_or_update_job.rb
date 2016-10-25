@@ -23,7 +23,7 @@ module JobBoard
           return create_new(
             data: Sequel::Postgres::JSONHash.new(job.to_hash),
             job_id: job_id,
-            queue: queue,
+            queue_name: queue,
             site: site
           ).to_hash
         else
@@ -50,9 +50,9 @@ module JobBoard
         @queue = @queue.sub(/^builds\./, '')
       end
 
-      def create_new(job_id: '', site: '', queue: '', data: {})
+      def create_new(job_id: '', site: '', queue_name: '', data: {})
         JobBoard::JobQueue.new(
-          name: queue,
+          queue_name: queue_name,
           site: site
         ).add(
           job_id: job_id
@@ -61,7 +61,7 @@ module JobBoard
         JobBoard::Models::Job.create(
           data: data,
           job_id: job_id,
-          queue: queue,
+          queue: queue_name,
           site: site
         )
       end

@@ -18,7 +18,7 @@ module JobBoard
           job = JobBoard::Models::Job.first(job_id: job_id, site: site)
           raise Sequel::Rollback if job.nil?
 
-          queue = JobBoard::JobQueue.new(name: job.queue, site: site)
+          queue = JobBoard::JobQueue.new(queue_name: job.queue, site: site)
           queue.remove(job_id: job_id)
 
           job.delete

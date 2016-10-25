@@ -39,7 +39,7 @@ module JobBoard
         count: params[:count],
         from: from,
         jobs: JSON.parse(request.body.read).fetch('jobs'),
-        queue: params[:queue],
+        queue_name: params[:queue],
         site: site
       ).merge(
         '@count' => params[:count],
@@ -54,7 +54,11 @@ module JobBoard
       job = JSON.parse(request.body.read)
       site = request.env.fetch('travis.site')
       db_job = JobBoard::Services::CreateOrUpdateJob.run(job: job, site: site)
-      halt 400, JSON.dump('@type' => 'error', error: 'what') if db_job.nil?
+      if db_job.nil?
+        log level: :error, msg: 'failed to create or update job',
+            job_id: job.fetch('id'), site: site
+        halt 400, JSON.dump('@type' => 'error', error: 'what')
+      end
       log msg: :added, job_id: job.fetch('id'), site: site
       [201, { 'Content-Length' => '0' }, '']
     end

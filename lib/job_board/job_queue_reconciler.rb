@@ -51,8 +51,10 @@ module JobBoard
             claimed: redis.llen("worker:#{site}:#{worker}")
           }
         else
-          redis.smembers("queues:#{site}").each do |name|
-            reclaimed += reclaim!(worker: worker, site: site, name: name)
+          redis.smembers("queues:#{site}").each do |queue_name|
+            reclaimed += reclaim!(
+              worker: worker, site: site, queue_name: queue_name
+            )
           end
           claimed[worker] = { claimed: 0 }
         end
@@ -61,14 +63,15 @@ module JobBoard
       [reclaimed, claimed]
     end
 
-    def reclaim!(worker: nil, site: '', name: '')
+    def reclaim!(worker: nil, site: '', queue_name: '')
       reclaimed = 0
 
-      redis.hgetall("queue:#{site}:#{name}:claims").each do |job_id, claimer|
+      claims = redis.hgetall("queue:#{site}:#{queue_name}:claims")
+      claims.each do |job_id, claimer|
         next unless worker == claimer
         redis.multi do |conn|
-          conn.lpush("queue:#{site}:#{name}", job_id)
-          conn.hdel("queue:#{site}:#{name}:claims", job_id)
+          conn.lpush("queue:#{site}:#{queue_name}", job_id)
+          conn.hdel("queue:#{site}:#{queue_name}:claims", job_id)
           reclaimed += 1
         end
       end
@@ -79,10 +82,10 @@ module JobBoard
     def measure(site)
       measured = {}
 
-      redis.smembers("queues:#{site}").each do |name|
-        measured[name] = {
-          queued: redis.llen("queue:#{site}:#{name}"),
-          claimed: redis.hlen("queue:#{site}:#{name}:claims")
+      redis.smembers("queues:#{site}").each do |queue_name|
+        measured[queue_name] = {
+          queued: redis.llen("queue:#{site}:#{queue_name}"),
+          claimed: redis.hlen("queue:#{site}:#{queue_name}:claims")
         }
       end
 

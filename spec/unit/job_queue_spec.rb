@@ -1,10 +1,12 @@
 # frozen_string_literal: true
 
 describe JobBoard::JobQueue do
-  let(:name) { 'lel' }
+  let(:queue_name) { 'lel' }
   let(:site) { 'test' }
   let(:redis) { JobBoard.redis }
-  subject { described_class.new(redis: redis, name: name, site: site) }
+  subject do
+    described_class.new(redis: redis, queue_name: queue_name, site: site)
+  end
 
   context 'with no data' do
     it 'can register' do
@@ -28,7 +30,9 @@ describe JobBoard::JobQueue do
 
     it 'cannot provide job ids for a given queue' do
       expect do
-        described_class.for_queue(redis: redis, site: site, name: name)
+        described_class.for_queue(
+          redis: redis, site: site, queue_name: queue_name
+        )
       end.to raise_error(JobBoard::JobQueue::Invalid)
     end
 
@@ -40,7 +44,7 @@ describe JobBoard::JobQueue do
     it 'can claim a job id' do
       subject.register(worker: 'a')
       claimed = subject.claim(worker: 'a')
-      expect(claimed).to be_nil
+      expect(claimed).to be_empty
     end
 
     it 'can remove a job id' do
@@ -83,7 +87,9 @@ describe JobBoard::JobQueue do
     it 'can provide job ids for a given queue' do
       subject.register(worker: 'a')
       expect(
-        described_class.for_queue(redis: redis, site: site, name: name)
+        described_class.for_queue(
+          redis: redis, site: site, queue_name: queue_name
+        )
       ).to eq(
         '0' => { claimed_by: nil },
         '1' => { claimed_by: nil },

@@ -228,7 +228,7 @@ describe 'Job Delivery API', integration: true do
         count: 1,
         from: from,
         jobs: [],
-        queue: 'lel',
+        queue_name: 'lel',
         site: site
       )
     end

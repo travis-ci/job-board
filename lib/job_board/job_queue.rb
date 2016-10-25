@@ -4,6 +4,7 @@ require 'job_board'
 module JobBoard
   class JobQueue
     Invalid = Class.new(StandardError)
+    Error = Class.new(StandardError)
 
     def self.for_worker(redis: nil, worker: '', site: '')
       redis ||= JobBoard.redis
@@ -18,50 +19,69 @@ module JobBoard
       raise Invalid, 'unknown site' unless redis.sismember('sites', site)
 
       results = {}
-      redis.smembers("queues:#{site}").map(&:to_sym).map do |name|
-        results[name] = for_queue(redis: redis, site: site, name: name)
+      redis.smembers("queues:#{site}").map(&:to_sym).map do |queue_name|
+        results[queue_name] = for_queue(
+          redis: redis, site: site, queue_name: queue_name
+        )
       end
       results
     end
 
-    def self.for_queue(redis: nil, site: '', name: '')
+    def self.for_queue(redis: nil, site: '', queue_name: '')
       redis ||= JobBoard.redis
-      unless redis.sismember("queues:#{site}", name)
+      unless redis.sismember("queues:#{site}", queue_name)
         raise Invalid, 'unknown queue'
       end
 
+      claims = nil
+      queued_ids = nil
+
+      redis.multi do |conn|
+        claims = conn.hgetall("queue:#{site}:#{queue_name}:claims")
+        queued_ids = conn.lrange("queue:#{site}:#{queue_name}", 0, -1)
+      end
+
+      # rubocop:disable Style/NilComparison
+      raise Error, 'unable to read queued ids' if queued_ids == nil
+      raise Error, 'unable to read claims' if claims == nil
+      # rubocop:enable Style/NilComparison
+
       results = {}
-      redis.hgetall("queue:#{site}:#{name}:claims").each do |job_id, worker|
+      claims.value.each do |job_id, worker|
         results[job_id] = {
           claimed_by: worker,
           updated_at: redis.hget(
-            "queue:#{site}:#{name}:claims:timestamps", job_id
+            "queue:#{site}:#{queue_name}:claims:timestamps", job_id
           )
         }
       end
 
-      redis.lrange("queue:#{site}:#{name}", 0, -1).each do |job_id|
+      queued_ids.value.each do |job_id|
         results[job_id] = { claimed_by: nil }
       end
 
       results
     end
 
-    attr_reader :redis, :name, :site, :ttl
+    attr_reader :redis, :queue_name, :site, :ttl
 
-    def initialize(redis: nil, name: '', site: '',
+    def initialize(redis: nil, queue_name: '', site: '',
                    ttl: JobBoard.config.worker_ttl)
       @redis = redis || JobBoard.redis
-      @name = name
+      @queue_name = queue_name
       @site = site
       @ttl = ttl
-      raise Invalid, 'missing site or queue name' if site.empty? || name.empty?
+      # rubocop:disable Style/GuardClause
+      if site.empty? || queue_name.empty?
+        raise Invalid, 'missing site or queue name'
+      end
+      # rubocop:enable Style/GuardClause
     end
 
     def register(worker: '')
       redis.multi do |conn|
         conn.sadd('sites', site)
-        conn.sadd("queues:#{site}", name)
+        conn.sadd("queues:#{site}", queue_name)
         conn.sadd("workers:#{site}", worker)
       end
     end
@@ -74,7 +94,7 @@ module JobBoard
     def remove(job_id: '')
       raise Invalid, 'missing job id' if job_id.empty?
 
-      result = redis.lrem(queue_key, 1, job_id)
+      result = redis.lrem(queue_key, 0, job_id)
       workers = redis.smembers("workers:#{site}")
       redis.multi do |conn|
         workers.each do |worker|
@@ -87,19 +107,32 @@ module JobBoard
       result
     end
 
-    def claim(worker: '')
-      claimed = redis.rpoplpush(
-        queue_key, worker_queue_list_key(worker: worker)
-      )
-      return nil if claimed.nil?
+    def claim(worker: '', max: 1) # TODO: , timeout: 5000)
+      raise Invalid, 'missing worker name' if worker.empty?
+      raise Invalid, 'max must be > zero' unless max.positive?
+      # TODO: implement timeout bits
+      # raise Invalid, 'timeout must be > zero' unless timeout.positive?
 
-      refresh_claims!(
-        worker: worker,
-        claimed: redis.smembers(
-          worker_index_set_key(worker: worker)
-        ) + [claimed]
-      )
-      claimed
+      new_claims = []
+
+      loop do
+        break if new_claims.length >= max
+        claimed = redis.rpoplpush(
+          queue_key, worker_queue_list_key(worker: worker)
+        )
+        break if claimed.nil?
+        new_claims << claimed
+      end
+
+      all_claims = redis.smembers(
+        worker_index_set_key(worker: worker)
+      ) + new_claims
+
+      unless all_claims.empty?
+        refresh_claims!(worker: worker, claimed: all_claims)
+      end
+
+      new_claims
     end
 
     def check_claims(worker: '', job_ids: [])
@@ -147,16 +180,16 @@ module JobBoard
     end
 
     def queue_key
-      @queue_key ||= "queue:#{site}:#{name}"
+      @queue_key ||= "queue:#{site}:#{queue_name}"
     end
 
     def queue_job_claims_key
-      @queue_job_claims_key ||= "queue:#{site}:#{name}:claims"
+      @queue_job_claims_key ||= "queue:#{site}:#{queue_name}:claims"
     end
 
     def queue_job_claim_timestamps_key
       @queue_job_claim_timestamps_key ||=
-        "queue:#{site}:#{name}:claims:timestamps"
+        "queue:#{site}:#{queue_name}:claims:timestamps"
     end
 
     def worker_index_set_key(worker: '')

@@ -26,7 +26,7 @@ describe JobBoard::Services::CreateOrUpdateJob do
 
     it 'creates a new database record' do
       expect(subject).to receive(:create_new)
-        .with(job_id: job_id, site: site, queue: 'rad', data: anything)
+        .with(job_id: job_id, site: site, queue_name: 'rad', data: anything)
         .and_return(new: :jorb, woop: :woop)
       expect(subject.run).to eql(new: :jorb, woop: :woop)
     end
