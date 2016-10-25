@@ -1,8 +1,11 @@
 # frozen_string_literal: true
 require 'job_board'
+require_relative '../l2met_log'
 
 module JobBoard
   class JobQueue
+    include L2metLog
+
     Invalid = Class.new(StandardError)
     Error = Class.new(StandardError)
 
@@ -107,16 +110,24 @@ module JobBoard
       result
     end
 
-    def claim(worker: '', max: 1) # TODO: , timeout: 5000)
+    def claim(worker: '', max: 1, timeout: 5.0)
       raise Invalid, 'missing worker name' if worker.empty?
       raise Invalid, 'max must be > zero' unless max.positive?
-      # TODO: implement timeout bits
-      # raise Invalid, 'timeout must be > zero' unless timeout.positive?
+      raise Invalid, 'timeout must be > zero' unless timeout.positive?
 
+      start = Time.now
       new_claims = []
 
       loop do
+        delta = Time.now - start
+        if delta >= timeout
+          log level: :warn, msg: 'timeout while claiming jobs',
+              max: max, timeout: timeout, delta: time_delta
+          break
+        end
+
         break if new_claims.length >= max
+
         claimed = redis.rpoplpush(
           queue_key, worker_queue_list_key(worker: worker)
         )
@@ -133,6 +144,18 @@ module JobBoard
       end
 
       new_claims
+    rescue => e
+      log level: :error, msg: 'failure during claim', error: e.to_s
+
+      begin
+        new_claims.each do |job_id|
+          redis.lpush(queue_key, job_id)
+        end
+      rescue => e
+        log level: :error, msg: 'failed to push claims back', error: e.to_s
+      end
+
+      []
     end
 
     def check_claims(worker: '', job_ids: [])
