@@ -12,6 +12,7 @@ GEM
       i18n (~> 0.7)
       minitest (~> 5.1)
       tzinfo (~> 1.1)
+    addressable (2.4.0)
     ast (2.3.0)
     backports (3.6.8)
     codeclimate-test-reporter (0.6.0)
@@ -22,13 +23,19 @@ GEM
     docile (1.1.5)
     factory_girl (4.7.0)
       activesupport (>= 3.0.0)
+    fakeredis (0.6.0)
+      redis (~> 3.2)
+    faraday (0.9.2)
+      multipart-post (>= 1.2, < 3)
     hashr (2.0.0)
     i18n (0.7.0)
     jemalloc (1.0.1)
     json (2.0.2)
+    jwt (1.5.6)
     method_source (0.8.2)
     minitest (5.9.1)
     multi_json (1.12.1)
+    multipart-post (2.0.0)
     parser (2.3.1.4)
       ast (~> 2.2)
     pg (0.19.0)
@@ -47,6 +54,9 @@ GEM
       rack (>= 1.0)
     rainbow (2.1.0)
     rake (11.3.0)
+    redis (3.3.1)
+    redis-namespace (1.5.2)
+      redis (~> 3.0, >= 3.0.4)
     rspec (3.5.0)
       rspec-core (~> 3.5.0)
       rspec-expectations (~> 3.5.0)
@@ -100,15 +110,21 @@ PLATFORMS
 
 DEPENDENCIES
   activesupport
+  addressable
   codeclimate-test-reporter
   factory_girl
+  fakeredis
+  faraday
   jemalloc
+  jwt
   pg
   pry
   puma
   rack-ssl
   rack-test
   rake
+  redis
+  redis-namespace
   rspec
   rubocop
   sequel

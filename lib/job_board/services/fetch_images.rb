@@ -1,25 +1,25 @@
 # frozen_string_literal: true
 require 'job_board'
+require_relative 'service'
+
 require 'sequel'
 
 module JobBoard
   module Services
     class FetchImages
-      def self.run(params: {})
-        new(params: params).run
-      end
+      extend Service
 
-      attr_reader :params, :infra
+      attr_reader :query, :infra
 
-      def initialize(params: {})
-        @params = params
-        @infra = params.fetch('infra')
+      def initialize(query: {})
+        @query = query
+        @infra = query.fetch('infra')
       end
 
       def run
         images = []
 
-        build_query.each do |image|
+        build_database_query.each do |image|
           images << image.tap do |i|
             i['tags'] = i['tags'].to_hash if i['tags']
           end
@@ -30,37 +30,37 @@ module JobBoard
 
       private
 
-      def build_query
-        query = with_tags_matching(
+      def build_database_query
+        database_query = with_tags_matching(
           with_name_like(
             with_is_default(
               JobBoard::Models::Image.where(infra: infra)
             )
           )
         ).reverse_order(:created_at)
-        limit = params.fetch('limit', 0)
-        query = query.limit(limit) unless limit.zero?
-        query
+        limit = query.fetch('limit', 0)
+        database_query = database_query.limit(limit) unless limit.zero?
+        database_query
       end
 
       def with_is_default(image_query)
-        return image_query unless params.fetch('is_default', false)
+        return image_query unless query.fetch('is_default', false)
         image_query.where(
           'is_default = ?', true
         )
       end
 
       def with_name_like(image_query)
-        return image_query unless params.key?('name')
+        return image_query unless query.key?('name')
         image_query.where(
-          Sequel.like(:name, /#{params.fetch('name')}/)
+          Sequel.like(:name, /#{query.fetch('name')}/)
         )
       end
 
       def with_tags_matching(image_query)
-        return image_query unless params.key?('tags')
+        return image_query unless query.key?('tags')
         image_query.where(
-          'tags @> ?', Sequel.hstore(params.fetch('tags'))
+          'tags @> ?', Sequel.hstore(query.fetch('tags'))
         )
       end
     end

@@ -4,15 +4,21 @@ source 'https://rubygems.org'
 ruby '2.3.1' if ENV.key?('DYNO')
 
 gem 'activesupport'
+gem 'addressable'
 gem 'codeclimate-test-reporter', group: %i(development test), require: nil
 gem 'factory_girl', group: %i(development test)
+gem 'fakeredis', group: %i(development test), require: false
+gem 'faraday'
 gem 'jemalloc'
+gem 'jwt'
 gem 'pg'
 gem 'pry', require: false
 gem 'puma'
 gem 'rack-ssl', require: false
 gem 'rack-test', group: %i(development test)
 gem 'rake'
+gem 'redis'
+gem 'redis-namespace'
 gem 'rspec', group: %i(development test)
 gem 'rubocop', group: %i(development test)
 gem 'sequel'

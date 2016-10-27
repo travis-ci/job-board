@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 RequestAuth = Struct.new('RequestAuth', :username, :password) do
-  def credentials
+  def basic_credentials
     [username, password]
   end
 end
@@ -11,8 +11,10 @@ describe JobBoard::Auth do
   let(:tokens) { %w(abc123 secret).join(':') }
 
   it 'pulls its raw auth tokens from JobBoard.config' do
-    expect(JobBoard).to receive_message_chain(:config, :auth, :tokens)
+    allow(JobBoard).to receive_message_chain(:config, :auth, :tokens)
       .and_return('hay:there')
+    allow(JobBoard).to receive_message_chain(:config, :jwt_public_key)
+      .and_return(nil)
     expect(subject.send(:raw_auth_tokens)).to eq('hay:there')
   end
 
@@ -29,17 +31,17 @@ describe JobBoard::Auth do
       let(:tokens) { %w(foo:bar admin:yah).join(',') }
 
       it 'rejects unknown user:pass combinations' do
-        expect(subject.send(:valid?, RequestAuth.new('foo', 'nope')))
+        expect(subject.send(:basic_valid?, RequestAuth.new('foo', 'nope')))
           .to eq(false)
       end
 
       it 'allows known user:pass combinations' do
-        expect(subject.send(:valid?, RequestAuth.new('foo', 'bar')))
+        expect(subject.send(:basic_valid?, RequestAuth.new('foo', 'bar')))
           .to eq(true)
       end
 
       it 'rejects known passwords with unknown users' do
-        expect(subject.send(:valid?, RequestAuth.new('foo', 'bar')))
+        expect(subject.send(:basic_valid?, RequestAuth.new('foo', 'bar')))
           .to eq(true)
       end
     end

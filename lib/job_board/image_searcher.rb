@@ -1,10 +1,14 @@
 # frozen_string_literal: true
 require_relative 'services/fetch_images'
+require_relative '../l2met_log'
 
 module JobBoard
   class ImageSearcher
+    include L2metLog
+
     def search(request_body)
-      logger.debug("handling request request_body=#{request_body.inspect}")
+      log level: :debug, msg: 'handling request',
+          request_body: request_body.inspect
 
       request_body.split(/\n|\r\n/).each do |line|
         images, params, limit = fetch_images_for_line(line)
@@ -41,18 +45,15 @@ module JobBoard
     end
 
     def parse_params(line)
-      logger.debug("parsing request line=#{line.inspect}")
+      log level: :debug, msg: 'parsing request', line: line.inspect
       Hash[CGI.parse(line).map { |k, v| [k, (v.first || '').strip] }]
     end
 
     def fetch_images(params)
-      images = ::JobBoard::Services::FetchImages.run(params: params)
-      logger.debug("found images=#{images.inspect} params=#{params.inspect}")
+      images = JobBoard::Services::FetchImages.run(query: params)
+      log level: :debug, msg: 'found',
+          images: images.inspect, params: params.inspect
       images
-    end
-
-    def logger
-      ::JobBoard.logger
     end
   end
 end
