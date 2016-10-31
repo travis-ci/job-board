@@ -21,7 +21,8 @@ module JobBoard
         JSON.dump(
           greeting: 'hello, human 👋!',
           pong: JobBoard.redis.ping.to_s,
-          now: pg_now
+          now: pg_now,
+          version: JobBoard.version
         )
       ]
     end
