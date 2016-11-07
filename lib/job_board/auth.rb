@@ -4,6 +4,7 @@ require 'base64'
 require 'job_board'
 require_relative '../l2met_log'
 
+require 'jwt'
 require 'rack/auth/abstract/handler'
 require 'rack/auth/abstract/request'
 
