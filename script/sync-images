@@ -13,6 +13,7 @@
 #+ .
 
 set -o errexit
+set -o pipefail
 
 main() {
   case "$*" in
@@ -96,7 +97,9 @@ __delete_dest() {
     (
       local args="infra=${infra}&name=${name}"
 
-      if [ $(__json_by_infra_and_name "${infra}" "${name}" <"${tmpdir}/dump-src.json" | wc -l) -ne 0 ]; then
+      __json_by_infra_and_name "${infra}" "${name}" <"${tmpdir}/dump-src.json" \
+        | jq -r '.name' \
+        | if ! grep -q "^${name}"; then
         echo "${name} not found in src, deleting from dest ${args}"
         curl -fsSL -X DELETE "${dest}/images?${args}" || (
           echo "ERROR: failed to delete ${args}"
