@@ -41,7 +41,7 @@ main() {
   local tmpdir
   tmpdir="$(mktemp -d /var/tmp/job-board-sync.XXXXX)"
 
-  __dump_images "${src}"  "${infra}" "${tmpdir}/dump-src.json"
+  __dump_images "${src}" "${infra}" "${tmpdir}/dump-src.json"
   __dump_images "${dest}" "${infra}" "${tmpdir}/dump-dest.json"
   __upsert_dest "${dest}" "${infra}" "${tmpdir}" "${filter}"
   __delete_dest "${dest}" "${infra}" "${tmpdir}" "${filter}"
@@ -100,11 +100,11 @@ __delete_dest() {
       __json_by_infra_and_name "${infra}" "${name}" <"${tmpdir}/dump-src.json" \
         | jq -r '.name' \
         | if ! grep -q "^${name}"; then
-        echo "${name} not found in src, deleting from dest ${args}"
-        curl -fsSL -X DELETE "${dest}/images?${args}" || (
-          echo "ERROR: failed to delete ${args}"
-        )
-      fi
+          echo "${name} not found in src, deleting from dest ${args}"
+          curl -fsSL -X DELETE "${dest}/images?${args}" || (
+            echo "ERROR: failed to delete ${args}"
+          )
+        fi
     ) 2>&1 | sed 's/^/     /'
   done
 }
