@@ -96,15 +96,17 @@ __delete_dest() {
   for name in $(__json_to_name "${filter}" <"${tmpdir}/dump-dest.json"); do
     (
       local args="infra=${infra}&name=${name}"
-
-      __json_by_infra_and_name "${infra}" "${name}" <"${tmpdir}/dump-src.json" \
-        | jq -r '.name' \
-        | if ! grep -q "^${name}"; then
-          echo "${name} not found in src, deleting from dest ${args}"
-          curl -fsSL -X DELETE "${dest}/images?${args}" || (
-            echo "ERROR: failed to delete ${args}"
-          )
-        fi
+      local src_name
+      src_name="$(
+        __json_by_infra_and_name \
+          "${infra}" "${name}" <"${tmpdir}/dump-src.json" | jq -r '.name'
+      )"
+      if [[ "${src_name}" != "${name}" ]]; then
+        echo "${name} not found in src, deleting from dest ${args}"
+        curl -fsSL -X DELETE "${dest}/images?${args}" || (
+          echo "ERROR: failed to delete ${args}"
+        )
+      fi
     ) 2>&1 | sed 's/^/     /'
   done
 }
