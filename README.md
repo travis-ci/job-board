@@ -13,8 +13,7 @@ historically used as a test bed for per-job HTTP querying across various worker
 infrastructures.
 
 For a detailed explanation of the APIs provided by **job-board**, and the
-behaviors expected from consumers, please consult see the [API section](#api)
-below.
+behaviors expected from consumers, please see the [API section](#api) below.
 
 ## Status
 
