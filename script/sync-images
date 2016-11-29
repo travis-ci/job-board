@@ -13,6 +13,7 @@
 #+ .
 
 set -o errexit
+set -o pipefail
 
 main() {
   case "$*" in
@@ -40,7 +41,7 @@ main() {
   local tmpdir
   tmpdir="$(mktemp -d /var/tmp/job-board-sync.XXXXX)"
 
-  __dump_images "${src}"  "${infra}" "${tmpdir}/dump-src.json"
+  __dump_images "${src}" "${infra}" "${tmpdir}/dump-src.json"
   __dump_images "${dest}" "${infra}" "${tmpdir}/dump-dest.json"
   __upsert_dest "${dest}" "${infra}" "${tmpdir}" "${filter}"
   __delete_dest "${dest}" "${infra}" "${tmpdir}" "${filter}"
@@ -95,8 +96,12 @@ __delete_dest() {
   for name in $(__json_to_name "${filter}" <"${tmpdir}/dump-dest.json"); do
     (
       local args="infra=${infra}&name=${name}"
-
-      if [ $(__json_by_infra_and_name "${infra}" "${name}" <"${tmpdir}/dump-src.json" | wc -l) -ne 0 ]; then
+      local src_name
+      src_name="$(
+        __json_by_infra_and_name \
+          "${infra}" "${name}" <"${tmpdir}/dump-src.json" | jq -r '.name'
+      )"
+      if [[ "${src_name}" != "${name}" ]]; then
         echo "${name} not found in src, deleting from dest ${args}"
         curl -fsSL -X DELETE "${dest}/images?${args}" || (
           echo "ERROR: failed to delete ${args}"
