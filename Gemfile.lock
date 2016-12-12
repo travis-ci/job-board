@@ -77,6 +77,8 @@ GEM
       ruby-progressbar (~> 1.7)
       unicode-display_width (~> 1.0, >= 1.0.1)
     ruby-progressbar (1.8.1)
+    sentry-raven (2.2.0)
+      faraday (>= 0.7.6, < 1.0)
     sequel (4.39.0)
     simplecov (0.12.0)
       docile (~> 1.1.0)
@@ -127,6 +129,7 @@ DEPENDENCIES
   redis-namespace
   rspec
   rubocop
+  sentry-raven
   sequel
   simplecov
   sinatra
@@ -136,4 +139,4 @@ DEPENDENCIES
   travis-support!
 
 BUNDLED WITH
-   1.12.5
+   1.13.6

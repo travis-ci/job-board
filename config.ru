@@ -14,4 +14,6 @@ unless %w(development test).include?(ENV['RACK_ENV'] || 'bogus')
   use Rack::SSL
 end
 
+use Raven::Rack if Travis::Become.config.sentry.dsn
+
 run JobBoard::App
