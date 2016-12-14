@@ -21,6 +21,7 @@ gem 'redis'
 gem 'redis-namespace'
 gem 'rspec', group: %i(development test)
 gem 'rubocop', group: %i(development test)
+gem 'sentry-raven'
 gem 'sequel'
 gem 'simplecov', group: %i(development test)
 gem 'sinatra'
