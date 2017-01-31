@@ -98,9 +98,9 @@ module JobBoard
       json data: [image.to_hash]
     end
 
-    # This is a multi-image version of `PUT /images` that accepts a boy of
+    # This is a multi-image version of `PUT /images` that accepts a body of
     # line-delimited requests, wrapping the whole thing up in a database-level
-    # transaction (where applicable).
+    # transaction.
     put '/images/multi' do
       halt 403 if guest?
 
