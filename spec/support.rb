@@ -3,7 +3,7 @@
 require 'simplecov'
 require 'codeclimate-test-reporter'
 
-if ENV['COVERAGE'] && ENV['INTEGRATION_SPECS'] == '1'
+if ENV['COVERAGE'] == '1' && ENV['INTEGRATION_SPECS'] == '1'
   CodeClimate::TestReporter.start
 end
 
