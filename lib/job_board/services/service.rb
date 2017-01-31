@@ -1,11 +1,11 @@
 # frozen_string_literal: true
-require_relative '../../l2met_log'
+require 'l2met-log'
 
 module JobBoard
   module Services
     module Service
       def self.extended(class_type)
-        class_type.send(:include, L2metLog)
+        class_type.send(:include, L2met::Log)
       end
 
       def run(*args)

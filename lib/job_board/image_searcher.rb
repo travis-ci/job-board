@@ -1,10 +1,11 @@
 # frozen_string_literal: true
 require_relative 'services/fetch_images'
-require_relative '../l2met_log'
+
+require 'l2met-log'
 
 module JobBoard
   class ImageSearcher
-    include L2metLog
+    include L2met::Log
 
     def search(request_body)
       log level: :debug, msg: 'handling request',
