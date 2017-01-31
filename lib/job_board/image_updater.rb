@@ -14,18 +14,29 @@ module JobBoard
           request_body: request_body.inspect
 
       images = []
+      errors = []
 
       JobBoard::Models.db.transaction do
         images = request_body.split(/\n|\r\n/).map do |line|
-          image = JobBoard::Services::UpdateImage.run(
-            params: JobBoard::ImageParams.parse(line)
-          )
-          raise Sequel::Rollback if image.nil?
+          params = JobBoard::ImageParams.parse(line)
+
+          unless JobBoard::ImageParams.valid?(params)
+            errors << "invalid params hash=#{params.inspect}"
+            raise Sequel::Rollback
+          end
+
+          image = JobBoard::Services::UpdateImage.run(params: params)
+
+          if image.nil?
+            errors << "failed to update image with name=#{params['name']}"
+            raise Sequel::Rollback
+          end
+
           image
         end
       end
 
-      images.compact
+      [images.compact, errors.compact]
     end
   end
 end

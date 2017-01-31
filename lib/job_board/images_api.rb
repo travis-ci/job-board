@@ -104,8 +104,8 @@ module JobBoard
     put '/images/multi' do
       halt 403 if guest?
 
-      images = image_updater.update(request.body.read)
-      halt 400 if images.nil? || images.empty?
+      images, errors = image_updater.update(request.body.read)
+      halt 400, JSON.dump(error: errors) if images.nil? || images.empty?
 
       status 200
       json data: images.map(&:to_hash)

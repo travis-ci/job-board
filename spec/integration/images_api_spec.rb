@@ -357,18 +357,19 @@ describe 'Images API', integration: true do
     {
       'when all updates match' => [
         %w(
-          infra=test&name=test-image-1&is_default=false&tags=foo:baz
-          infra=test&name=test-image-2&is_default=false&tags=foo:nah,production:ja
-          infra=test&name=test-image-3&is_default=false&tags=foo:um,production:fuh
+          infra=test&name=test-image-1&tags=foo:baz
+          infra=test&name=test-image-2&tags=foo:nah,production:ja
+          infra=test&name=test-image-3&tags=foo:um,production:fuh
         ), 200
       ],
       'when any update does not match' => [
         %w(
-          infra=test&name=test-image-2&is_default=false&tags=foo:nah,production:ja
-          infra=test&name=test-image-3&is_default=false&tags=foo:um,production:fuh
-          infra=test&name=test-image-99&is_default=false&tags=foo:baz
+          infra=test&name=test-image-2&tags=foo:nah,production:ja
+          infra=test&name=test-image-3&tags=foo:um,production:fuh
+          infra=test&name=test-image-99&tags=foo:baz
         ), 400
-      ]
+      ],
+      'with invalid input' => [%W(infra=test\xba\xba\xda\xda), 400]
     }.each do |desc, (body, status)|
       context desc do
         it "returns #{status}" do
@@ -397,10 +398,25 @@ describe 'Images API', integration: true do
         end
 
         if status >= 300
-          it 'has an empty response body' do
+          it 'has an error response body' do
             put '/images/multi', body.join("\n"),
                 'CONTENT_TYPE' => 'text/uri-list'
-            expect(last_response.body).to be_empty
+            expect(last_response.body).to_not be_empty
+            response_body = JSON.parse(last_response.body)
+            expect(response_body).to include('error')
+            expect(response_body['error']).to_not be_empty
+          end
+
+          it 'does not update images' do
+            put '/images/multi', body.join("\n"),
+                'CONTENT_TYPE' => 'text/uri-list'
+
+            get '/images?infra=test&tags=foo:baz'
+            expect(last_response.status).to eql(200)
+            expect(last_response.body).to_not be_empty
+            response_body = JSON.parse(last_response.body)
+            expect(response_body).to include('data')
+            expect(response_body['data']).to be_empty
           end
         end
       end

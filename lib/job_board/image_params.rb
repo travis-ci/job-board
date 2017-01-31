@@ -14,6 +14,10 @@ module JobBoard
         end
       end
 
+      def valid?(params)
+        !params['name'].to_s.empty? && !params['infra'].to_s.empty?
+      end
+
       private def parse_tags(tags_string)
         Hash[tags_string.split(',').map { |t| t.split(':', 2) }]
       end
