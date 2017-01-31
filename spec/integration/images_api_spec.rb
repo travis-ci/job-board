@@ -330,6 +330,56 @@ describe 'Images API', integration: true do
     end
   end
 
+  describe 'PUT /images/multi' do
+    let(:auth) { %w(admin secret) }
+
+    before :each do
+      JobBoard::Models::Image.where(infra: 'test').delete
+
+      5.times do |n|
+        created = JobBoard::Services::CreateImage.run(
+          params: {
+            'infra' => 'test',
+            'name' => "test-image-#{n}",
+            'is_default' => n.zero?,
+            'tags' => {
+              'foo' => 'bar',
+              'production' => (n.even? ? 'nope' : 'yep'),
+              'last_in' => (n == 2 ? 'yep' : 'nope')
+            }
+          }
+        )
+        created.created_at += (300 * n)
+        created.save_changes
+      end
+    end
+
+    {
+      'when all updates match' => [
+        %w(
+          infra=test&name=test-image-1&is_default=false&tags=foo:baz
+          infra=test&name=test-image-2&is_default=false&tags=foo:nah,production:ja
+          infra=test&name=test-image-3&is_default=false&tags=foo:um,production:fuh
+        ), 200
+      ],
+      'when any update does not match' => [
+        %w(
+          infra=test&name=test-image-2&is_default=false&tags=foo:nah,production:ja
+          infra=test&name=test-image-3&is_default=false&tags=foo:um,production:fuh
+          infra=test&name=test-image-99&is_default=false&tags=foo:baz
+        ), 400
+      ]
+    }.each do |desc, (body, status)|
+      context desc do
+        it "returns #{status}" do
+          put '/images/multi', body.join("\n"),
+              'CONTENT_TYPE' => 'text/uri-list'
+          expect(last_response.status).to eql(status)
+        end
+      end
+    end
+  end
+
   describe 'DELETE /images' do
     let(:auth) { %w(admin secret) }
 
