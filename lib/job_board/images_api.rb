@@ -104,7 +104,7 @@ module JobBoard
       set_images_mutation_params
 
       n_destroyed = JobBoard::Services::DeleteImages.run(params: params)
-      halt 404 if n_destroyed.zero?
+      halt 404 if n_destroyed.nil? || n_destroyed.zero?
 
       [204, {}, '']
     end

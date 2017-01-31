@@ -56,6 +56,7 @@ module JobBoard
       redis_url: ENV.fetch(
         ENV.fetch('REDIS_PROVIDER', 'REDIS_URL'), 'redis://localhost:6379/0'
       ),
+      sentry: { dsn: nil },
       worker_ttl: Integer(ENV.fetch('JOB_BOARD_WORKER_TTL', '120'))
     )
 
