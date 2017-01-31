@@ -376,6 +376,33 @@ describe 'Images API', integration: true do
               'CONTENT_TYPE' => 'text/uri-list'
           expect(last_response.status).to eql(status)
         end
+
+        if status < 299
+          it 'has a data response body with updated images' do
+            put '/images/multi', body.join("\n"),
+                'CONTENT_TYPE' => 'text/uri-list'
+            response_body = JSON.parse(last_response.body)
+            expect(response_body).to_not be_empty
+            expect(response_body).to include('data')
+            expect(response_body['data']).to_not be_nil
+            expect(response_body['data'].length).to eql(body.length)
+
+            body_params = body.map { |l| JobBoard::ImageParams.parse(l) }
+            response_body['data'].zip(body_params).each do |params, image|
+              expect(params['name']).to eql(image['name'])
+              expect(params['infra']).to eql(image['infra'])
+              expect(params['tags']).to eql(image['tags'])
+            end
+          end
+        end
+
+        if status >= 300
+          it 'has an empty response body' do
+            put '/images/multi', body.join("\n"),
+                'CONTENT_TYPE' => 'text/uri-list'
+            expect(last_response.body).to be_empty
+          end
+        end
       end
     end
   end
