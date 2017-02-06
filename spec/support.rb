@@ -3,7 +3,7 @@
 require 'simplecov'
 require 'codeclimate-test-reporter'
 
-if ENV['COVERAGE'] && ENV['INTEGRATION_SPECS'] == '1'
+if ENV['COVERAGE'] == '1' && ENV['INTEGRATION_SPECS'] == '1'
   CodeClimate::TestReporter.start
 end
 
@@ -13,12 +13,12 @@ ENV['DATABASE_URL'] = 'mock://' unless ENV['INTEGRATION_SPECS'] == '1'
 ENV['DATABASE_SQL_LOGGING'] = nil
 
 require 'job_board'
-require 'l2met_log'
+require 'l2met-log'
 require 'rack/test'
 require 'factory_girl'
 require 'fakeredis/rspec'
 
-L2metLog.default_log_level = :fatal
+L2met::Log.default_log_level = :fatal
 
 module RackTestBits
   include Rack::Test::Methods

@@ -1,10 +1,11 @@
 # frozen_string_literal: true
 require_relative 'services/fetch_images'
-require_relative '../l2met_log'
+
+require 'l2met-log'
 
 module JobBoard
   class ImageSearcher
-    include L2metLog
+    include L2met::Log
 
     def search(request_body)
       log level: :debug, msg: 'handling request',
@@ -21,32 +22,15 @@ module JobBoard
     private
 
     def fetch_images_for_line(line)
-      params = parse_params(line)
+      params = JobBoard::ImageParams.parse(line)
 
       return [[], 1] if missing_infra?(params)
 
-      params['tags'] = parse_tags(params['tags']) if params.key?('tags')
-      params['limit'] = limit = Integer(params['limit'] || 1)
-      params['is_default'] = parse_bool(params['is_default'] || false)
-
-      [fetch_images(params), params, limit]
+      [fetch_images(params), params, params['limit']]
     end
 
     def missing_infra?(params)
       params['infra'].nil? || params['infra'].empty?
-    end
-
-    def parse_tags(tags_string)
-      Hash[tags_string.split(',').map { |t| t.split(':', 2) }]
-    end
-
-    def parse_bool(bool_string)
-      %w(yes true on 1).include?(bool_string.to_s.downcase)
-    end
-
-    def parse_params(line)
-      log level: :debug, msg: 'parsing request', line: line.inspect
-      Hash[CGI.parse(line).map { |k, v| [k, (v.first || '').strip] }]
     end
 
     def fetch_images(params)

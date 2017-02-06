@@ -1,4 +1,10 @@
 GIT
+  remote: https://github.com/travis-ci/l2met-log.git
+  revision: d04ccc5e746b56685a48be9d113603fbb3c60db3
+  specs:
+    l2met-log (0.1.0)
+
+GIT
   remote: https://github.com/travis-ci/travis-support
   revision: 2cd02d2a06fdd1e2fc2f129148c168b56f7c190f
   specs:
@@ -119,6 +125,7 @@ DEPENDENCIES
   faraday
   jemalloc
   jwt
+  l2met-log!
   pg
   pry
   puma

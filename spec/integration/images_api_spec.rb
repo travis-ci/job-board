@@ -330,6 +330,99 @@ describe 'Images API', integration: true do
     end
   end
 
+  describe 'PUT /images/multi' do
+    let(:auth) { %w(admin secret) }
+
+    before :each do
+      JobBoard::Models::Image.where(infra: 'test').delete
+
+      5.times do |n|
+        created = JobBoard::Services::CreateImage.run(
+          params: {
+            'infra' => 'test',
+            'name' => "test-image-#{n}",
+            'is_default' => n.zero?,
+            'tags' => {
+              'foo' => 'bar',
+              'production' => (n.even? ? 'nope' : 'yep'),
+              'last_in' => (n == 2 ? 'yep' : 'nope')
+            }
+          }
+        )
+        created.created_at += (300 * n)
+        created.save_changes
+      end
+    end
+
+    {
+      'when all updates match' => [
+        %w(
+          infra=test&name=test-image-1&tags=foo:baz
+          infra=test&name=test-image-2&tags=foo:nah,production:ja
+          infra=test&name=test-image-3&tags=foo:um,production:fuh
+        ), 200
+      ],
+      'when any update does not match' => [
+        %w(
+          infra=test&name=test-image-2&tags=foo:nah,production:ja
+          infra=test&name=test-image-3&tags=foo:um,production:fuh
+          infra=test&name=test-image-99&tags=foo:baz
+        ), 400
+      ],
+      'with invalid input' => [%W(infra=test\xba\xba\xda\xda), 400]
+    }.each do |desc, (body, status)|
+      context desc do
+        it "returns #{status}" do
+          put '/images/multi', body.join("\n"),
+              'CONTENT_TYPE' => 'text/uri-list'
+          expect(last_response.status).to eql(status)
+        end
+
+        if status < 299
+          it 'has a data response body with updated images' do
+            put '/images/multi', body.join("\n"),
+                'CONTENT_TYPE' => 'text/uri-list'
+            response_body = JSON.parse(last_response.body)
+            expect(response_body).to_not be_empty
+            expect(response_body).to include('data')
+            expect(response_body['data']).to_not be_nil
+            expect(response_body['data'].length).to eql(body.length)
+
+            body_params = body.map { |l| JobBoard::ImageParams.parse(l) }
+            response_body['data'].zip(body_params).each do |params, image|
+              expect(params['name']).to eql(image['name'])
+              expect(params['infra']).to eql(image['infra'])
+              expect(params['tags']).to eql(image['tags'])
+            end
+          end
+        end
+
+        if status >= 300
+          it 'has an error response body' do
+            put '/images/multi', body.join("\n"),
+                'CONTENT_TYPE' => 'text/uri-list'
+            expect(last_response.body).to_not be_empty
+            response_body = JSON.parse(last_response.body)
+            expect(response_body).to include('error')
+            expect(response_body['error']).to_not be_empty
+          end
+
+          it 'does not update images' do
+            put '/images/multi', body.join("\n"),
+                'CONTENT_TYPE' => 'text/uri-list'
+
+            get '/images?infra=test&tags=foo:baz'
+            expect(last_response.status).to eql(200)
+            expect(last_response.body).to_not be_empty
+            response_body = JSON.parse(last_response.body)
+            expect(response_body).to include('data')
+            expect(response_body['data']).to be_empty
+          end
+        end
+      end
+    end
+  end
+
   describe 'DELETE /images' do
     let(:auth) { %w(admin secret) }
 

@@ -1,10 +1,11 @@
 # frozen_string_literal: true
 require 'job_board'
-require_relative '../l2met_log'
+
+require 'l2met-log'
 
 module JobBoard
   class JobQueueReconciler
-    include L2metLog
+    include L2met::Log
 
     def initialize(redis: nil)
       @redis = redis || JobBoard.redis

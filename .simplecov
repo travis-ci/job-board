@@ -1,6 +1,6 @@
 # vim:filetype=ruby
 #
-if ENV['COVERAGE']
+if ENV['COVERAGE'] == '1'
   SimpleCov.start do
     add_filter '/spec/'
     add_filter '/db/'

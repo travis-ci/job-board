@@ -11,6 +11,7 @@ gem 'fakeredis', group: %i(development test), require: false
 gem 'faraday'
 gem 'jemalloc'
 gem 'jwt'
+gem 'l2met-log', git: 'https://github.com/travis-ci/l2met-log.git'
 gem 'pg'
 gem 'pry', require: false
 gem 'puma'

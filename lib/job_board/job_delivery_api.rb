@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 require 'json'
 
-require_relative '../l2met_log'
 require_relative 'auth'
 require_relative 'services'
 
+require 'l2met-log'
 require 'sinatra/base'
 require 'sinatra/json'
 require 'sinatra/param'
@@ -16,7 +16,7 @@ module JobBoard
     before { content_type :json }
 
     helpers do
-      include L2metLog
+      include L2met::Log
       include JobBoard::Auth::GuestDetect
     end
 

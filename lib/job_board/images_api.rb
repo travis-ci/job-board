@@ -98,6 +98,19 @@ module JobBoard
       json data: [image.to_hash]
     end
 
+    # This is a multi-image version of `PUT /images` that accepts a body of
+    # line-delimited requests, wrapping the whole thing up in a database-level
+    # transaction.
+    put '/images/multi' do
+      halt 403 if guest?
+
+      images, errors = image_updater.update(request.body.read)
+      halt 400, JSON.dump(error: errors) if images.nil? || images.empty?
+
+      status 200
+      json data: images.map(&:to_hash)
+    end
+
     delete '/images' do
       halt 403 if guest?
 
@@ -109,13 +122,15 @@ module JobBoard
       [204, {}, '']
     end
 
-    private
-
-    def image_searcher
+    private def image_searcher
       @image_searcher ||= JobBoard::ImageSearcher.new
     end
 
-    def images_fields(images, fields)
+    private def image_updater
+      @image_updater ||= JobBoard::ImageUpdater.new
+    end
+
+    private def images_fields(images, fields)
       images.map do |image|
         image.delete_if { |k, _| !fields.include?(k) }
       end
