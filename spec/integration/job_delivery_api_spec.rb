@@ -1,8 +1,9 @@
 # frozen_string_literal: true
+
 describe 'Job Delivery API', integration: true do
-  let(:guest_auth) { %w(guest guest) }
-  let(:admin_auth) { %w(important secret) }
-  let(:auth_tokens) { %w(abc123 secret) }
+  let(:guest_auth) { %w[guest guest] }
+  let(:admin_auth) { %w[important secret] }
+  let(:auth_tokens) { %w[abc123 secret] }
   let(:from) { 'worker@localhost' }
   let(:site) { 'test' }
 
@@ -276,7 +277,7 @@ describe 'Job Delivery API', integration: true do
       expect(config['os']).to eq('mcohess')
     end
 
-    %w(job_state_url log_parts_url jwt @type).each do |key|
+    %w[job_state_url log_parts_url jwt @type].each do |key|
       it "includes a #{key.inspect} key" do
         authorize(*admin_auth)
         get "/jobs/#{job_id}", nil,

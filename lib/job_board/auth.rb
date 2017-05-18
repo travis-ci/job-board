@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'base64'
 
 require 'job_board'
@@ -31,12 +32,14 @@ module JobBoard
     def call(env)
       auth = Request.new(env)
 
-      return [
-        412,
-        { 'Content-Type' => 'application/json' },
-        [JSON.dump('@type' => 'error', error: 'missing Travis-Site header')]
-      ] if site_paths =~ auth.request.path_info &&
-           !env.key?('HTTP_TRAVIS_SITE')
+      if site_paths =~ auth.request.path_info &&
+         !env.key?('HTTP_TRAVIS_SITE')
+        return [
+          412,
+          { 'Content-Type' => 'application/json' },
+          [JSON.dump('@type' => 'error', error: 'missing Travis-Site header')]
+        ]
+      end
 
       return unauthorized unless auth.provided?
       return bad_request unless auth.basic? || auth.bearer?
@@ -72,7 +75,7 @@ module JobBoard
     end
 
     def basic_valid?(auth)
-      return true if auth.basic_credentials == %w(guest guest)
+      return true if auth.basic_credentials == %w[guest guest]
       auth_tokens.include?(auth.basic_credentials.last) ||
         auth_tokens.include?(auth.basic_credentials)
     end

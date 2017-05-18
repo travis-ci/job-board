@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'hashr'
 require 'openssl'
 require 'travis/config'

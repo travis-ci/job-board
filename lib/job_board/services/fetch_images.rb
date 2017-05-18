@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'job_board'
 require_relative 'service'
 
@@ -45,9 +46,7 @@ module JobBoard
 
       def with_is_default(image_query)
         return image_query unless query.fetch('is_default', false)
-        image_query.where(
-          'is_default = ?', true
-        )
+        image_query.where(is_default: true)
       end
 
       def with_name_like(image_query)
@@ -60,7 +59,7 @@ module JobBoard
       def with_tags_matching(image_query)
         return image_query unless query.key?('tags')
         image_query.where(
-          'tags @> ?', Sequel.hstore(query.fetch('tags'))
+          Sequel.lit('tags @> ?', Sequel.hstore(query.fetch('tags')))
         )
       end
     end

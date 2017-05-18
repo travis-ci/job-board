@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 # vim:fileencoding=utf-8
 
 require_relative 'images_api'

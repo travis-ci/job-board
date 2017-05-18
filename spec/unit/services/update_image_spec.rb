@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 describe JobBoard::Services::UpdateImage do
   let(:image0) { build(:image) }
 

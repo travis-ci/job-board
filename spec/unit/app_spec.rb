@@ -1,11 +1,12 @@
 # frozen_string_literal: true
+
 describe JobBoard::App do
   let(:image0) { build(:image) }
-  let(:auth) { %w(guest guest) }
+  let(:auth) { %w[guest guest] }
 
   before do
     allow_any_instance_of(JobBoard::Auth).to receive(:auth_tokens)
-      .and_return(%w(secret))
+      .and_return(%w[secret])
     basic_authorize(*auth)
     allow(JobBoard::Services::CreateImage).to receive(:run)
       .and_return(image0)
@@ -16,7 +17,7 @@ describe JobBoard::App do
   end
 
   describe 'POST /images' do
-    let(:auth) { %w(admin secret) }
+    let(:auth) { %w[admin secret] }
 
     it 'requires infra param' do
       post '/images'
@@ -52,7 +53,7 @@ describe JobBoard::App do
   describe 'POST /images/search' do
     it 'returns empty dataset if no queries include "infra"' do
       post '/images/search',
-           %w(foo=test name=test-image).join("\n"),
+           %w[foo=test name=test-image].join("\n"),
            'CONTENT_TYPE' => 'text/uri-list'
 
       expect(last_response.status).to eql(200)
@@ -63,7 +64,7 @@ describe JobBoard::App do
 
     it 'returns an array of images' do
       post '/images/search',
-           %w(infra=test infra=test&name=test-image).join("\n"),
+           %w[infra=test infra=test&name=test-image].join("\n"),
            'CONTENT_TYPE' => 'text/uri-list'
 
       expect(last_response.status).to eql(200)
@@ -74,7 +75,7 @@ describe JobBoard::App do
 
     it 'returns the matching query' do
       post '/images/search',
-           %w(infra=test infra=test&name=test-image).join("\n"),
+           %w[infra=test infra=test&name=test-image].join("\n"),
            'CONTENT_TYPE' => 'text/uri-list'
 
       expect(last_response.status).to eql(200)
@@ -87,7 +88,7 @@ describe JobBoard::App do
   end
 
   describe 'PUT /images' do
-    let(:auth) { %w(admin secret) }
+    let(:auth) { %w[admin secret] }
 
     it 'requires infra param' do
       put '/images'

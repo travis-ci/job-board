@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 module JobBoard
   module Services
     autoload :AllocateJobs, 'job_board/services/allocate_jobs'

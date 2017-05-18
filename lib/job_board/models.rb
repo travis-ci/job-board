@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'logger'
 
 require 'sequel'
@@ -28,7 +29,7 @@ module JobBoard
         return if @initdb
         Sequel.extension :core_extensions, :pg_hstore, :pg_json
 
-        %w(images).each do |table|
+        %w[images].each do |table|
           Sequel.qualify(:job_board, table.to_sym)
           table.to_sym.qualify(:job_board)
         end

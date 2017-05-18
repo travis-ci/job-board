@@ -1,7 +1,8 @@
 # frozen_string_literal: true
+
 describe 'Images API', integration: true do
-  let(:auth) { %w(guest guest) }
-  let(:auth_tokens) { %w(abc123 secret) }
+  let(:auth) { %w[guest guest] }
+  let(:auth_tokens) { %w[abc123 secret] }
 
   before do
     allow_any_instance_of(JobBoard::ImagesAPI).to receive(:images_name_format)
@@ -100,7 +101,7 @@ describe 'Images API', integration: true do
       expect(response_body).to_not be_empty
       expect(response_body['data']).to_not be_nil
       response_body['data'].each do |image|
-        expect(image.keys).to eql(%w(name))
+        expect(image.keys).to eql(%w[name])
       end
     end
   end
@@ -128,15 +129,15 @@ describe 'Images API', integration: true do
     end
 
     {
-      'with infra & wildcard name' => [%w(infra=test&name=.*), 1],
+      'with infra & wildcard name' => [%w[infra=test&name=.*], 1],
       'with infra & limit=3' =>
-        [%w(infra=test&limit=3), 3],
+        [%w[infra=test&limit=3], 3],
       'with infra & tags' =>
-        [%w(infra=test&tags=foo:bar,production:yep), 1],
+        [%w[infra=test&tags=foo:bar,production:yep], 1],
       'with infra, tags, limit=3, & is_default=false' =>
-        [%w(infra=test&tags=foo:bar&is_default=false&limit=3), 3],
+        [%w[infra=test&tags=foo:bar&is_default=false&limit=3], 3],
       'with infra, tags, limit=3, & is_default=true' =>
-        [%w(infra=test&tags=foo:bar&is_default=true&limit=3), 1]
+        [%w[infra=test&tags=foo:bar&is_default=true&limit=3], 1]
     }.each do |desc, (body, count)|
       context desc do
         it 'returns 200' do
@@ -161,7 +162,7 @@ describe 'Images API', integration: true do
     end
 
     {
-      'when no queries include "infra"' => %w(foo=test&limit=1 name=test-image)
+      'when no queries include "infra"' => %w[foo=test&limit=1 name=test-image]
     }.each do |desc, body|
       context desc do
         it 'returns empty dataset' do
@@ -187,13 +188,13 @@ describe 'Images API', integration: true do
       expect(response_body).to_not be_empty
       expect(response_body['data']).to_not be_nil
       response_body['data'].each do |image|
-        expect(image.keys).to eql(%w(name))
+        expect(image.keys).to eql(%w[name])
       end
     end
   end
 
   describe 'POST /images' do
-    let(:auth) { %w(admin secret) }
+    let(:auth) { %w[admin secret] }
 
     before :each do
       JobBoard::Models::Image.where(infra: 'test').delete
@@ -217,7 +218,7 @@ describe 'Images API', integration: true do
         end
 
         context 'with guest auth' do
-          let(:auth) { %w(guest guest) }
+          let(:auth) { %w[guest guest] }
 
           it 'returns 403' do
             post path
@@ -250,7 +251,7 @@ describe 'Images API', integration: true do
   end
 
   describe 'PUT /images' do
-    let(:auth) { %w(admin secret) }
+    let(:auth) { %w[admin secret] }
 
     before :each do
       JobBoard::Models::Image.where(infra: 'test').delete
@@ -319,7 +320,7 @@ describe 'Images API', integration: true do
         end
 
         context 'with guest auth' do
-          let(:auth) { %w(guest guest) }
+          let(:auth) { %w[guest guest] }
 
           it 'returns 403' do
             put path
@@ -331,7 +332,7 @@ describe 'Images API', integration: true do
   end
 
   describe 'PUT /images/multi' do
-    let(:auth) { %w(admin secret) }
+    let(:auth) { %w[admin secret] }
 
     before :each do
       JobBoard::Models::Image.where(infra: 'test').delete
@@ -356,20 +357,20 @@ describe 'Images API', integration: true do
 
     {
       'when all updates match' => [
-        %w(
+        %w[
           infra=test&name=test-image-1&tags=foo:baz
           infra=test&name=test-image-2&tags=foo:nah,production:ja
           infra=test&name=test-image-3&tags=foo:um,production:fuh
-        ), 200
+        ], 200
       ],
       'when any update does not match' => [
-        %w(
+        %w[
           infra=test&name=test-image-2&tags=foo:nah,production:ja
           infra=test&name=test-image-3&tags=foo:um,production:fuh
           infra=test&name=test-image-99&tags=foo:baz
-        ), 400
+        ], 400
       ],
-      'with invalid input' => [%W(infra=test\xba\xba\xda\xda), 400]
+      'with invalid input' => [%W[infra=test\xba\xba\xda\xda], 400]
     }.each do |desc, (body, status)|
       context desc do
         it "returns #{status}" do
@@ -424,7 +425,7 @@ describe 'Images API', integration: true do
   end
 
   describe 'DELETE /images' do
-    let(:auth) { %w(admin secret) }
+    let(:auth) { %w[admin secret] }
 
     before :each do
       JobBoard::Models::Image.where(infra: 'test').delete
@@ -468,7 +469,7 @@ describe 'Images API', integration: true do
         end
 
         context 'with guest auth' do
-          let(:auth) { %w(guest guest) }
+          let(:auth) { %w[guest guest] }
 
           it 'returns 403' do
             delete path

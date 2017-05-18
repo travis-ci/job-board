@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 describe JobBoard::Services::CreateOrUpdateJob do
   subject do
     described_class.new(job: job, site: site)

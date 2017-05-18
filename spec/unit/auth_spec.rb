@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 RequestAuth = Struct.new('RequestAuth', :username, :password) do
   def basic_credentials
     [username, password]
@@ -8,7 +9,7 @@ end
 describe JobBoard::Auth do
   subject { described_class.new(nil) }
 
-  let(:tokens) { %w(abc123 secret).join(':') }
+  let(:tokens) { %w[abc123 secret].join(':') }
 
   it 'pulls its raw auth tokens from JobBoard.config' do
     allow(JobBoard).to receive_message_chain(:config, :auth, :tokens)
@@ -28,7 +29,7 @@ describe JobBoard::Auth do
     end
 
     context 'with ","-delimited user:pass auth tokens' do
-      let(:tokens) { %w(foo:bar admin:yah).join(',') }
+      let(:tokens) { %w[foo:bar admin:yah].join(',') }
 
       it 'rejects unknown user:pass combinations' do
         expect(subject.send(:basic_valid?, RequestAuth.new('foo', 'nope')))

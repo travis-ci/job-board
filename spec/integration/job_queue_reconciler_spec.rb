@@ -8,7 +8,7 @@ describe JobBoard::JobQueueReconciler do
   let(:site) { 'test' }
 
   before do
-    keys = %w(sites queues:* queue:* workers:* worker:*).map do |glob|
+    keys = %w[sites queues:* queue:* workers:* worker:*].map do |glob|
       JobBoard.redis.keys(glob)
     end
 
@@ -61,13 +61,13 @@ describe JobBoard::JobQueueReconciler do
           reclaimed: 0
         )
         avail_a = job_queue.check_claims(
-          worker: 'a', job_ids: %w(0 2)
+          worker: 'a', job_ids: %w[0 2]
         )
-        expect(avail_a).to eq(%w(0 2))
+        expect(avail_a).to eq(%w[0 2])
         avail_b = job_queue.check_claims(
-          worker: 'b', job_ids: %w(1 3)
+          worker: 'b', job_ids: %w[1 3]
         )
-        expect(avail_b).to eq(%w(1 3))
+        expect(avail_b).to eq(%w[1 3])
       end
     end
 
@@ -95,13 +95,13 @@ describe JobBoard::JobQueueReconciler do
           reclaimed: 0
         )
         avail_a = job_queue.check_claims(
-          worker: 'a', job_ids: %w(0 2)
+          worker: 'a', job_ids: %w[0 2]
         )
-        expect(avail_a).to eq(%w(0 2))
+        expect(avail_a).to eq(%w[0 2])
         avail_b = job_queue.check_claims(
-          worker: 'b', job_ids: %w(1)
+          worker: 'b', job_ids: %w[1]
         )
-        expect(avail_b).to eq(%w(1))
+        expect(avail_b).to eq(%w[1])
       end
     end
 
@@ -134,13 +134,13 @@ describe JobBoard::JobQueueReconciler do
           reclaimed: 2
         )
         avail_a = job_queue.check_claims(
-          worker: 'a', job_ids: %w(0 2)
+          worker: 'a', job_ids: %w[0 2]
         )
-        expect(avail_a).to eq(%w())
+        expect(avail_a).to eq(%w[])
         avail_b = job_queue.check_claims(
-          worker: 'b', job_ids: %w(1)
+          worker: 'b', job_ids: %w[1]
         )
-        expect(avail_b).to eq(%w(1))
+        expect(avail_b).to eq(%w[1])
       end
     end
   end

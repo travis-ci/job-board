@@ -37,7 +37,7 @@ describe JobBoard::JobQueue do
     end
 
     it 'can check claims' do
-      claimed = subject.check_claims(worker: 'a', job_ids: %w(0 1 2 3))
+      claimed = subject.check_claims(worker: 'a', job_ids: %w[0 1 2 3])
       expect(claimed).to be_empty
     end
 
@@ -107,7 +107,7 @@ describe JobBoard::JobQueue do
 
     it 'can check claims' do
       claimed = subject.check_claims(
-        worker: 'a', job_ids: %w(0 1 2 3)
+        worker: 'a', job_ids: %w[0 1 2 3]
       )
       expect(claimed).to eq([])
     end

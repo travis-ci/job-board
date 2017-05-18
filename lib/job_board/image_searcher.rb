@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative 'services/fetch_images'
 
 require 'l2met-log'

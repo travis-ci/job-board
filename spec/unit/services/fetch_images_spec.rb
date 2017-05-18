@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 class FakeImageQuery
   attr_reader :results, :wheres, :limit
   def initialize(results)
@@ -52,7 +53,7 @@ describe JobBoard::Services::FetchImages do
       }
       expect(described_class.run(query: fetch_query)).to eql(results)
       expect(database_query.wheres).to include(
-        ['tags @> ?', Sequel.hstore('a' => 'b')]
+        [Sequel.lit('tags @> ?', Sequel.hstore('a' => 'b'))]
       )
     end
   end

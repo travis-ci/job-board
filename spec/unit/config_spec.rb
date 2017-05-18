@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 describe JobBoard::Config do
   subject { described_class.load }
 

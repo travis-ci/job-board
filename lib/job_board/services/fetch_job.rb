@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'base64'
 
 require 'job_board'
@@ -93,25 +94,25 @@ module JobBoard
         job_copy = Marshal.load(Marshal.dump(job))
         data = job_copy.fetch('data', {})
         data.reject! do |k, _|
-          %w(
+          %w[
             cache_settings
             env_vars
             source
             ssh_key
-          ).include?(k)
+          ].include?(k)
         end
 
-        data.fetch('config', {}).reject! do |k, _|
-          !%w(
+        data.fetch('config', {}).select! do |k, _|
+          %w[
             dist
             group
             language
             os
-          ).include?(k)
+          ].include?(k)
         end
 
-        data.fetch('job', {}).reject! { |k, _| k != 'id' }
-        data.fetch('repository', {}).reject! { |k, _| k != 'slug' }
+        data.fetch('job', {}).select! { |k, _| k == 'id' }
+        data.fetch('repository', {}).select! { |k, _| k == 'slug' }
         job_copy
       end
 

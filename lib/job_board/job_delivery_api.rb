@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'json'
 
 require_relative 'auth'
@@ -28,9 +29,11 @@ module JobBoard
       param :queue, String, blank: true, required: true
       param :count, Integer, default: 1
 
-      halt 412, JSON.dump(
-        '@type' => 'error', error: 'missing from header'
-      ) unless request.env.key?('HTTP_FROM')
+      unless request.env.key?('HTTP_FROM')
+        halt 412, JSON.dump(
+          '@type' => 'error', error: 'missing from header'
+        )
+      end
 
       from = request.env.fetch('HTTP_FROM')
       site = request.env.fetch('travis.site')
@@ -71,11 +74,13 @@ module JobBoard
         job_id: job_id, site: site, infra: infra
       )
       halt 404, JSON.dump('@type' => 'error', error: 'no such job') if job.nil?
-      halt 424, JSON.dump(
-        '@type' => 'error',
-        error: 'job script fetch error',
-        upstream_error: job.message
-      ) if job.is_a?(JobBoard::Services::FetchJobScript::BuildScriptError)
+      if job.is_a?(JobBoard::Services::FetchJobScript::BuildScriptError)
+        halt 424, JSON.dump(
+          '@type' => 'error',
+          error: 'job script fetch error',
+          upstream_error: job.message
+        )
+      end
       log msg: :fetched, job_id: job_id, site: site, infra: infra
       json job
     end

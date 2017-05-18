@@ -1,7 +1,8 @@
 # frozen_string_literal: true
+
 describe 'Misc API', integration: true do
   describe 'GET /' do
-    let(:auth) { %w(guest guest) }
+    let(:auth) { %w[guest guest] }
 
     before do
       authorize(*auth)
