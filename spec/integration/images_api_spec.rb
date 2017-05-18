@@ -214,7 +214,7 @@ describe 'Images API', integration: true do
         end
 
         it 'creates a new image' do
-          expect { post path }.to change { JobBoard::Models::Image.count }
+          expect { post path }.to(change { JobBoard::Models::Image.count })
         end
 
         context 'with guest auth' do
@@ -226,7 +226,7 @@ describe 'Images API', integration: true do
           end
 
           it 'does not create a new image' do
-            expect { post path }.to_not change { JobBoard::Models::Image.count }
+            expect { post path }.to_not(change { JobBoard::Models::Image.count })
           end
         end
       end
@@ -244,7 +244,7 @@ describe 'Images API', integration: true do
         end
 
         it 'creates no image' do
-          expect { post path }.to_not change { JobBoard::Models::Image.count }
+          expect { post path }.to_not(change { JobBoard::Models::Image.count })
         end
       end
     end
@@ -465,7 +465,7 @@ describe 'Images API', integration: true do
           expect do
             delete path
             expect(last_response.body).to be_empty
-          end.to change { JobBoard::Models::Image.count }.by(-1)
+          end.to(change { JobBoard::Models::Image.count }.by(-1))
         end
 
         context 'with guest auth' do
@@ -480,7 +480,7 @@ describe 'Images API', integration: true do
             expect do
               delete path
               expect(last_response.body).to be_empty
-            end.to_not change { JobBoard::Models::Image.count }
+            end.to_not(change { JobBoard::Models::Image.count })
           end
         end
       end

@@ -126,7 +126,7 @@ module JobBoard
 
       def job_id_url(key)
         Addressable::Template.new(
-          config.fetch(:"#{key % { site: site }}")
+          config.fetch(:"#{format(key, site: site)}")
         ).partial_expand('job_id' => job_id).pattern
       end
     end

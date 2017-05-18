@@ -27,13 +27,14 @@ module JobBoard
 
       def initdb!
         return if @initdb
-        Sequel.extension :core_extensions, :pg_hstore, :pg_json
+        Sequel.extension :core_extensions
 
-        %w[images].each do |table|
+        %w[images jobs].each do |table|
           Sequel.qualify(:job_board, table.to_sym)
           table.to_sym.qualify(:job_board)
         end
 
+        db.extension :pg_hstore, :pg_json
         @initdb = db['select now()']
       end
     end
