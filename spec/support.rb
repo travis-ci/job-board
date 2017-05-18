@@ -1,11 +1,6 @@
 # frozen_string_literal: true
 
 require 'simplecov'
-require 'codeclimate-test-reporter'
-
-if ENV['COVERAGE'] == '1' && ENV['INTEGRATION_SPECS'] == '1'
-  CodeClimate::TestReporter.start
-end
 
 ENV['RACK_ENV'] = 'test'
 ENV['LOG_LEVEL'] = 'fatal'
