@@ -1,2 +1,3 @@
-web: bundle exec je rackup -p $PORT
-console: bundle exec script/console
+web: bin/job-board-pgbouncer-exec bin/job-board-server
+
+console: bundle exec je bin/job-board-console

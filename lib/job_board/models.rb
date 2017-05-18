@@ -15,7 +15,9 @@ module JobBoard
         @db ||= Sequel.connect(
           JobBoard.config.database.url,
           max_connections: JobBoard.config.database.pool_size,
-          logger: db_logger
+          logger: db_logger,
+          after_connect: ->(c) { after_connect(c) },
+          preconnect: preconnect?
         )
       end
 
@@ -36,6 +38,39 @@ module JobBoard
 
         db.extension(*connection_extensions)
         @initdb = db['select now()']
+      end
+
+      private def after_connect(conn)
+        execute_compat(
+          conn, "SET application_name = '#{JobBoard.config.process_name}'"
+        )
+        execute_compat(
+          conn, "SET statement_timeout = #{statement_timeout_ms}"
+        )
+      end
+
+      private def statement_timeout_ms
+        @statement_timeout_ms ||= if ENV['DYNO'].to_s.start_with?('web.')
+                                    30 * 1_000
+                                  else
+                                    30 * 60 * 1_000
+                                  end
+      end
+
+      private def execute_compat(conn, statement)
+        if conn.respond_to?(:exec)
+          conn.exec(statement)
+        elsif conn.respond_to?(:execute)
+          conn.execute(statement)
+        elsif conn.respond_to?(:create_statement)
+          st = conn.create_statement
+          st.execute(statement)
+          st.close
+        end
+      end
+
+      private def preconnect?
+        %w[true 1].include?(ENV['PGBOUNCER_ENABLED'].to_s.downcase)
       end
 
       private def global_extensions
