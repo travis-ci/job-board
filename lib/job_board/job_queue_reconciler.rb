@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'job_board'
 
 require 'l2met-log'

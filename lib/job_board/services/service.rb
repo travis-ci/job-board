@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'l2met-log'
 
 module JobBoard

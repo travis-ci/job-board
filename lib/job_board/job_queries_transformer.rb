@@ -38,36 +38,48 @@ module JobBoard
         candidate_tags << { is_default: false }.merge(tags)
       end
 
-      add_tags.call(
-        osx_image: val('osx_image'),
-        os: 'osx'
-      ) if osx? && has?('osx_image')
+      if osx? && has?('osx_image')
+        add_tags.call(
+          osx_image: val('osx_image'),
+          os: 'osx'
+        )
+      end
 
-      add_tags.call(
-        dist: val('dist'),
-        group: val('group'),
-        language_key => 'true'
-      ) if has?('dist', 'group', 'language')
+      if has?('dist', 'group', 'language')
+        add_tags.call(
+          dist: val('dist'),
+          group: val('group'),
+          language_key => 'true'
+        )
+      end
 
-      add_tags.call(
-        dist: val('dist'),
-        language_key => 'true'
-      ) if has?('dist', 'language') && !osx?
+      if has?('dist', 'language') && !osx?
+        add_tags.call(
+          dist: val('dist'),
+          language_key => 'true'
+        )
+      end
 
-      add_tags.call(
-        group: val('group'),
-        language_key => 'true'
-      ) if has?('group', 'language')
+      if has?('group', 'language')
+        add_tags.call(
+          group: val('group'),
+          language_key => 'true'
+        )
+      end
 
-      add_tags.call(
-        os: val('os'),
-        language_key => 'true'
-      ) if has?('os', 'language')
+      if has?('os', 'language')
+        add_tags.call(
+          os: val('os'),
+          language_key => 'true'
+        )
+      end
 
       add_default_tag.call(language_key => 'true') if has?('language')
-      add_default_tag.call(
-        osx_image: val('osx_image')
-      ) if osx? && has?('osx_image')
+      if osx? && has?('osx_image')
+        add_default_tag.call(
+          osx_image: val('osx_image')
+        )
+      end
       add_default_tag.call(dist: val('dist')) if has?('dist')
       add_default_tag.call(group: val('group')) if has?('group')
       add_default_tag.call(os: val('os')) if has?('os')
@@ -84,7 +96,7 @@ module JobBoard
     end
 
     def osx?
-      %w(osx macos).include?(config.fetch('os'))
+      %w[osx macos].include?(config.fetch('os'))
     end
 
     def language_key

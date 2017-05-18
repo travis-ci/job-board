@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require 'cgi'
 
 module JobBoard
@@ -23,7 +24,7 @@ module JobBoard
       end
 
       private def parse_bool(bool_string)
-        %w(yes true on 1).include?(bool_string.to_s.downcase)
+        %w[yes true on 1].include?(bool_string.to_s.downcase)
       end
     end
   end

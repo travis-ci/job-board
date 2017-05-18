@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require_relative 'image_params'
 require_relative 'models'
 require_relative 'services/update_image'

@@ -27,3 +27,6 @@ before_script:
 - createdb job_board_test
 - sqitch deploy
 - sqitch verify
+
+after_success:
+- bundle exec codeclimate-test-reporter

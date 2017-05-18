@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 describe JobBoard::Services::CreateImage do
   it 'has params' do
     expect(subject.params).to_not be_nil
