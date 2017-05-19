@@ -28,6 +28,10 @@ module JobBoard
       @paranoid_queue_names ||= paranoid_queues.split(',').map(&:strip)
     end
 
+    def process_name
+      ['job-board', env, ENV['DYNO'] || 'anon'].compact.join('.')
+    end
+
     define(
       auth: {
         tokens: ''
