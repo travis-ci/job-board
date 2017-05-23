@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
-require 'hashr'
+require 'base64'
 require 'openssl'
+
+require 'hashr'
 require 'travis/config'
 
 module JobBoard
@@ -19,9 +21,16 @@ module JobBoard
     def jwt_public_key
       @jwt_public_key ||= begin
         OpenSSL::PKey::RSA.new(jwt_private_key).public_key
-      rescue
+      rescue => e
+        warn e
         nil
       end
+    end
+
+    def jwt_private_key
+      value = super
+      return value if value.start_with?('-----')
+      Base64.decode64(value)
     end
 
     def paranoid_queue_names
