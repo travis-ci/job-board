@@ -1,0 +1,36 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+libdir = File.expand_path('../../lib', __FILE__)
+$LOAD_PATH.unshift(libdir) unless $LOAD_PATH.include?(libdir)
+
+require 'json'
+require_relative '../lib/job_board'
+
+def main(argv: ARGV)
+  if argv.include?('--once')
+    $stdout.puts JSON.pretty_generate(reconcile!)
+    return 0
+  end
+
+  loop do
+    stats = reconcile!
+    stats.fetch(:sites, {}).each do |site_name, site|
+      $stdout.puts "reconciled site=#{site_name} " \
+      "reclaimed=#{site.fetch(:reclaimed, '???')}"
+      site.fetch(:queues, {}).each do |queue_name, queue|
+        $stdout.puts "site=#{site_name} queue=#{queue_name} " \
+        "queued=#{queue[:queued]} claimed=#{queue[:claimed]}"
+      end
+    end
+    sleep(Integer(ENV['JOB_BOARD_RECONCILIATION_SLEEP_INTERVAL'] || 1))
+  end
+
+  0
+end
+
+def reconcile!
+  JobBoard::JobQueueReconciler.new.reconcile!
+end
+
+exit main
