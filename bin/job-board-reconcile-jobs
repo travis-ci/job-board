@@ -13,13 +13,16 @@ include L2met::Log
 
 def main(argv: ARGV)
   if argv.include?('--once')
-    $stdout.puts JSON.pretty_generate(reconcile!)
-    return 0
+    $stdout.puts JSON.pretty_generate(
+      JobBoard::JobQueueReconciler.new.reconcile!
+    )
+    exit 0
   end
 
+  reconciler = JobBoard::JobQueueReconciler.new
   log msg: 'starting reconciliation loop'
   loop do
-    stats = reconcile!
+    stats = reconciler.reconcile!
     stats.fetch(:sites, {}).each do |site_name, site|
       log msg: 'reconciled', site: site_name,
           reclaimed: site.fetch(:reclaimed, '???')
@@ -31,11 +34,7 @@ def main(argv: ARGV)
     sleep(Integer(ENV['JOB_BOARD_RECONCILIATION_SLEEP_INTERVAL'] || 1))
   end
 
-  0
+  exit 0
 end
 
-def reconcile!
-  JobBoard::JobQueueReconciler.new.reconcile!
-end
-
-exit main
+main
