@@ -28,7 +28,7 @@ module JobBoard
             site: site
           ).to_hash
         else
-          db_job.set_all(
+          db_job.set(
             data: Sequel::Postgres::JSONHash.new(job.to_hash),
             queue: queue,
             site: site

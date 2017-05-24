@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
-require 'hashr'
+require 'base64'
 require 'openssl'
+
+require 'hashr'
 require 'travis/config'
 
 module JobBoard
@@ -18,8 +20,20 @@ module JobBoard
 
     def jwt_public_key
       @jwt_public_key ||= begin
-        OpenSSL::PKey::RSA.new(jwt_private_key).public_key
-      rescue
+        jwt_private_key.public_key
+      rescue => e
+        warn e
+        nil
+      end
+    end
+
+    def jwt_private_key
+      @jwt_private_key ||= begin
+        value = super
+        return OpenSSL::PKey::RSA.new(value) if value.start_with?('-----')
+        OpenSSL::PKey::RSA.new(Base64.decode64(value))
+      rescue => e
+        warn e
         nil
       end
     end

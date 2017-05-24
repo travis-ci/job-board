@@ -56,6 +56,8 @@ module JobBoard
     post '/jobs/add' do
       job = JSON.parse(request.body.read)
       site = request.env.fetch('travis.site')
+      log level: :debug, msg: 'parsed job',
+          job_id: job.fetch('id', '<unknown>'), site: site
       db_job = JobBoard::Services::CreateOrUpdateJob.run(job: job, site: site)
       if db_job.nil?
         log level: :error, msg: 'failed to create or update job',

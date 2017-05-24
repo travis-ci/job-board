@@ -1,0 +1,43 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+libdir = File.expand_path('../../lib', __FILE__)
+$LOAD_PATH.unshift(libdir) unless $LOAD_PATH.include?(libdir)
+
+require 'json'
+require 'l2met-log'
+
+require_relative '../lib/job_board'
+
+include L2met::Log
+
+$stdout.sync = true
+$stderr.sync = true
+
+def main(argv: ARGV)
+  if argv.include?('--once')
+    $stdout.puts JSON.pretty_generate(
+      JobBoard::JobQueueReconciler.new.reconcile!
+    )
+    return 0
+  end
+
+  reconciler = JobBoard::JobQueueReconciler.new
+  log msg: 'starting reconciliation loop'
+  loop do
+    stats = reconciler.reconcile!
+    stats.fetch(:sites, {}).each do |site_name, site|
+      log msg: 'reconciled', site: site_name,
+          reclaimed: site.fetch(:reclaimed, '???')
+      site.fetch(:queues, {}).each do |queue_name, queue|
+        log site: site_name, queue: queue_name,
+            queued: queue[:queued], claimed: queue[:claimed]
+      end
+    end
+    sleep(Integer(ENV['JOB_BOARD_RECONCILIATION_SLEEP_INTERVAL'] || 1))
+  end
+
+  0
+end
+
+exit main
