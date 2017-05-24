@@ -11,6 +11,9 @@ require_relative '../lib/job_board'
 
 include L2met::Log
 
+$stdout.sync = true
+$stderr.sync = true
+
 def main(argv: ARGV)
   if argv.include?('--once')
     $stdout.puts JSON.pretty_generate(
