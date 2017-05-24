@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'base64'
 require 'openssl'
 
 require_relative 'service'
@@ -13,12 +12,6 @@ module JobBoard
       extend Service
 
       class << self
-        def private_key
-          @private_key ||= OpenSSL::PKey::RSA.new(
-            Base64.decode64(JobBoard.config.jwt_private_key)
-          )
-        end
-
         def job_max_duration
           @job_max_duration ||= Integer(JobBoard.config.job_max_duration)
         end
@@ -46,7 +39,7 @@ module JobBoard
       end
 
       def private_key
-        self.class.private_key
+        JobBoard.config.jwt_private_key
       end
     end
   end

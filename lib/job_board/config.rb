@@ -20,7 +20,7 @@ module JobBoard
 
     def jwt_public_key
       @jwt_public_key ||= begin
-        OpenSSL::PKey::RSA.new(jwt_private_key).public_key
+        jwt_private_key.public_key
       rescue => e
         warn e
         nil
@@ -28,9 +28,14 @@ module JobBoard
     end
 
     def jwt_private_key
-      value = super
-      return value if value.start_with?('-----')
-      Base64.decode64(value)
+      @jwt_private_key ||= begin
+        value = super
+        return OpenSSL::PKey::RSA.new(value) if value.start_with?('-----')
+        OpenSSL::PKey::RSA.new(Base64.decode64(value))
+      rescue => e
+        warn e
+        nil
+      end
     end
 
     def paranoid_queue_names
