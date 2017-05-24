@@ -16,7 +16,7 @@ def main(argv: ARGV)
     $stdout.puts JSON.pretty_generate(
       JobBoard::JobQueueReconciler.new.reconcile!
     )
-    exit 0
+    return 0
   end
 
   reconciler = JobBoard::JobQueueReconciler.new
@@ -34,7 +34,7 @@ def main(argv: ARGV)
     sleep(Integer(ENV['JOB_BOARD_RECONCILIATION_SLEEP_INTERVAL'] || 1))
   end
 
-  exit 0
+  0
 end
 
-main
+exit main
