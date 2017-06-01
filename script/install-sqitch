@@ -6,7 +6,7 @@ set -o errexit
 : ${CACHEDIR:=${HOME}/.cache}
 : ${PERL5DIR:=${HOME}/perl5}
 
-mkdir -p "${BINDIR}"
+mkdir -p "${BINDIR}" "${CACHEDIR}"
 
 if [[ ! -f "${CACHEDIR}/cpanm" ]] ; then
   curl -sL 'https://cpanmin.us/' -o "${CACHEDIR}/cpanm"
