@@ -72,8 +72,11 @@ module JobBoard
       claims.each do |job_id, claimer|
         next unless worker == claimer
         redis.multi do |conn|
+          conn.srem("worker:#{site}:#{worker}:idx", job_id)
+          conn.lrem("worker:#{site}:#{worker}", 1, job_id)
           conn.lpush("queue:#{site}:#{queue_name}", job_id)
           conn.hdel("queue:#{site}:#{queue_name}:claims", job_id)
+          conn.hdel("queue:#{site}:#{queue_name}:claims:timestamps", job_id)
           reclaimed += 1
         end
       end
