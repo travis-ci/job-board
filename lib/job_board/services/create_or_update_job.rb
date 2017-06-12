@@ -38,9 +38,7 @@ module JobBoard
         end
       end
 
-      private
-
-      def queue
+      private def queue
         return @queue if @queue
         @queue = job.fetch('data').fetch('queue', nil)
         if @queue.nil?
@@ -51,7 +49,7 @@ module JobBoard
         @queue = @queue.sub(/^builds\./, '')
       end
 
-      def create_new(job_id: '', site: '', queue_name: '', data: {})
+      private def create_new(job_id: '', site: '', queue_name: '', data: {})
         JobBoard::JobQueue.new(
           queue_name: queue_name,
           site: site
@@ -67,7 +65,7 @@ module JobBoard
         )
       end
 
-      def assign_queue
+      private def assign_queue
         JobBoard::Services::FetchQueue.run(job: job)
       end
     end

@@ -20,9 +20,7 @@ module JobBoard
       [[], '', 1]
     end
 
-    private
-
-    def fetch_images_for_line(line)
+    private def fetch_images_for_line(line)
       params = JobBoard::ImageParams.parse(line)
 
       return [[], 1] if missing_infra?(params)
@@ -30,11 +28,11 @@ module JobBoard
       [fetch_images(params), params, params['limit']]
     end
 
-    def missing_infra?(params)
+    private def missing_infra?(params)
       params['infra'].nil? || params['infra'].empty?
     end
 
-    def fetch_images(params)
+    private def fetch_images(params)
       images = JobBoard::Services::FetchImages.run(query: params)
       log level: :debug, msg: 'found',
           images: images.inspect, params: params.inspect

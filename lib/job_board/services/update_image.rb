@@ -21,16 +21,14 @@ module JobBoard
         update_image(image)
       end
 
-      private
-
-      def by_infra_and_name
+      private def by_infra_and_name
         JobBoard::Models::Image.where(
           infra: params.fetch('infra'),
           name: params.fetch('name')
         ).first
       end
 
-      def update_image(image)
+      private def update_image(image)
         image.update(
           infra: params.fetch('infra'),
           name: params.fetch('name'),

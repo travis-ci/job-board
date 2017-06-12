@@ -68,37 +68,35 @@ module JobBoard
       unauthorized
     end
 
-    private
-
-    def challenge
+    private def challenge
       'Basic realm="job-board"'
     end
 
-    def basic_valid?(auth)
+    private def basic_valid?(auth)
       return true if auth.basic_credentials == %w[guest guest]
       auth_tokens.include?(auth.basic_credentials.last) ||
-        auth_tokens.include?(auth.basic_credentials)
+      auth_tokens.include?(auth.basic_credentials)
     end
 
-    def bearer_valid?(auth)
+    private def bearer_valid?(auth)
       return false if auth.job_id.nil?
       return false if auth.params.empty?
       return false if auth.jwt_header.nil? || auth.jwt_payload.nil?
       true
     end
 
-    def decode_jwt!(auth)
+    private def decode_jwt!(auth)
       auth.jwt_payload, auth.jwt_header = JWT.decode(
         auth.params, secret, verify,
         algorithm: alg, verify_sub: true, 'sub' => auth.job_id
       )
     end
 
-    def auth_tokens
+    private def auth_tokens
       @auth_tokens ||= build_auth_tokens
     end
 
-    def build_auth_tokens
+    private def build_auth_tokens
       unless raw_auth_tokens.include?(',')
         return raw_auth_tokens.split(':').map(&:strip)
       end
@@ -108,7 +106,7 @@ module JobBoard
       end
     end
 
-    def raw_auth_tokens
+    private def raw_auth_tokens
       @raw_auth_tokens ||= JobBoard.config.auth.tokens
     end
 

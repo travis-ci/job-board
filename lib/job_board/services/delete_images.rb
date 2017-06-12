@@ -19,9 +19,7 @@ module JobBoard
         images.destroy
       end
 
-      private
-
-      def by_infra_and_name
+      private def by_infra_and_name
         JobBoard::Models::Image.where(
           infra: params.fetch('infra'),
           name: params.fetch('name')
