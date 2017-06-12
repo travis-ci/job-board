@@ -35,6 +35,7 @@ module JobBoard
         )
       end
 
+      queue = params[:queue].to_s.sub(/^builds\./, '')
       from = request.env.fetch('HTTP_FROM')
       site = request.env.fetch('travis.site')
 
@@ -42,13 +43,13 @@ module JobBoard
         count: params[:count],
         from: from,
         jobs: JSON.parse(request.body.read).fetch('jobs'),
-        queue_name: params[:queue],
+        queue_name: queue,
         site: site
       ).merge(
         '@count' => params[:count],
-        '@queue' => params[:queue]
+        '@queue' => queue
       )
-      log msg: :allocated, queue: params[:queue],
+      log msg: :allocated, queue: queue,
           count: params[:count], from: from, site: site
       json body
     end
