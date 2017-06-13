@@ -6,6 +6,7 @@ ENV['RACK_ENV'] = 'test'
 ENV['LOG_LEVEL'] = 'fatal'
 ENV['DATABASE_URL'] = 'mock://' unless ENV['INTEGRATION_SPECS'] == '1'
 ENV['DATABASE_SQL_LOGGING'] = nil
+ENV['AUTH_TOKENS'] = 'test'
 
 require 'job_board'
 require 'l2met-log'

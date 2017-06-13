@@ -47,6 +47,7 @@ module JobBoard
     end
 
     define(
+      api_logging: true,
       auth: {
         tokens: ''
       },

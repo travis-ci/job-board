@@ -10,6 +10,10 @@ require 'sinatra/base'
 
 module JobBoard
   class App < Sinatra::Base
+    configure do
+      enable :logging if JobBoard.config.api_logging?
+    end
+
     use Rack::Deflater
     use JobBoard::Auth, site_paths: %r{^/jobs.+}
     use JobBoard::JobDeliveryAPI
