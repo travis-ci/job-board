@@ -8,11 +8,14 @@ module Support
       @n = n
       @target_version = target_version
       @workers = {}
+      @tmproot = ENV['RSPEC_RUNNER_TMPROOT'] ||
+                 Dir.mktmpdir(%w[job-board- -travis-worker])
     end
 
-    attr_reader :n, :target_version, :workers
+    attr_reader :n, :target_version, :tmproot, :workers
     private :n
     private :target_version
+    private :tmproot
     private :workers
 
     def start(port: 9987)
@@ -29,15 +32,14 @@ module Support
         workers.delete(worker_n)
       end
 
-      FileUtils.rm_rf(tmproot)
+      FileUtils.rm_rf(tmproot) unless ENV.key?('RSPEC_RUNNER_TMPROOT')
     end
 
     private def spawn_worker(worker_n, port)
       pid = spawn(
         build_worker_env(worker_n, port),
         worker_exe,
-        %i[out err] => [build_worker_log_output(worker_n), 'w'],
-        unsetenv_others: true
+        %i[out err] => [build_worker_log_output(worker_n), 'w']
       )
       workers[worker_n] = { pid: pid }
     end
@@ -66,8 +68,9 @@ module Support
         'TRAVIS_WORKER_LOCAL_SCRIPTS_DIR' => worker_scripts_dir,
         'TRAVIS_WORKER_POOL_SIZE' => '3',
         'TRAVIS_WORKER_PROVIDER_NAME' => 'local',
-        'TRAVIS_WORKER_QUEUE_NAME' => 'job_board_test',
+        'TRAVIS_WORKER_QUEUE_NAME' => 'test',
         'TRAVIS_WORKER_QUEUE_TYPE' => 'http',
+        'TRAVIS_WORKER_SILENCE_METRICS' => 'true',
         'TRAVIS_WORKER_TRAVIS_SITE' => 'test'
       }
     end
@@ -95,10 +98,6 @@ module Support
 
     private def scripts_dir
       @scripts_dir ||= File.join(tmproot, 'scripts')
-    end
-
-    private def tmproot
-      @tmproot ||= Dir.mktmpdir(%w[job-board- -travis-worker])
     end
 
     private def target_platform

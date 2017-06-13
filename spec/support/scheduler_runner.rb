@@ -4,8 +4,14 @@ require 'fileutils'
 
 module Support
   class SchedulerRunner
-    attr_reader :scheduler_thread
+    def initialize
+      @tmproot = ENV['RSPEC_RUNNER_TMPROOT'] ||
+                 Dir.mktmpdir(%w[job-board- -scheduler])
+    end
+
+    attr_reader :scheduler_thread, :tmproot
     private :scheduler_thread
+    private :tmproot
 
     def start(port: 9987, count: 3)
       forked_pid_file = pid_file
@@ -16,7 +22,7 @@ module Support
     def stop
       Process.kill(:TERM, pid) if File.exist?(pid_file)
     ensure
-      FileUtils.rm_rf(tmproot)
+      FileUtils.rm_rf(tmproot) unless ENV.key?('RSPEC_RUNNER_TMPROOT')
     end
 
     private def start_foreground(port: 9987, count: 3, pid: '',
@@ -41,28 +47,21 @@ module Support
         job_id = 100_000 + scheduled
 
         begin
-          body = JSON.dump(
-            'id' => job_id,
-            'data' => {
-              'queue' => 'job_board_test'
+          command = [
+            'curl',
+            '-fvSL',
+            '-H', 'Content-Type: application/json',
+            '-H', 'Travis-Site: test',
+            '-d', JSON.dump(build_job_body(job_id)),
+            "http://scheduler:test@127.0.0.1:#{port}/jobs/add",
+            {
+              out: stdout_fd.fileno,
+              err: stderr_fd.fileno,
+              unsetenv_others: true
             }
-          )
-          command = %(
-            curl -fvvSL
-              -H 'Content-Type: application/json'
-              -H 'Travis-Site: test'
-              -d '#{body}'
-              http://scheduler:test@127.0.0.1:#{port}/jobs/add
-          ).split.join(' ')
+          ]
 
-          if system(
-            command,
-            out: stdout_file,
-            err: stderr_file,
-            unsetenv_others: true
-          )
-            $stderr.puts "---> added job_id=#{job_id}"
-          end
+          $stderr.puts "---> added job_id=#{job_id}" if system(*command)
         rescue => e
           $stderr.puts "---> ERROR: #{e}"
         end
@@ -71,16 +70,33 @@ module Support
       end
     end
 
+    private def build_job_body(job_id)
+      {
+        'id' => job_id,
+        'data' => {
+          'queue' => 'test',
+          'config' => {
+            'language' => 'echo',
+            'os' => 'minesweeper'
+          }
+        }
+      }
+    end
+
     private def reopen_streams
       FileUtils.mkdir_p(tmproot)
-      $stdout = File.open(stdout_file, 'w')
-      $stderr = File.open(stderr_file, 'w')
+      $stdout = stdout_fd
+      $stderr = stderr_fd
       $stdout.sync = true
       $stderr.sync = true
     end
 
-    private def tmproot
-      @tmproot ||= Dir.mktmpdir(%w[job-board- -scheduler-runner])
+    private def stdout_fd
+      File.open(stdout_file, 'a')
+    end
+
+    private def stderr_fd
+      File.open(stderr_file, 'a')
     end
 
     private def pid

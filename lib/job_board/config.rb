@@ -4,6 +4,7 @@ require 'base64'
 require 'openssl'
 
 require 'hashr'
+require 'l2met-log'
 require 'travis/config'
 
 module JobBoard
@@ -69,7 +70,7 @@ module JobBoard
       job_state_com_url: ENV.fetch('JOB_BOARD_JOB_STATE_COM_URL', ''),
       job_state_org_url: ENV.fetch('JOB_BOARD_JOB_STATE_ORG_URL', ''),
       jwt_private_key: ENV.fetch('JOB_BOARD_JWT_PRIVATE_KEY', ''),
-      log_level: 'info',
+      log_level: ENV.fetch('JOB_BOARD_LOG_LEVEL', 'info'),
       log_parts_com_url: ENV.fetch('JOB_BOARD_LOG_PARTS_COM_URL', ''),
       log_parts_org_url: ENV.fetch('JOB_BOARD_LOG_PARTS_ORG_URL', ''),
       paranoid_queues: ENV.fetch('JOB_BOARD_PARANOID_QUEUES', 'docker,ec2'),
