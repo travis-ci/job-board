@@ -74,17 +74,17 @@ describe 'Worker Interaction', integration: true do
       scheduler_runner.scheduled_count > 0
     end
 
-    # TODO: {
+    # TODO: re-enable once a worker version is available that works! {
     # wait_around do
     #   !JobBoard::JobQueue.for_site(site: 'test')
     #     .fetch(:test, {}).empty?
     # end
-    #
+
     # wait_around do
     #   JobBoard::JobQueue.for_site(site: 'test')
     #     .fetch(:test, {}).empty?
     # end
-    # } TODO:
+    # TODO: }
   end
 
   after :all do
@@ -94,7 +94,11 @@ describe 'Worker Interaction', integration: true do
     scheduler_runner.stop
   end
 
-  it 'does stuff' do
-    expect(:TODO).to eq :TODO
+  it 'completes all scheduled jobs' do
+    # TODO: re-enable once a worker version is available that works!
+    skip('does not work with latest released worker version')
+    summary = scheduler_runner.scheduled_summary
+    expect(summary).to_not be_empty
+    expect(summary.length).to eq summary.sort.uniq.length
   end
 end

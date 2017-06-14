@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'fileutils'
+require 'time'
 
 module Support
   class SchedulerRunner
@@ -38,6 +39,7 @@ module Support
     end
 
     private def scheduler_loop(port: 9987, count: 3)
+      job_ids = []
       scheduled = 0
       loop do
         break if scheduled >= count
@@ -45,6 +47,7 @@ module Support
         File.write(scheduled_count_file, scheduled.to_s)
 
         job_id = 100_000 + scheduled
+        job_ids << job_id
 
         begin
           command = [
@@ -64,16 +67,27 @@ module Support
           $stderr.puts "---> added job_id=#{job_id}" if system(*command)
         rescue => e
           $stderr.puts "---> ERROR: #{e}"
+          job_ids.pop
         end
 
         sleep rand(0.001..0.1)
       end
+
+      File.write(
+        scheduled_summary_file,
+        JSON.pretty_generate(job_ids)
+      )
     end
 
     private def build_job_body(job_id)
       {
         'id' => job_id,
         'data' => {
+          'job' => {
+            'id' => job_id,
+            'number' => '1',
+            'queued_at' => (Time.now.utc - 5).iso8601
+          },
           'queue' => 'test',
           'config' => {
             'language' => 'echo',
@@ -124,6 +138,17 @@ module Support
         return Integer(File.read(scheduled_count_file))
       end
       0
+    end
+
+    private def scheduled_summary_file
+      File.join(tmproot, 'scheduled-summary.json')
+    end
+
+    def scheduled_summary
+      if File.exist?(scheduled_summary_file)
+        return JSON.parse(File.read(scheduled_summary_file))
+      end
+      []
     end
   end
 end
