@@ -9,6 +9,9 @@ cache:
   - ${HOME}/perl5
   - ${HOME}/.cache
 
+services:
+- redis
+
 addons:
   postgresql: 9.3
 
