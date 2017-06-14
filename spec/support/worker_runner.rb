@@ -20,12 +20,12 @@ module Support
     private :tmproot
     private :workers
 
-    def start(port: 9987)
+    def start(port: 9987, maybe_killer: true)
       ensure_worker_exe_exists
       n.times do |worker_n|
         workers[worker_n] = spawn_worker(worker_n, port)
       end
-      start_maybe_killer_thread
+      start_maybe_killer_thread if maybe_killer
     end
 
     def stop

@@ -90,7 +90,8 @@ describe 'Worker Interaction', integration: true do
     end
 
     job_board_reconciler_runner.start
-    worker_runner.start(port: job_board_runner_port)
+    # TODO: enable the "maybe killer" to further test + improve resilience
+    worker_runner.start(port: job_board_runner_port, maybe_killer: false)
     scheduler_runner.start(port: job_board_runner_port, count: job_count)
 
     wait_around(label: 'first scheduled job') do
