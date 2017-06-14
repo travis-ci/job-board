@@ -32,6 +32,14 @@ module JobBoard
       ]
     end
 
+    get '/latest-stats' do
+      [
+        200,
+        { 'Content-Type' => 'application/json' },
+        JobBoard.redis.get('latest-stats')
+      ]
+    end
+
     def pg_now
       JobBoard::Models.db[
         %(select now() at time zone 'UTC' as now)
