@@ -65,9 +65,17 @@ module Support
     private def ensure_worker_exe_exists
       return if File.exist?(worker_exe)
 
-      unless system('curl', '-o', worker_exe, '-sfSL', worker_download_url)
+      dl_out_file = File.join(tmproot, 'worker-download.out')
+      unless system(
+        'curl',
+        '-o', worker_exe,
+        '-vvfSL',
+        worker_download_url,
+        %i[out err] => dl_out_file
+      )
         raise StandardError, 'Failed to download worker from ' \
-                             "#{worker_download_url.inspect}"
+                             "#{worker_download_url.inspect}: " \
+                             "#{File.read(dl_out_file)}"
       end
 
       FileUtils.chmod(0o755, worker_exe)
