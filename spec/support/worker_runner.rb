@@ -67,7 +67,7 @@ module Support
 
       unless system('curl', '-o', worker_exe, '-sfSL', worker_download_url)
         raise StandardError, 'Failed to download worker from ' \
-                             worker_download_url.inspect
+                             "#{worker_download_url.inspect}"
       end
 
       FileUtils.chmod(0o755, worker_exe)
