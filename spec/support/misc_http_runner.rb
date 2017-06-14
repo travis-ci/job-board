@@ -7,6 +7,10 @@ require 'sinatra/base'
 
 module Support
   class MiscHttpApp < Sinatra::Base
+    class << self
+      attr_accessor :tmproot
+    end
+
     configure do
       enable :logging
     end
@@ -24,19 +28,29 @@ module Support
     end
 
     post '/script' do
-      $stderr.puts "---> POST /script body: #{request.body.read}"
+      request_body = request.body.read
+      request_json = JSON.parse(request_body)
+      $stderr.puts "---> POST /script body: #{request_body}"
       status 200
       content_type :text
-      body gen_script
+      body gen_script(
+        request_json.fetch('job', {}).fetch('id', '???'),
+        Digest::SHA1.hexdigest(request_body)
+      )
     end
 
-    private def gen_script
+    private def gen_script(job_id, sig)
       <<~EOF
         #!/bin/bash
+        # job_id: #{job_id}
+        # config signature: #{sig}
+
         for thing in a b c d e; do
           echo "doing thing $thing now"
           sleep 1
         done
+
+        date +%s >#{self.class.tmproot}/job-#{job_id}-finished
       EOF
     end
   end
@@ -48,9 +62,10 @@ module Support
     end
 
     attr_reader :tmproot
-    private :tmproot
 
     def start(port: 10_087)
+      Support::MiscHttpApp.tmproot = tmproot
+
       @options = {
         Port: port,
         app: Support::MiscHttpApp,
