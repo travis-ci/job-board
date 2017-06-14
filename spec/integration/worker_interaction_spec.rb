@@ -96,7 +96,7 @@ describe 'Worker Interaction', integration: true do
                          .fetch(:test, {}).empty?
     end
 
-    wait_around(label: 'emptied queue', loop_sleep: 10) do
+    wait_around(label: 'emptied queue', loop_sleep: 10, timeout: 120) do
       JobBoard::JobQueue.for_site(site: 'test')
                         .fetch(:test, {}).empty?
     end
