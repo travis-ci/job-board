@@ -4,15 +4,17 @@ require 'fileutils'
 
 module Support
   class WorkerRunner
-    def initialize(n: 1, target_version: 'v2.9.1')
+    def initialize(n: 1, target_version: 'v2.9.1', kill_tendency: 29)
       @n = n
       @target_version = target_version
+      @kill_tendency = kill_tendency
       @workers = {}
       @tmproot = ENV['RSPEC_RUNNER_TMPROOT'] ||
                  Dir.mktmpdir(%w[job-board- -travis-worker])
     end
 
-    attr_reader :n, :target_version, :tmproot, :workers
+    attr_reader :kill_tendency, :n, :target_version, :tmproot, :workers
+    private :kill_tendency
     private :n
     private :target_version
     private :tmproot
@@ -23,16 +25,23 @@ module Support
       n.times do |worker_n|
         workers[worker_n] = spawn_worker(worker_n, port)
       end
+      start_maybe_killer_thread
     end
 
     def stop
+      kill_workers!
+      FileUtils.rm_rf(tmproot) unless ENV.key?('RSPEC_RUNNER_TMPROOT')
+    end
+
+    private def kill_workers!(maybe: false, sig: :TERM)
+      return if maybe && !(Time.now.to_i % kill_tendency).zero?
+      return if maybe && workers.length == 1
+
       workers.keys.each do |worker_n|
         worker = workers[worker_n]
-        Process.kill(:TERM, worker[:pid])
+        Process.kill(sig, worker[:pid])
         workers.delete(worker_n)
       end
-
-      FileUtils.rm_rf(tmproot) unless ENV.key?('RSPEC_RUNNER_TMPROOT')
     end
 
     private def spawn_worker(worker_n, port)
@@ -42,6 +51,15 @@ module Support
         %i[out err] => [build_worker_log_output(worker_n), 'w']
       )
       workers[worker_n] = { pid: pid }
+    end
+
+    private def start_maybe_killer_thread
+      Thread.start do
+        loop do
+          kill_workers!(maybe: true, sig: :INT)
+          sleep rand(1..10)
+        end
+      end
     end
 
     private def ensure_worker_exe_exists

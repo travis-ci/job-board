@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
-require 'support/misc_http_runner'
+require 'support/job_board_reconciler_runner'
 require 'support/job_board_runner'
+require 'support/misc_http_runner'
 require 'support/scheduler_runner'
 require 'support/worker_runner'
 
@@ -20,6 +21,10 @@ describe 'Worker Interaction', integration: true do
 
   def job_board_runner
     @job_board_runner ||= Support::JobBoardRunner.new
+  end
+
+  def job_board_reconciler_runner
+    @job_board_reconciler_runner ||= Support::JobBoardReconcilerRunner.new
   end
 
   def scheduler_runner
@@ -84,6 +89,7 @@ describe 'Worker Interaction', integration: true do
       true
     end
 
+    job_board_reconciler_runner.start
     worker_runner.start(port: job_board_runner_port)
     scheduler_runner.start(port: job_board_runner_port, count: job_count)
 
@@ -109,6 +115,7 @@ describe 'Worker Interaction', integration: true do
   after :all do
     job_board_runner.stop
     misc_http_runner.stop
+    job_board_reconciler_runner.stop
     worker_runner.stop
     scheduler_runner.stop
   end
