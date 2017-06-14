@@ -65,10 +65,7 @@ module Support
     private def ensure_worker_exe_exists
       return if File.exist?(worker_exe)
 
-      unless system "curl -o #{worker_exe} -sfSL #{worker_download_url}"
-        raise StandardError, 'failed to download worker executable'
-      end
-
+      system('curl', '-o', worker_exe, '-sfSL', worker_download_url) &&
       FileUtils.chmod(0o755, worker_exe)
     end
 
