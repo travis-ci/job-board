@@ -64,6 +64,7 @@ module Support
 
     private def ensure_worker_exe_exists
       return if File.exist?(worker_exe)
+      FileUtils.mkdir_p(File.dirname(worker_exe))
 
       dl_out_file = File.join(tmproot, 'worker-download.out')
       unless system(
