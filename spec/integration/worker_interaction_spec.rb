@@ -134,7 +134,9 @@ describe 'Worker Interaction', integration: true do
   end
 
   it 'removes all records of completed jobs' do
-    expect(JobBoard::Models::Job.where(site: 'test').count).to be_zero
+    expect(
+      JobBoard::Models::Job.where(site: 'test').select(:job_id).map(:job_id)
+    ).to be_empty
   end
 
   it 'completes all jobs even when worker(s) disappear' do

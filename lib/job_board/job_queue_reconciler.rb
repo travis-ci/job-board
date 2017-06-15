@@ -14,7 +14,7 @@ module JobBoard
 
     attr_reader :redis
 
-    def reconcile!
+    def reconcile!(with_ids: JobBoard.config.reconcile_stats_with_ids)
       log msg: 'starting reconciliation process'
       start_time = Time.now
       stats = { sites: {} }
@@ -30,9 +30,10 @@ module JobBoard
         log msg: 'reconciling', site: site
         reclaimed, claimed = reconcile_site!(site: site)
 
-        log msg: 'reclaimed jobs', site: site, n: reclaimed
+        log msg: 'reclaimed jobs', site: site, n: reclaimed.length
         log msg: 'setting worker claimed jobs', site: site
-        stats[:sites][site][:reclaimed] = reclaimed
+        stats[:sites][site][:reclaimed] = reclaimed.length
+        stats[:sites][site][:reclaimed_ids] = reclaimed if with_ids
         stats[:sites][site][:workers].merge!(claimed)
 
         log msg: 'fetching queue stats', site: site
@@ -44,7 +45,7 @@ module JobBoard
     end
 
     private def reconcile_site!(site: '')
-      reclaimed = 0
+      reclaimed = []
       claimed = {}
 
       redis.smembers("workers:#{site}").each do |worker|
@@ -69,7 +70,7 @@ module JobBoard
     end
 
     private def reclaim_jobs_from_worker(site: '', worker: '')
-      reclaimed = 0
+      reclaimed = []
 
       redis.smembers("queues:#{site}").each do |queue_name|
         reclaimed += reclaim!(
@@ -81,7 +82,7 @@ module JobBoard
     end
 
     private def reclaim!(worker: '', site: '', queue_name: '')
-      reclaimed = 0
+      reclaimed = []
       return reclaimed if worker.empty? || site.empty? || queue_name.empty?
 
       claims = redis.hgetall("queue:#{site}:#{queue_name}:claims")
@@ -90,7 +91,7 @@ module JobBoard
         reclaim_job(
           worker: worker, job_id: job_id, site: site, queue_name: queue_name
         )
-        reclaimed += 1
+        reclaimed << job_id
       end
 
       reclaimed
@@ -118,7 +119,7 @@ module JobBoard
       redis.multi do |conn|
         conn.srem("worker:#{site}:#{worker}:idx", job_id)
         conn.lrem("worker:#{site}:#{worker}", 1, job_id)
-        conn.lpush("queue:#{site}:#{queue_name}", job_id)
+        conn.rpush("queue:#{site}:#{queue_name}", job_id)
         conn.hdel("queue:#{site}:#{queue_name}:claims", job_id)
         conn.hdel("queue:#{site}:#{queue_name}:claims:timestamps", job_id)
       end

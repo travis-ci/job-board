@@ -32,6 +32,7 @@ module Support
 
       L2met::Log.default_log_level = :debug
       JobBoard.config.worker_ttl = 5
+      JobBoard.config.reconcile_stats_with_ids = true
 
       File.write(pid_file, Process.pid.to_s)
 

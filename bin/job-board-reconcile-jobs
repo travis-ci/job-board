@@ -30,7 +30,10 @@ def main(argv: ARGV)
     stats = reconciler.reconcile!
     stats.fetch(:sites, {}).each do |site_name, site|
       log msg: 'reconciled', site: site_name,
-          reclaimed: site.fetch(:reclaimed, '???')
+          reclaimed: site.fetch(:reclaimed, '???'),
+          reclaimed_ids: site.fetch(
+            :reclaimed_ids, [:notset]
+          ).map(&:to_s).join(',')
       site.fetch(:queues, {}).each do |queue_name, queue|
         log site: site_name, queue: queue_name,
             queued: queue[:queued], claimed: queue[:claimed]

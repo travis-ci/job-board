@@ -74,6 +74,7 @@ module JobBoard
       log_parts_com_url: ENV.fetch('JOB_BOARD_LOG_PARTS_COM_URL', ''),
       log_parts_org_url: ENV.fetch('JOB_BOARD_LOG_PARTS_ORG_URL', ''),
       paranoid_queues: ENV.fetch('JOB_BOARD_PARANOID_QUEUES', 'docker,ec2'),
+      reconcile_stats_with_ids: false,
       redis_url: ENV.fetch(
         ENV.fetch('REDIS_PROVIDER', 'REDIS_URL'), 'redis://localhost:6379/0'
       ),
