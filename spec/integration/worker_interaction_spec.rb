@@ -90,8 +90,7 @@ describe 'Worker Interaction', integration: true do
     end
 
     job_board_reconciler_runner.start
-    # TODO: enable the "maybe killer" to further test + improve resilience
-    worker_runner.start(port: job_board_runner_port, maybe_killer: false)
+    worker_runner.start(port: job_board_runner_port, maybe_killer: true)
     scheduler_runner.start(port: job_board_runner_port, count: job_count)
 
     wait_around(label: 'first scheduled job') do
@@ -138,14 +137,21 @@ describe 'Worker Interaction', integration: true do
     expect(JobBoard::Models::Job.where(site: 'test').count).to be_zero
   end
 
-  it 'marks jobs completed only when completed' do
-    finished_files = Dir["#{misc_http_runner.tmproot}/job-*-finished"]
-    expect(finished_files.length).to eq job_count
+  it 'completes all jobs even when worker(s) disappear' do
+    expect(worker_runner.killed_workers.length).to be_positive
+  end
 
-    finished_timestamps = finished_files.map { |fn| Integer(File.read(fn)) }
+  it 'marks jobs completed only when completed' do
+    state_summary = misc_http_runner.state_summary
+    finished = state_summary.reject do |s|
+      s['data']['finished'] == '0001-01-01T00:00:00Z'
+    end
+    expect(finished.length).to eq job_count
+
+    finished_timestamps = finished.map { |s| Time.parse(s['data']['finished']) }
     finished_timestamps.sort!
 
-    expect(finished_timestamps.min).to be > suite_start.to_i
-    expect(finished_timestamps.max).to be < Time.now.utc.to_i
+    expect(finished_timestamps.min).to be > suite_start
+    expect(finished_timestamps.max).to be < Time.now.utc
   end
 end

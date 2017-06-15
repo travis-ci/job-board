@@ -33,13 +33,15 @@ module Support
       FileUtils.rm_rf(tmproot) unless ENV.key?('RSPEC_RUNNER_TMPROOT')
     end
 
-    private def kill_workers!(maybe: false, sig: :TERM)
-      return if maybe && !(Time.now.to_i % kill_tendency).zero?
-      return if maybe && workers.length == 1
+    def killed_workers
+      return [] unless File.exist?(killed_workers_file)
+      JSON.parse(File.read(killed_workers_file))
+    end
 
+    private def kill_workers!
       workers.keys.each do |worker_n|
         worker = workers[worker_n]
-        Process.kill(sig, worker[:pid])
+        Process.kill(:TERM, worker[:pid])
         workers.delete(worker_n)
       end
     end
@@ -53,10 +55,20 @@ module Support
       workers[worker_n] = { pid: pid }
     end
 
-    private def start_maybe_killer_thread
+    private def start_maybe_killer_thread(initial_sleep: 5)
+      sleep initial_sleep
+      to_kill = {}
+      (workers.size * 0.25).to_i.times do |_n|
+        to_kill[workers.values.sample.fetch(:pid)] = true
+      end
+
       Thread.start do
         loop do
-          kill_workers!(maybe: true, sig: :INT)
+          break if to_kill.empty?
+          pid = to_kill.keys.first
+          Process.kill(:TERM, pid)
+          to_kill.delete(pid)
+          save_killed_worker(pid)
           sleep rand(1..10)
         end
       end
@@ -122,6 +134,16 @@ module Support
         'amd64',
         'travis-worker'
       )
+    end
+
+    private def save_killed_worker(pid)
+      current = killed_workers
+      current << Integer(pid)
+      File.write(killed_workers_file, JSON.dump(current))
+    end
+
+    private def killed_workers_file
+      File.join(tmproot, 'killed-workers.json')
     end
 
     private def scripts_dir
