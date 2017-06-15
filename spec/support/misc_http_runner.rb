@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'fileutils'
+require 'thread'
 
 require 'rack/server'
 require 'sinatra/base'
@@ -8,7 +9,11 @@ require 'sinatra/base'
 module Support
   class MiscHttpApp < Sinatra::Base
     class << self
-      attr_accessor :tmproot
+      attr_accessor :state_summary_file
+
+      def state_summary_mutex
+        @state_summary_mutex ||= Mutex.new
+      end
     end
 
     configure do
@@ -22,8 +27,9 @@ module Support
     end
 
     patch '/jobs/:job_id/state' do
-      $stderr.puts "---> PATCH /jobs/#{params[:job_id]}/state " \
-                   "body: #{request.body.read}"
+      parsed = JSON.parse(request.body.read)
+      $stderr.puts "---> PATCH /jobs/#{params[:job_id]}/state body: #{parsed}"
+      save_state_update(params[:job_id], parsed)
       status 200
     end
 
@@ -49,9 +55,18 @@ module Support
           echo "doing thing $thing now"
           sleep 1
         done
-
-        date +%s >#{self.class.tmproot}/job-#{job_id}-finished
       EOF
+    end
+
+    private def save_state_update(job_id, data)
+      fname = self.class.state_summary_file
+
+      self.class.state_summary_mutex.synchronize do
+        current = []
+        current += JSON.parse(File.read(fname)) if File.exist?(fname)
+        current << { 'job_id' => job_id, 'data' => data }
+        File.write(fname, JSON.pretty_generate(current))
+      end
     end
   end
 
@@ -64,7 +79,8 @@ module Support
     attr_reader :tmproot
 
     def start(port: 10_087)
-      Support::MiscHttpApp.tmproot = tmproot
+      Support::MiscHttpApp.state_summary_file = state_summary_file
+      File.write(state_summary_file, '[]')
 
       @options = {
         Port: port,
@@ -83,6 +99,11 @@ module Support
       FileUtils.rm_rf(tmproot) unless ENV.key?('RSPEC_RUNNER_TMPROOT')
     end
 
+    def state_summary
+      return [] unless File.exist?(state_summary_file)
+      JSON.parse(File.read(state_summary_file))
+    end
+
     private def start_rack_server(options: {})
       reopen_streams
       $stderr.puts '---> starting misc http server'
@@ -94,6 +115,10 @@ module Support
       $stderr = File.open(stderr_file, 'a')
       $stdout.sync = true
       $stderr.sync = true
+    end
+
+    private def state_summary_file
+      File.join(tmproot, 'state-summary.json')
     end
 
     private def stdout_file

@@ -23,6 +23,7 @@ module Support
     def stop
       Process.kill(:TERM, pid) if File.exist?(pid_file)
     ensure
+      FileUtils.rm_f(pid_file)
       FileUtils.rm_rf(tmproot) unless ENV.key?('RSPEC_RUNNER_TMPROOT')
     end
 
