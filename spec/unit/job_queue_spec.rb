@@ -3,10 +3,13 @@
 describe JobBoard::JobQueue do
   let(:queue_name) { 'lel' }
   let(:site) { 'test' }
+  let(:redis_pool) { JobBoard.redis_pool }
   let(:redis) { JobBoard.redis }
 
   subject do
-    described_class.new(redis: redis, queue_name: queue_name, site: site)
+    described_class.new(
+      redis_pool: redis_pool, queue_name: queue_name, site: site
+    )
   end
 
   before :each do
