@@ -21,7 +21,10 @@ module JobBoard
   autoload :Services, 'job_board/services'
 
   def config
-    @config ||= Config.load
+    return @config if defined?(@config)
+    @config ||= JobBoard::Config.load
+    L2met::Log.default_log_level = @config.log_level
+    @config
   end
 
   module_function :config

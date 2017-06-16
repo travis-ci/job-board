@@ -160,33 +160,55 @@ module JobBoard
       []
     end
 
-    def check_claims(worker: '', job_ids: [])
+    def check_claims(worker: nil, job_ids: [])
       claimed = []
+      return claimed if worker.nil?
 
       job_ids.each do |job_id|
-        # NOTE: I'm pretty sure there's a race condition here, but I don't know
-        # how likely it is or the severity of the outcome.  Using a lua script
-        # might be the answer.  ~meatballhat
-        if redis.hget(queue_job_claims_key, job_id) == worker &&
-           redis.sismember(worker_index_set_key(worker: worker), job_id)
-          redis.hset(queue_job_claim_timestamps_key, job_id, now)
+        if worker_has_current_job_claim?(worker: worker, job_id: job_id)
+          touch_job_claim_timestamp(job_id: job_id)
           claimed << job_id
           next
         end
-        redis.srem(worker_index_set_key(worker: worker), job_id)
+
+        remove_job_id_from_worker_queue(worker: worker, job_id: job_id)
       end
 
+      extend_worker_queue_expiry(worker: worker)
+      claimed
+    end
+
+    private def worker_has_current_job_claim?(worker: nil, job_id: nil)
+      futures = {}
+      redis.pipelined do
+        futures[:claimed_by] = redis.hget(queue_job_claims_key, job_id)
+        futures[:exists] = redis.sismember(
+          worker_index_set_key(worker: worker), job_id
+        )
+      end
+      futures[:claimed_by].value == worker && futures[:exists].value
+    end
+
+    private def touch_job_claim_timestamp(job_id: '')
+      redis.hset(queue_job_claim_timestamps_key, job_id, now)
+    end
+
+    private def extend_worker_queue_expiry(worker: nil)
       redis.multi do |conn|
         conn.expire(worker_index_set_key(worker: worker), ttl)
         conn.expire(worker_queue_list_key(worker: worker), ttl)
       end
-
-      claimed
     end
 
-    private
+    private def remove_job_id_from_worker_queue(worker: nil, job_id: nil)
+      redis.multi do |conn|
+        conn.srem(worker_index_set_key(worker: worker), job_id)
+        conn.lrem(worker_queue_list_key(worker: worker), 1, job_id)
+      end
+    end
 
-    def refresh_claims!(worker: '', claimed: [])
+    private def refresh_claims!(worker: nil, claimed: [])
+      return if worker.nil?
       claimed_map = claimed.map { |job_id| [job_id, worker] }
       redis.multi do |conn|
         conn.sadd(worker_index_set_key(worker: worker), claimed)
@@ -200,28 +222,28 @@ module JobBoard
       end
     end
 
-    def now
+    private def now
       Time.now.utc.iso8601(7)
     end
 
-    def queue_key
+    private def queue_key
       @queue_key ||= "queue:#{site}:#{queue_name}"
     end
 
-    def queue_job_claims_key
+    private def queue_job_claims_key
       @queue_job_claims_key ||= "queue:#{site}:#{queue_name}:claims"
     end
 
-    def queue_job_claim_timestamps_key
+    private def queue_job_claim_timestamps_key
       @queue_job_claim_timestamps_key ||=
         "queue:#{site}:#{queue_name}:claims:timestamps"
     end
 
-    def worker_index_set_key(worker: '')
+    private def worker_index_set_key(worker: '')
       "#{worker_queue_list_key(worker: worker)}:idx"
     end
 
-    def worker_queue_list_key(worker: '')
+    private def worker_queue_list_key(worker: '')
       "worker:#{site}:#{worker}"
     end
   end

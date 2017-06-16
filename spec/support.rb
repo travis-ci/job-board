@@ -2,18 +2,26 @@
 
 require 'simplecov'
 
+def integration?
+  ENV['INTEGRATION_SPECS'] == '1'
+end
+
 ENV['RACK_ENV'] = 'test'
 ENV['LOG_LEVEL'] = 'fatal'
-ENV['DATABASE_URL'] = 'mock://' unless ENV['INTEGRATION_SPECS'] == '1'
+ENV['DATABASE_URL'] = 'mock://' unless integration?
 ENV['DATABASE_SQL_LOGGING'] = nil
+ENV['AUTH_TOKENS'] = 'test'
+ENV['JOB_BOARD_JWT_PRIVATE_KEY'] = File.read(
+  File.expand_path('../test_rsa', __FILE__)
+)
 
 require 'job_board'
 require 'l2met-log'
 require 'rack/test'
 require 'factory_girl'
-require 'fakeredis/rspec'
+require 'fakeredis/rspec' unless integration?
 
-L2met::Log.default_log_level = :fatal
+L2met::Log.default_log_level = :fatal unless integration?
 
 module RackTestBits
   include Rack::Test::Methods
@@ -29,10 +37,13 @@ FactoryGirl.define do
   end
 end
 
-integration_enabled = ENV['INTEGRATION_SPECS'] == '1'
-
 RSpec.configure do |c|
   c.include RackTestBits
   c.include FactoryGirl::Syntax::Methods
-  c.filter_run_excluding(integration: true) unless integration_enabled
+  c.filter_run_excluding(integration: true) unless integration?
+  c.before(:suite) do
+    JobBoard.redis.del('queues:test')
+    JobBoard.redis.del('queue:test:test')
+    JobBoard.redis.del('workers:test')
+  end
 end

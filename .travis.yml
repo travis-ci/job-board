@@ -9,12 +9,16 @@ cache:
   - ${HOME}/perl5
   - ${HOME}/.cache
 
+services:
+- redis
+
 addons:
   postgresql: 9.3
 
 env:
   global:
   - DATABASE_URL='postgres://localhost:5432/job_board_test'
+  - RUBYOPT=-W0
   matrix:
   - INTEGRATION_SPECS='1' COVERAGE='1'
   - INTEGRATION_SPECS='0'

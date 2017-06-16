@@ -37,7 +37,7 @@ module JobBoard
         end
 
         db.extension(*connection_extensions)
-        @initdb = db['select now()']
+        @initdb = db['select now()'].first
       end
 
       private def after_connect(conn)

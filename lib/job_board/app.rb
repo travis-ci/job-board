@@ -10,6 +10,10 @@ require 'sinatra/base'
 
 module JobBoard
   class App < Sinatra::Base
+    configure do
+      enable :logging if JobBoard.config.api_logging?
+    end
+
     use Rack::Deflater
     use JobBoard::Auth, site_paths: %r{^/jobs.+}
     use JobBoard::JobDeliveryAPI
@@ -25,6 +29,14 @@ module JobBoard
           now: pg_now,
           version: JobBoard.version
         )
+      ]
+    end
+
+    get '/latest-stats' do
+      [
+        200,
+        { 'Content-Type' => 'application/json' },
+        JobBoard.redis.get('latest-stats')
       ]
     end
 

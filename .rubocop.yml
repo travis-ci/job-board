@@ -5,3 +5,6 @@ AllCops:
 
 Style/Documentation:
   Enabled: false
+
+Metrics/ClassLength:
+  Max: 200

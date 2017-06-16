@@ -21,6 +21,8 @@ module JobBoard
 
         db_job = JobBoard::Models::Job.first(job_id: job_id.to_s)
         if db_job.nil?
+          log level: :info, msg: 'creating new job record', job: job_id,
+              queue: queue, site: site
           return create_new(
             data: Sequel::Postgres::JSONHash.new(job.to_hash),
             job_id: job_id,
@@ -28,6 +30,8 @@ module JobBoard
             site: site
           ).to_hash
         else
+          log level: :info, msg: 'updating existing job record', job: job_id,
+              queue: queue
           db_job.set(
             data: Sequel::Postgres::JSONHash.new(job.to_hash),
             queue: queue,
@@ -38,20 +42,19 @@ module JobBoard
         end
       end
 
-      private
-
-      def queue
+      private def queue
         return @queue if @queue
-        @queue = job.fetch('data').fetch('queue', nil)
+        @queue = job.fetch('data', {}).fetch('queue', nil)
         if @queue.nil?
           @queue = assign_queue
-          log level: :warn, msg: 'nil queue from scheduler', new: @queue
+          log level: :warn, msg: 'nil queue from scheduler',
+              new: @queue, job: job.fetch('id')
         end
 
         @queue = @queue.sub(/^builds\./, '')
       end
 
-      def create_new(job_id: '', site: '', queue_name: '', data: {})
+      private def create_new(job_id: '', site: '', queue_name: '', data: {})
         JobBoard::JobQueue.new(
           queue_name: queue_name,
           site: site
@@ -67,7 +70,7 @@ module JobBoard
         )
       end
 
-      def assign_queue
+      private def assign_queue
         JobBoard::Services::FetchQueue.run(job: job)
       end
     end

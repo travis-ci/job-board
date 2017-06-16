@@ -23,9 +23,7 @@ module JobBoard
       end
     end
 
-    private
-
-    def build_candidate_tags
+    private def build_candidate_tags
       full_tag_set = {}
       candidate_tags = []
 
@@ -87,23 +85,23 @@ module JobBoard
       [full_tag_set] + candidate_tags
     end
 
-    def val(key)
+    private def val(key)
       config.fetch(key)
     end
 
-    def has?(*keys)
+    private def has?(*keys)
       keys.all? { |key| config.fetch(key, '').to_s.strip != '' }
     end
 
-    def osx?
+    private def osx?
       %w[osx macos].include?(config.fetch('os'))
     end
 
-    def language_key
+    private def language_key
       :"language_#{config.fetch('language')}"
     end
 
-    def config
+    private def config
       job_data_config
     end
   end

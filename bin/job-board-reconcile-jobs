@@ -5,6 +5,8 @@ libdir = File.expand_path('../../lib', __FILE__)
 $LOAD_PATH.unshift(libdir) unless $LOAD_PATH.include?(libdir)
 
 require 'json'
+require 'time'
+
 require 'l2met-log'
 
 require_relative '../lib/job_board'
@@ -28,12 +30,20 @@ def main(argv: ARGV)
     stats = reconciler.reconcile!
     stats.fetch(:sites, {}).each do |site_name, site|
       log msg: 'reconciled', site: site_name,
-          reclaimed: site.fetch(:reclaimed, '???')
+          reclaimed: site.fetch(:reclaimed, '???'),
+          reclaimed_ids: site.fetch(
+            :reclaimed_ids, [:notset]
+          ).map(&:to_s).join(',')
       site.fetch(:queues, {}).each do |queue_name, queue|
         log site: site_name, queue: queue_name,
             queued: queue[:queued], claimed: queue[:claimed]
       end
     end
+
+    JobBoard.redis.set(
+      'latest-stats',
+      JSON.dump(stats.merge(generated: Time.now.utc.iso8601))
+    )
     sleep(Integer(ENV['JOB_BOARD_RECONCILIATION_SLEEP_INTERVAL'] || 1))
   end
 

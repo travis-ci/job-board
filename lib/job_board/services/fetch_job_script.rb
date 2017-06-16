@@ -24,6 +24,8 @@ module JobBoard
             JobBoard.config.build_api_url
           )
         end
+
+        attr_writer :build_uri
       end
 
       def initialize(job_data: {}, caching_enabled: true, cache_ttl: 3600)

@@ -4,8 +4,25 @@ describe JobBoard::JobQueue do
   let(:queue_name) { 'lel' }
   let(:site) { 'test' }
   let(:redis) { JobBoard.redis }
+
   subject do
     described_class.new(redis: redis, queue_name: queue_name, site: site)
+  end
+
+  before :each do
+    redis.multi do |conn|
+      %W[
+        queue:#{site}:#{queue_name}
+        queue:#{site}:#{queue_name}:claims
+        queue:#{site}:#{queue_name}:claims:timestamps
+        queues:#{site}
+        worker:#{site}:a
+        workers:#{site}
+      ].each do |key|
+        conn.del(key)
+      end
+      conn.srem('sites', site)
+    end
   end
 
   context 'with no data' do
