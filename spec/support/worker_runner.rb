@@ -4,17 +4,15 @@ require 'fileutils'
 
 module Support
   class WorkerRunner
-    def initialize(n: 1, target_version: 'v2.9.1', kill_tendency: 29)
+    def initialize(n: 1, target_version: 'v2.9.2')
       @n = n
       @target_version = target_version
-      @kill_tendency = kill_tendency
       @workers = {}
       @tmproot = ENV['RSPEC_RUNNER_TMPROOT'] ||
                  Dir.mktmpdir(%w[job-board- -travis-worker])
     end
 
-    attr_reader :kill_tendency, :n, :target_version, :tmproot, :workers
-    private :kill_tendency
+    attr_reader :n, :target_version, :tmproot, :workers
     private :n
     private :target_version
     private :tmproot
@@ -25,7 +23,7 @@ module Support
       n.times do |worker_n|
         workers[worker_n] = spawn_worker(worker_n, port)
       end
-      start_maybe_killer_thread if maybe_killer
+      start_maybe_killer_thread if maybe_killer && n > 1
     end
 
     def stop
@@ -58,7 +56,7 @@ module Support
     private def start_maybe_killer_thread(initial_sleep: 5)
       sleep initial_sleep
       to_kill = {}
-      (workers.size * 0.25).to_i.times do |_n|
+      (workers.size * 0.25).ceil.times do |_n|
         to_kill[workers.values.sample.fetch(:pid)] = true
       end
 
