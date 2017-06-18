@@ -4,15 +4,12 @@ require_relative 'image_params'
 require_relative 'models'
 require_relative 'services/update_image'
 
-require 'l2met-log'
-
 module JobBoard
   class ImageUpdater
-    include L2met::Log
-
     def update(request_body)
-      log level: :debug, msg: 'handling request',
-          request_body: request_body.inspect
+      JobBoard.logger.debug(
+        'handling request', request_body: request_body.inspect
+      )
 
       images = []
       errors = []

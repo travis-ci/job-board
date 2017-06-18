@@ -31,8 +31,9 @@ module JobBoard
 
       def payload
         exp = (Time.now.utc + self.class.job_max_duration).to_i
-        log level: :debug, msg: 'creating jwt payload', sub: job_id,
-            exp: exp, site: site
+        JobBoard.logger.debug(
+          'creating jwt payload', sub: job_id, exp: exp, site: site
+        )
         {
           iss: "job-board/#{JobBoard.version}",
           sub: job_id,

@@ -7,11 +7,7 @@ $LOAD_PATH.unshift(libdir) unless $LOAD_PATH.include?(libdir)
 require 'json'
 require 'time'
 
-require 'l2met-log'
-
 require_relative '../lib/job_board'
-
-include L2met::Log
 
 $stdout.sync = true
 $stderr.sync = true
@@ -25,18 +21,24 @@ def main(argv: ARGV)
   end
 
   reconciler = JobBoard::JobQueueReconciler.new
-  log msg: 'starting reconciliation loop'
+  JobBoard.logger.info('starting reconciliation loop')
   loop do
     stats = reconciler.reconcile!
     stats.fetch(:sites, {}).each do |site_name, site|
-      log msg: 'reconciled', site: site_name,
-          reclaimed: site.fetch(:reclaimed, '???'),
-          reclaimed_ids: site.fetch(
-            :reclaimed_ids, [:notset]
-          ).map(&:to_s).join(',')
+      JobBoard.logger.info(
+        'reconciled',
+        site: site_name,
+        reclaimed: site.fetch(:reclaimed, '???'),
+        reclaimed_ids: site.fetch(
+          :reclaimed_ids, [:notset]
+        ).map(&:to_s).join(',')
+      )
       site.fetch(:queues, {}).each do |queue_name, queue|
-        log site: site_name, queue: queue_name,
-            queued: queue[:queued], claimed: queue[:claimed]
+        JobBoard.logger.info(
+          'queue stats',
+          site: site_name, queue: queue_name,
+          queued: queue[:queued], claimed: queue[:claimed]
+        )
       end
     end
 

@@ -12,7 +12,6 @@ gem 'fakeredis', group: %i[development test], require: false
 gem 'faraday'
 gem 'jemalloc'
 gem 'jwt'
-gem 'l2met-log', git: 'https://github.com/travis-ci/l2met-log.git'
 gem 'pg'
 gem 'pry', require: false
 gem 'puma'
@@ -30,4 +29,4 @@ gem 'sinatra'
 gem 'sinatra-contrib'
 gem 'sinatra-param', require: 'sinatra/param'
 gem 'travis-config'
-gem 'travis-support', git: 'https://github.com/travis-ci/travis-support'
+gem 'travis-logger', git: 'https://github.com/travis-ci/travis-logger.git'
