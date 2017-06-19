@@ -68,11 +68,11 @@ module JobBoard
       results
     end
 
-    attr_reader :redis, :queue_name, :site, :ttl
+    attr_reader :redis_pool, :queue_name, :site, :ttl
 
-    def initialize(redis: nil, queue_name: '', site: '',
+    def initialize(redis_pool: nil, queue_name: '', site: '',
                    ttl: JobBoard.config.worker_ttl)
-      @redis = redis || JobBoard.redis
+      @redis_pool = redis_pool || JobBoard.redis_pool
       @queue_name = queue_name
       @site = site
       @ttl = ttl
@@ -84,32 +84,36 @@ module JobBoard
     end
 
     def register(worker: '')
-      redis.multi do |conn|
-        conn.sadd('sites', site)
-        conn.sadd("queues:#{site}", queue_name)
-        conn.sadd("workers:#{site}", worker)
+      redis_pool.with do |redis|
+        redis.multi do |conn|
+          conn.sadd('sites', site)
+          conn.sadd("queues:#{site}", queue_name)
+          conn.sadd("workers:#{site}", worker)
+        end
       end
     end
 
     def add(job_id: '')
       raise Invalid, 'missing job id' if job_id.to_s.empty?
-      redis.lpush(queue_key, job_id.to_s)
+      redis_pool.with { |c| c.lpush(queue_key, job_id.to_s) }
     end
 
     def remove(job_id: '')
       raise Invalid, 'missing job id' if job_id.empty?
 
-      result = redis.lrem(queue_key, 0, job_id)
-      workers = redis.smembers("workers:#{site}")
-      redis.multi do |conn|
-        workers.each do |worker|
-          conn.srem("worker:#{site}:#{worker}:idx", job_id)
-          conn.lrem("worker:#{site}:#{worker}", 1, job_id)
+      redis_pool.with do |redis|
+        result = redis.lrem(queue_key, 0, job_id)
+        workers = redis.smembers("workers:#{site}")
+        redis.multi do |conn|
+          workers.each do |worker|
+            conn.srem("worker:#{site}:#{worker}:idx", job_id)
+            conn.lrem("worker:#{site}:#{worker}", 1, job_id)
+          end
+          conn.hdel(queue_job_claims_key, job_id)
+          conn.hdel(queue_job_claim_timestamps_key, job_id)
         end
-        conn.hdel(queue_job_claims_key, job_id)
-        conn.hdel(queue_job_claim_timestamps_key, job_id)
+        result
       end
-      result
     end
 
     def claim(worker: '', max: 1, timeout: 5.0)
@@ -120,38 +124,42 @@ module JobBoard
       start = Time.now
       new_claims = []
 
-      loop do
-        delta = Time.now - start
-        if delta >= timeout
-          log level: :warn, msg: 'timeout while claiming jobs',
-              max: max, timeout: timeout, delta: time_delta
-          break
+      redis_pool.with do |redis|
+        loop do
+          delta = Time.now - start
+          if delta >= timeout
+            log level: :warn, msg: 'timeout while claiming jobs',
+                max: max, timeout: timeout, delta: time_delta
+            break
+          end
+
+          break if new_claims.length >= max
+
+          claimed = redis.rpoplpush(
+            queue_key, worker_queue_list_key(worker: worker)
+          )
+          break if claimed.nil?
+          new_claims << claimed
         end
 
-        break if new_claims.length >= max
+        all_claims = redis.smembers(
+          worker_index_set_key(worker: worker)
+        ) + new_claims
 
-        claimed = redis.rpoplpush(
-          queue_key, worker_queue_list_key(worker: worker)
-        )
-        break if claimed.nil?
-        new_claims << claimed
+        unless all_claims.empty?
+          refresh_claims!(redis: redis, worker: worker, claimed: all_claims)
+        end
+
+        new_claims
       end
-
-      all_claims = redis.smembers(
-        worker_index_set_key(worker: worker)
-      ) + new_claims
-
-      unless all_claims.empty?
-        refresh_claims!(worker: worker, claimed: all_claims)
-      end
-
-      new_claims
     rescue => e
       log level: :error, msg: 'failure during claim', error: e.to_s
 
       begin
-        new_claims.each do |job_id|
-          redis.lpush(queue_key, job_id)
+        redis_pool.with do |redis|
+          new_claims.each do |job_id|
+            redis.lpush(queue_key, job_id)
+          end
         end
       rescue => e
         log level: :error, msg: 'failed to push claims back', error: e.to_s
@@ -164,50 +172,63 @@ module JobBoard
       claimed = []
       return claimed if worker.nil?
 
-      job_ids.each do |job_id|
-        if worker_has_current_job_claim?(worker: worker, job_id: job_id)
-          touch_job_claim_timestamp(job_id: job_id)
-          claimed << job_id
-          next
+      redis_pool.with do |redis|
+        job_ids.each do |job_id|
+          if worker_has_current_job_claim?(
+            redis: redis, worker: worker, job_id: job_id
+          )
+            touch_job_claim_timestamp(redis: redis, job_id: job_id)
+            claimed << job_id
+            next
+          end
+
+          remove_job_id_from_worker_queue(
+            redis: redis, worker: worker, job_id: job_id
+          )
         end
 
-        remove_job_id_from_worker_queue(worker: worker, job_id: job_id)
+        extend_worker_queue_expiry(redis: redis, worker: worker)
       end
 
-      extend_worker_queue_expiry(worker: worker)
       claimed
     end
 
-    private def worker_has_current_job_claim?(worker: nil, job_id: nil)
+    private def worker_has_current_job_claim?(
+      redis: nil, worker: nil, job_id: nil
+    )
       futures = {}
+
       redis.pipelined do
         futures[:claimed_by] = redis.hget(queue_job_claims_key, job_id)
         futures[:exists] = redis.sismember(
           worker_index_set_key(worker: worker), job_id
         )
       end
+
       futures[:claimed_by].value == worker && futures[:exists].value
     end
 
-    private def touch_job_claim_timestamp(job_id: '')
+    private def touch_job_claim_timestamp(redis: nil, job_id: '')
       redis.hset(queue_job_claim_timestamps_key, job_id, now)
     end
 
-    private def extend_worker_queue_expiry(worker: nil)
+    private def extend_worker_queue_expiry(redis: nil, worker: nil)
       redis.multi do |conn|
         conn.expire(worker_index_set_key(worker: worker), ttl)
         conn.expire(worker_queue_list_key(worker: worker), ttl)
       end
     end
 
-    private def remove_job_id_from_worker_queue(worker: nil, job_id: nil)
+    private def remove_job_id_from_worker_queue(
+      redis: nil, worker: nil, job_id: nil
+    )
       redis.multi do |conn|
         conn.srem(worker_index_set_key(worker: worker), job_id)
         conn.lrem(worker_queue_list_key(worker: worker), 1, job_id)
       end
     end
 
-    private def refresh_claims!(worker: nil, claimed: [])
+    private def refresh_claims!(redis: nil, worker: nil, claimed: [])
       return if worker.nil?
       claimed_map = claimed.map { |job_id| [job_id, worker] }
       redis.multi do |conn|

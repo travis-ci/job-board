@@ -40,10 +40,14 @@ def main(argv: ARGV)
       end
     end
 
-    JobBoard.redis.set(
-      'latest-stats',
-      JSON.dump(stats.merge(generated: Time.now.utc.iso8601))
-    )
+    JobBoard.redis_pool.with do |conn|
+      conn.set(
+        'latest-stats',
+        JSON.dump(
+          stats.merge(generated: Time.now.utc.iso8601)
+        )
+      )
+    end
     sleep(Integer(ENV['JOB_BOARD_RECONCILIATION_SLEEP_INTERVAL'] || 1))
   end
 

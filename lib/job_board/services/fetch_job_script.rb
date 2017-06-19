@@ -71,15 +71,17 @@ module JobBoard
       end
 
       def fetch_cached
-        value = JobBoard.redis.get(cache_key)
+        value = JobBoard.redis_pool.with { |c| c.get(cache_key) }
         return nil unless value
         Base64.decode64(value)
       end
 
       def store_cached(script)
-        JobBoard.redis.setex(
-          cache_key, cache_ttl, Base64.strict_encode64(script)
-        )
+        JobBoard.redis_pool.with do |conn|
+          conn.setex(
+            cache_key, cache_ttl, Base64.strict_encode64(script)
+          )
+        end
       end
 
       def cache_key

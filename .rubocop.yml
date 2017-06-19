@@ -7,4 +7,4 @@ Style/Documentation:
   Enabled: false
 
 Metrics/ClassLength:
-  Max: 200
+  Max: 250
