@@ -7,6 +7,7 @@ ruby '2.4.1' if ENV.key?('DYNO')
 gem 'activesupport'
 gem 'addressable'
 gem 'codeclimate-test-reporter', group: %i[development test], require: nil
+gem 'connection_pool'
 gem 'factory_girl', group: %i[development test]
 gem 'fakeredis', group: %i[development test], require: false
 gem 'faraday'

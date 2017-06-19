@@ -2,6 +2,7 @@
 
 require_relative 'travis'
 
+require 'connection_pool'
 require 'redis-namespace'
 require 'travis/logger'
 
@@ -50,4 +51,14 @@ module JobBoard
   end
 
   module_function :redis
+
+  def redis_pool
+    @redis_pool ||= ConnectionPool.new(config.redis_pool_options) do
+      Redis::Namespace.new(
+        :job_board, redis: Redis.new(url: config.redis_url)
+      )
+    end
+  end
+
+  module_function :redis_pool
 end

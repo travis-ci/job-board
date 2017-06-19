@@ -4,42 +4,44 @@ require 'job_board'
 
 module JobBoard
   class JobQueueReconciler
-    def initialize(redis: nil)
-      @redis = redis || JobBoard.redis
+    def initialize(redis_pool: nil)
+      @redis_pool = redis_pool || JobBoard.redis_pool
     end
 
-    attr_reader :redis
+    attr_reader :redis_pool
 
     def reconcile!(with_ids: JobBoard.config.reconcile_stats_with_ids)
       JobBoard.logger.info('starting reconciliation process')
       start_time = Time.now
       stats = { sites: {} }
 
-      redis.smembers('sites').map(&:to_sym).each do |site|
-        next if site.to_s.empty?
+      redis_pool.with do |redis|
+        redis.smembers('sites').map(&:to_sym).each do |site|
+          next if site.to_s.empty?
 
-        stats[:sites][site] = {
-          workers: {},
-          queues: {}
-        }
+          stats[:sites][site] = {
+            workers: {},
+            queues: {}
+          }
 
-        JobBoard.logger.info('reconciling', site: site)
-        reclaimed, claimed = reconcile_site!(site: site)
+          JobBoard.logger.info('reconciling', site: site)
+          reclaimed, claimed = reconcile_site!(site: site)
 
-        JobBoard.logger.info('reclaimed jobs', site: site, n: reclaimed.length)
-        stats[:sites][site][:reclaimed] = reclaimed.length
-        stats[:sites][site][:reclaimed_ids] = reclaimed if with_ids
-        stats[:sites][site][:workers].merge!(claimed)
+          JobBoard.logger.info('reclaimed jobs', site: site, n: reclaimed.length)
+          stats[:sites][site][:reclaimed] = reclaimed.length
+          stats[:sites][site][:reclaimed_ids] = reclaimed if with_ids
+          stats[:sites][site][:workers].merge!(claimed)
 
-        JobBoard.logger.info('fetching queue stats', site: site)
-        stats[:sites][site][:queues].merge!(measure(site))
+          JobBoard.logger.info('fetching queue stats', site: site)
+          stats[:sites][site][:queues].merge!(measure(site))
+        end
+
+        JobBoard.logger.info('finished with reconciliation process')
+        stats.merge(time: "#{Time.now - start_time}s")
       end
-
-      JobBoard.logger.info('finished with reconciliation process')
-      stats.merge(time: "#{Time.now - start_time}s")
     end
 
-    private def reconcile_site!(site: '')
+    private def reconcile_site!(redis: nil, site: '')
       reclaimed = []
       claimed = {}
 
@@ -47,12 +49,14 @@ module JobBoard
         worker = worker.to_s.strip
         next if worker.empty?
 
-        if worker_is_current?(site: site, worker: worker)
+        if worker_is_current?(redis: redis, site: site, worker: worker)
           claimed[worker] = {
             claimed: redis.llen("worker:#{site}:#{worker}")
           }
         else
-          reclaimed += reclaim_jobs_from_worker(site: site, worker: worker)
+          reclaimed += reclaim_jobs_from_worker(
+            redis: redis, site: site, worker: worker
+          )
           claimed[worker] = { claimed: 0 }
         end
       end
@@ -60,23 +64,23 @@ module JobBoard
       [reclaimed, claimed]
     end
 
-    private def worker_is_current?(site: '', worker: '')
+    private def worker_is_current?(redis: nil, site: '', worker: '')
       redis.exists("worker:#{site}:#{worker}")
     end
 
-    private def reclaim_jobs_from_worker(site: '', worker: '')
+    private def reclaim_jobs_from_worker(redis: nil, site: '', worker: '')
       reclaimed = []
 
       redis.smembers("queues:#{site}").each do |queue_name|
         reclaimed += reclaim!(
-          worker: worker, site: site, queue_name: queue_name
+          redis: redis, worker: worker, site: site, queue_name: queue_name
         )
       end
 
       reclaimed
     end
 
-    private def reclaim!(worker: '', site: '', queue_name: '')
+    private def reclaim!(redis: nil, worker: '', site: '', queue_name: '')
       reclaimed = []
       return reclaimed if worker.empty? || site.empty? || queue_name.empty?
 
@@ -84,7 +88,8 @@ module JobBoard
       claims.each do |job_id, claimer|
         next unless worker == claimer
         reclaim_job(
-          worker: worker, job_id: job_id, site: site, queue_name: queue_name
+          redis: redis, worker: worker, job_id: job_id,
+          site: site, queue_name: queue_name
         )
         reclaimed << job_id
       end
@@ -92,7 +97,7 @@ module JobBoard
       reclaimed
     end
 
-    private def measure(site)
+    private def measure(redis: nil, site: '')
       measured = {}
 
       redis.smembers("queues:#{site}").each do |queue_name|
@@ -110,7 +115,9 @@ module JobBoard
       measured
     end
 
-    private def reclaim_job(worker: '', job_id: '', site: '', queue_name: '')
+    private def reclaim_job(
+      redis: nil, worker: '', job_id: '', site: '', queue_name: ''
+    )
       redis.multi do |conn|
         conn.srem("worker:#{site}:#{worker}:idx", job_id)
         conn.lrem("worker:#{site}:#{worker}", 1, job_id)

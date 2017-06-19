@@ -25,7 +25,7 @@ module JobBoard
         { 'Content-Type' => 'application/json' },
         JSON.dump(
           greeting: 'hello, human 👋!',
-          pong: JobBoard.redis.ping.to_s,
+          pong: JobBoard.redis_pool.with { |c| c.ping.to_s },
           now: pg_now,
           version: JobBoard.version
         )
@@ -36,7 +36,7 @@ module JobBoard
       [
         200,
         { 'Content-Type' => 'application/json' },
-        JobBoard.redis.get('latest-stats')
+        JobBoard.redis_pool.with { |c| c.get('latest-stats') }
       ]
     end
 
