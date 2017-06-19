@@ -130,7 +130,7 @@ module JobBoard
             )
             break
           end
-        
+
           break if new_claims.length >= max
 
           claimed = redis.rpoplpush(
