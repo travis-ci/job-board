@@ -25,7 +25,7 @@ module JobBoard
           }
 
           JobBoard.logger.info('reconciling', site: site)
-          reclaimed, claimed = reconcile_site!(site: site)
+          reclaimed, claimed = reconcile_site!(redis: redis, site: site)
 
           JobBoard.logger.info('reclaimed jobs', site: site, n: reclaimed.length)
           stats[:sites][site][:reclaimed] = reclaimed.length
@@ -33,7 +33,7 @@ module JobBoard
           stats[:sites][site][:workers].merge!(claimed)
 
           JobBoard.logger.info('fetching queue stats', site: site)
-          stats[:sites][site][:queues].merge!(measure(site))
+          stats[:sites][site][:queues].merge!(measure(redis: redis, site: site))
         end
 
         JobBoard.logger.info('finished with reconciliation process')
