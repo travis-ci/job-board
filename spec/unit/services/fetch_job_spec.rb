@@ -52,7 +52,7 @@ describe JobBoard::Services::FetchJob do
       .with(job_id: job_id, site: site)
       .and_return(fake_db_job)
     allow(JobBoard::Services::FetchJobScript).to receive(:run)
-      .with(job_data: job_script_data)
+      .with(job_data: job_script_data, site: site)
       .and_return("#!/bin/bash\necho wat\n")
     allow(JobBoard::Services::CreateJWT).to receive(:run)
       .with(job_id: job_id, site: site)

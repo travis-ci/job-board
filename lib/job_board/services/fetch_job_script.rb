@@ -15,21 +15,25 @@ module JobBoard
       BuildScriptError = Class.new(StandardError)
 
       class << self
-        def build_api_conn
-          @build_api_conn ||= Faraday.new(url: build_uri.to_s)
+        def build_api_conn(site)
+          @build_api_conns ||= {}
+          @build_api_conns[site] ||= Faraday.new(url: build_uri(site))
         end
 
-        def build_uri
-          @build_uri ||= Addressable::URI.parse(
-            JobBoard.config.build_api_url
+        def build_uri(site)
+          @build_uris ||= {}
+          @build_uris[site] ||= Addressable::URI.parse(
+            JobBoard.config["build_api_#{site}_url"]
           )
         end
 
-        attr_writer :build_uri
+        attr_writer :build_uris
       end
 
-      def initialize(job_data: {}, caching_enabled: true, cache_ttl: 3600)
+      def initialize(job_data: {}, site: '',
+                     caching_enabled: true, cache_ttl: 3600)
         @job_data = job_data
+        @site = site
         @caching_enabled = caching_enabled
         @cache_ttl = cache_ttl
       end
@@ -42,7 +46,7 @@ module JobBoard
           return cached_script unless cached_script.nil?
         end
 
-        response = self.class.build_api_conn.post do |req|
+        response = self.class.build_api_conn(site).post do |req|
           req.url '/script'
           req.headers['User-Agent'] = user_agent
           req.headers['Authorization'] = auth_header
@@ -67,7 +71,7 @@ module JobBoard
       end
 
       def auth_header
-        "token #{self.class.build_uri.password}"
+        "token #{self.class.build_uri(site).password}"
       end
 
       def fetch_cached
