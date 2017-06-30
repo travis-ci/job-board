@@ -59,7 +59,8 @@ module JobBoard
           npm_cache: ''
         }
       },
-      build_api_url: ENV.fetch('JOB_BOARD_BUILD_API_URL', ''),
+      build_api_com_url: ENV.fetch('JOB_BOARD_BUILD_API_COM_URL', ''),
+      build_api_org_url: ENV.fetch('JOB_BOARD_BUILD_API_ORG_URL', ''),
       database: {
         url: '',
         sql_logging: false

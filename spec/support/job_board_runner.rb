@@ -59,8 +59,9 @@ module Support
 
       JobBoard.config.worker_ttl = 5
 
-      JobBoard::Services::FetchJobScript.build_uri =
-        Addressable::URI.parse(misc_base_url)
+      JobBoard::Services::FetchJobScript.build_uris = {
+        'test' => Addressable::URI.parse(misc_base_url)
+      }
 
       Rack::Server.start(options)
     end

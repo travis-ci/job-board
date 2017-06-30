@@ -34,6 +34,8 @@ describe JobBoard::Services::FetchJobScript do
   before :each do
     allow(described_class).to receive(:build_api_conn)
       .and_return(fake_http)
+    allow(described_class).to receive(:build_uri)
+      .and_return(Addressable::URI.parse('http://user:pass@jobs.example.org'))
   end
 
   let :fake_http do
@@ -47,7 +49,7 @@ describe JobBoard::Services::FetchJobScript do
   end
 
   it 'fetches a script' do
-    script = described_class.run(job_data: job_data)
+    script = described_class.run(job_data: job_data, site: 'test')
     expect(script.length).to be_positive
     expect(script).to match(/bash/)
   end
