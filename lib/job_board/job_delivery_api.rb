@@ -5,7 +5,6 @@ require 'json'
 require_relative 'auth'
 require_relative 'services'
 
-require 'l2met-log'
 require 'sinatra/base'
 require 'sinatra/json'
 require 'sinatra/param'
@@ -17,7 +16,6 @@ module JobBoard
     before { content_type :json }
 
     helpers do
-      include L2met::Log
       include JobBoard::Auth::GuestDetect
     end
 
@@ -49,23 +47,29 @@ module JobBoard
         '@count' => params[:count],
         '@queue' => queue
       )
-      log msg: :allocated, queue: queue,
-          count: params[:count], from: from, site: site
+      JobBoard.logger.info(
+        'allocated',
+        queue: queue, count: params[:count], from: from, site: site
+      )
       json body
     end
 
     post '/jobs/add' do
       job = JSON.parse(request.body.read)
       site = request.env.fetch('travis.site')
-      log level: :debug, msg: 'parsed job',
-          job_id: job.fetch('id', '<unknown>'), site: site
+      JobBoard.logger.debug(
+        'parsed job',
+        job_id: job.fetch('id', '<unknown>'), site: site
+      )
       db_job = JobBoard::Services::CreateOrUpdateJob.run(job: job, site: site)
       if db_job.nil?
-        log level: :error, msg: 'failed to create or update job',
-            job_id: job.fetch('id'), site: site
+        JobBoard.logger.error(
+          'failed to create or update job',
+          job_id: job.fetch('id'), site: site
+        )
         halt 400, JSON.dump('@type' => 'error', error: 'what')
       end
-      log msg: :added, job_id: job.fetch('id'), site: site
+      JobBoard.logger.info('added', job_id: job.fetch('id'), site: site)
       [201, { 'Content-Length' => '0' }, '']
     end
 
@@ -84,7 +88,7 @@ module JobBoard
           upstream_error: job.message
         )
       end
-      log msg: :fetched, job_id: job_id, site: site, infra: infra
+      JobBoard.logger.info('fetched', job_id: job_id, site: site, infra: infra)
       json job
     end
 
@@ -92,7 +96,7 @@ module JobBoard
       job_id = params.fetch('job_id')
       site = request.env.fetch('travis.site')
       JobBoard::Services::DeleteJob.run(job_id: job_id, site: site)
-      log msg: :deleted, job_id: job_id, site: site
+      JobBoard.logger.info('deleted', job_id: job_id, site: site)
       [204, {}, '']
     end
   end

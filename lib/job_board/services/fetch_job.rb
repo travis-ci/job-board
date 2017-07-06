@@ -59,28 +59,34 @@ module JobBoard
       end
 
       def fetch_db_job
-        log msg: 'fetching job from database',
-            job_id: job_id, site: site, infra: infra
+        JobBoard.logger.info(
+          'fetching job from database',
+          job_id: job_id, site: site, infra: infra
+        )
         JobBoard::Models::Job.first(job_id: job_id, site: site)
       end
 
       def fetch_job_script(job_data)
-        log msg: 'fetching job script',
-            job_id: job_id, site: site, infra: infra
+        JobBoard.logger.info(
+          'fetching job script',
+          job_id: job_id, site: site, infra: infra
+        )
         JobBoard::Services::FetchJobScript.run(job_data: job_data, site: site)
       end
 
       def generate_jwt
-        log msg: 'creating jwt',
-            job_id: job_id, site: site, infra: infra
+        JobBoard.logger.info(
+          'creating jwt', job_id: job_id, site: site, infra: infra
+        )
         JobBoard::Services::CreateJWT.run(
           job_id: job_id, site: site
         )
       end
 
       def fetch_image_name(job)
-        log msg: 'fetching image name',
-            job_id: job_id, site: site, infra: infra
+        JobBoard.logger.info(
+          'fetching image name', job_id: job_id, site: site, infra: infra
+        )
         JobBoard::JobQueriesTransformer.new(
           job_data_config: job.fetch('data').fetch('config'), infra: infra
         ).queries.each do |query|

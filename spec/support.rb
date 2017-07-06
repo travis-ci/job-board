@@ -16,12 +16,9 @@ ENV['JOB_BOARD_JWT_PRIVATE_KEY'] = File.read(
 )
 
 require 'job_board'
-require 'l2met-log'
 require 'rack/test'
 require 'factory_girl'
 require 'fakeredis/rspec' unless integration?
-
-L2met::Log.default_log_level = :fatal unless integration?
 
 module RackTestBits
   include Rack::Test::Methods

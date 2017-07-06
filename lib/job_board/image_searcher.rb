@@ -2,15 +2,13 @@
 
 require_relative 'services/fetch_images'
 
-require 'l2met-log'
-
 module JobBoard
   class ImageSearcher
-    include L2met::Log
-
     def search(request_body)
-      log level: :debug, msg: 'handling request',
-          request_body: request_body.inspect
+      JobBoard.logger.debug(
+        'handling request',
+        request_body: request_body.inspect
+      )
 
       request_body.split(/\n|\r\n/).each do |line|
         images, params, limit = fetch_images_for_line(line)
@@ -34,8 +32,9 @@ module JobBoard
 
     private def fetch_images(params)
       images = JobBoard::Services::FetchImages.run(query: params)
-      log level: :debug, msg: 'found',
-          images: images.inspect, params: params.inspect
+      JobBoard.logger.debug(
+        'found', images: images.inspect, params: params.inspect
+      )
       images
     end
   end
