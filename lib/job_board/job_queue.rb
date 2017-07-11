@@ -84,6 +84,8 @@ module JobBoard
     end
 
     def register(worker: '')
+      raise Invalid, 'missing worker name' if worker.to_s.empty?
+
       redis_pool.with do |redis|
         redis.multi do |conn|
           conn.sadd('sites', site)
@@ -95,7 +97,14 @@ module JobBoard
 
     def add(job_id: '')
       raise Invalid, 'missing job id' if job_id.to_s.empty?
-      redis_pool.with { |c| c.lpush(queue_key, job_id.to_s) }
+
+      redis_pool.with do |redis|
+        redis.multi do |conn|
+          conn.sadd('sites', site)
+          conn.sadd("queues:#{site}", queue_name)
+          conn.lpush(queue_key, job_id.to_s)
+        end
+      end
     end
 
     def remove(job_id: '')
