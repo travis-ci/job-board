@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'time'
+
 require 'job_board'
 
 module JobBoard
@@ -87,6 +89,7 @@ module JobBoard
           conn.sadd('sites', site)
           conn.sadd("queues:#{site}", queue_name)
           conn.sadd("workers:#{site}", worker)
+          conn.setex("workers:#{site}:#{worker}:ping", ttl, Time.now.iso8601)
         end
       end
     end

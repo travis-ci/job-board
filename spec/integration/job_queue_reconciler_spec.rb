@@ -57,7 +57,11 @@ describe JobBoard::JobQueueReconciler do
           queues: {
             'lel' => { queued: 0, claimed: 4 }
           },
-          reclaimed: 0
+          reclaimed: 0,
+          capacity: {
+            busy: 2,
+            total: 3
+          }
         )
         avail_a = job_queue.check_claims(
           worker: 'a', job_ids: %w[0 2]
@@ -90,7 +94,11 @@ describe JobBoard::JobQueueReconciler do
           queues: {
             'lel' => { queued: 1, claimed: 3 }
           },
-          reclaimed: 0
+          reclaimed: 0,
+          capacity: {
+            busy: 2,
+            total: 3
+          }
         )
         avail_a = job_queue.check_claims(
           worker: 'a', job_ids: %w[0 2]
@@ -127,7 +135,11 @@ describe JobBoard::JobQueueReconciler do
           queues: {
             'lel' => { queued: 2, claimed: 2 }
           },
-          reclaimed: 2
+          reclaimed: 2,
+          capacity: {
+            busy: 1,
+            total: 3
+          }
         )
         avail_a = job_queue.check_claims(
           worker: 'a', job_ids: %w[0 2]
