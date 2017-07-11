@@ -73,7 +73,7 @@ describe JobBoard::JobQueue do
 
     it 'can add a job id' do
       subject.register(worker: 'a')
-      expect(subject.add(job_id: '0')).to eq(1)
+      expect(subject.add(job_id: '0').last).to eq(1)
     end
   end
 
@@ -144,7 +144,7 @@ describe JobBoard::JobQueue do
 
     it 'can add a job id' do
       subject.register(worker: 'a')
-      expect(subject.add(job_id: '4')).to eq(5)
+      expect(subject.add(job_id: '4').last).to eq(5)
     end
   end
 end
