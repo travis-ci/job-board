@@ -1,14 +1,8 @@
 GIT
-  remote: https://github.com/travis-ci/l2met-log.git
-  revision: d04ccc5e746b56685a48be9d113603fbb3c60db3
+  remote: https://github.com/travis-ci/travis-logger.git
+  revision: b589e0ca0e9f1a5d6cd8536ff7288d21d36c7560
   specs:
-    l2met-log (0.1.0)
-
-GIT
-  remote: https://github.com/travis-ci/travis-support
-  revision: 113cff17fe383bb72fcfae3a97a8ce98c228342f
-  specs:
-    travis-support (0.0.1)
+    travis-logger (0.0.1)
 
 GEM
   remote: https://rubygems.org/
@@ -130,7 +124,6 @@ DEPENDENCIES
   faraday
   jemalloc
   jwt
-  l2met-log!
   pg
   pry
   puma
@@ -148,7 +141,7 @@ DEPENDENCIES
   sinatra-contrib
   sinatra-param
   travis-config
-  travis-support!
+  travis-logger!
 
 BUNDLED WITH
    1.15.1

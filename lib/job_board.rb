@@ -4,6 +4,7 @@ require_relative 'travis'
 
 require 'connection_pool'
 require 'redis-namespace'
+require 'travis/logger'
 
 module JobBoard
   autoload :App, 'job_board/app'
@@ -22,13 +23,19 @@ module JobBoard
   autoload :Services, 'job_board/services'
 
   def config
-    return @config if defined?(@config)
     @config ||= JobBoard::Config.load
-    L2met::Log.default_log_level = @config.log_level
-    @config
   end
 
   module_function :config
+
+  def logger
+    @logger ||= Travis::Logger.new(@logdev || $stdout, config)
+  end
+
+  module_function :logger
+
+  attr_writer :logdev
+  module_function :logdev=
 
   def version
     @version ||=

@@ -1,8 +1,7 @@
 # frozen_string_literal: true
 
 require 'fileutils'
-
-require 'l2met-log'
+require 'logger'
 
 module Support
   class JobBoardReconcilerRunner
@@ -30,9 +29,11 @@ module Support
     private def start_reconciler
       reopen_streams
 
-      L2met::Log.default_log_level = :debug
       JobBoard.config.worker_ttl = 5
       JobBoard.config.reconcile_stats_with_ids = true
+      JobBoard.instance_variable_set(:@logger, nil)
+      JobBoard.logdev = $stdout
+      JobBoard.logger.level = ::Logger::DEBUG
 
       File.write(pid_file, Process.pid.to_s)
 

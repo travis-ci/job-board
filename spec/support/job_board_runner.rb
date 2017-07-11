@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 require 'fileutils'
+require 'logger'
 
 require 'addressable/uri'
-require 'l2met-log'
 require 'rack/server'
 
 require 'job_board'
@@ -45,7 +45,7 @@ module Support
       reopen_streams
       $stderr.puts '---> starting server'
 
-      L2met::Log.default_log_level = :debug
+      JobBoard.logger.level = ::Logger::DEBUG
 
       misc_base_url = "http://127.0.0.1:#{misc_http_port}"
       JobBoard.config[:job_state_test_url] = File.join(

@@ -2,12 +2,8 @@
 
 require 'job_board'
 
-require 'l2met-log'
-
 module JobBoard
   class JobQueue
-    include L2met::Log
-
     Invalid = Class.new(StandardError)
     Error = Class.new(StandardError)
 
@@ -137,8 +133,10 @@ module JobBoard
         loop do
           delta = Time.now - start
           if delta >= timeout
-            log level: :warn, msg: 'timeout while claiming jobs',
-                max: max, timeout: timeout, delta: time_delta
+            JobBoard.logger.warn(
+              'timeout while claiming jobs',
+              max: max, timeout: timeout, delta: time_delta
+            )
             break
           end
 
@@ -162,7 +160,7 @@ module JobBoard
         new_claims
       end
     rescue => e
-      log level: :error, msg: 'failure during claim', error: e.to_s
+      JobBoard.logger.error('failure during claim', error: e.to_s)
 
       begin
         redis_pool.with do |redis|
@@ -171,7 +169,7 @@ module JobBoard
           end
         end
       rescue => e
-        log level: :error, msg: 'failed to push claims back', error: e.to_s
+        JobBoard.logger.error('failed to push claims back', error: e.to_s)
       end
 
       []
