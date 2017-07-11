@@ -52,8 +52,7 @@ describe JobBoard::JobQueueReconciler do
         expect(stats[:sites][site.to_sym]).to eq(
           workers: {
             'a' => { claimed: 2 },
-            'b' => { claimed: 2 },
-            'c' => { claimed: 0 }
+            'b' => { claimed: 2 }
           },
           queues: {
             'lel' => { queued: 0, claimed: 4 }
@@ -86,8 +85,7 @@ describe JobBoard::JobQueueReconciler do
         expect(stats[:sites][site.to_sym]).to eq(
           workers: {
             'a' => { claimed: 2 },
-            'b' => { claimed: 1 },
-            'c' => { claimed: 0 }
+            'b' => { claimed: 1 }
           },
           queues: {
             'lel' => { queued: 1, claimed: 3 }
@@ -124,9 +122,7 @@ describe JobBoard::JobQueueReconciler do
         expect(stats[:sites][site.to_sym]).to_not be_nil
         expect(stats[:sites][site.to_sym]).to eq(
           workers: {
-            'a' => { claimed: 0 },
-            'b' => { claimed: 2 },
-            'c' => { claimed: 0 }
+            'b' => { claimed: 2 }
           },
           queues: {
             'lel' => { queued: 2, claimed: 2 }

@@ -57,7 +57,7 @@ module JobBoard
           reclaimed += reclaim_jobs_from_worker(
             redis: redis, site: site, worker: worker
           )
-          claimed[worker] = { claimed: 0 }
+          redis.srem("workers:#{site}", worker)
         end
       end
 
