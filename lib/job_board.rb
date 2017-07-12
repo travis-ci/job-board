@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'time'
+
 require_relative 'travis'
 
 require 'connection_pool'

@@ -58,7 +58,11 @@ describe JobBoard::JobQueueReconciler do
           queues: {
             'lel' => { queued: 0, claimed: 4 }
           },
-          reclaimed: 0
+          reclaimed: 0,
+          capacity: {
+            busy: 2,
+            total: 3
+          }
         )
         avail_a = job_queue.check_claims(
           worker: 'a', job_ids: %w[0 2]
@@ -92,7 +96,11 @@ describe JobBoard::JobQueueReconciler do
           queues: {
             'lel' => { queued: 1, claimed: 3 }
           },
-          reclaimed: 0
+          reclaimed: 0,
+          capacity: {
+            busy: 2,
+            total: 3
+          }
         )
         avail_a = job_queue.check_claims(
           worker: 'a', job_ids: %w[0 2]
@@ -115,6 +123,7 @@ describe JobBoard::JobQueueReconciler do
         # the worker queue and index ~meatballhat
         JobBoard.redis.del("worker:#{site}:a:idx")
         JobBoard.redis.del("worker:#{site}:a")
+        JobBoard.redis.del("worker:#{site}:a:ping")
       end
 
       it 'reconciles' do
@@ -124,14 +133,17 @@ describe JobBoard::JobQueueReconciler do
         expect(stats[:sites][site.to_sym]).to_not be_nil
         expect(stats[:sites][site.to_sym]).to eq(
           workers: {
-            'a' => { claimed: 0 },
             'b' => { claimed: 2 },
             'c' => { claimed: 0 }
           },
           queues: {
             'lel' => { queued: 2, claimed: 2 }
           },
-          reclaimed: 2
+          reclaimed: 2,
+          capacity: {
+            busy: 1,
+            total: 2
+          }
         )
         avail_a = job_queue.check_claims(
           worker: 'a', job_ids: %w[0 2]
