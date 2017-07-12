@@ -28,7 +28,7 @@ module JobBoard
           reclaimed, claimed = reconcile_site!(redis: redis, site: site)
           stats[:sites][site][:capacity] = {
             total: measure_capacity(redis: redis, site: site),
-            busy: claimed.select { |_, w| w[:claimed].positive? }.length
+            busy: claimed.count { |_, w| w[:claimed].positive? }
           }
 
           JobBoard.logger.info('reclaimed jobs', site: site, n: reclaimed.length)
