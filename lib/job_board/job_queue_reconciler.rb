@@ -28,7 +28,7 @@ module JobBoard
           reclaimed, claimed = reconcile_site!(redis: redis, site: site)
           stats[:sites][site][:capacity] = {
             total: measure_capacity(redis: redis, site: site),
-            busy: claimed.length
+            busy: claimed.select { |_, w| w[:claimed].positive? }.length
           }
 
           JobBoard.logger.info('reclaimed jobs', site: site, n: reclaimed.length)
@@ -49,7 +49,7 @@ module JobBoard
       reclaimed = []
       claimed = {}
 
-      redis.smembers("workers:#{site}").each do |worker|
+      redis.smembers("workers:#{site}").sort.each do |worker|
         worker = worker.to_s.strip
         next if worker.empty?
 
@@ -70,12 +70,12 @@ module JobBoard
 
     private def measure_capacity(redis: nil, site: '')
       total = 0
-      redis.scan_each(match: "workers:#{site}:*:ping") { total += 1 }
+      redis.scan_each(match: "worker:#{site}:*:ping") { total += 1 }
       total
     end
 
     private def worker_is_current?(redis: nil, site: '', worker: '')
-      redis.exists("worker:#{site}:#{worker}")
+      redis.exists("worker:#{site}:#{worker}:ping")
     end
 
     private def reclaim_jobs_from_worker(redis: nil, site: '', worker: '')
