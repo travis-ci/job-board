@@ -81,15 +81,19 @@ module JobBoard
       # rubocop:enable Style/GuardClause
     end
 
-    def register(worker: '')
+    def register(worker: '', capacity: 1)
       raise Invalid, 'missing worker name' if worker.to_s.empty?
+      raise Invalid, 'negative capacity' if capacity.negative?
+
+      capacity = capacity.to_s
 
       redis_pool.with do |redis|
         redis.multi do |conn|
           conn.sadd('sites', site)
           conn.sadd("queues:#{site}", queue_name)
           conn.sadd("workers:#{site}", worker)
-          conn.setex("worker:#{site}:#{worker}:ping", ttl, Time.now.iso8601)
+          conn.hset("worker:#{site}:#{worker}:capacity", queue_name, capacity)
+          conn.expire("worker:#{site}:#{worker}:capacity", ttl)
         end
       end
     end

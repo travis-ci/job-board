@@ -20,7 +20,7 @@ module JobBoard
       attr_reader :jobs, :count, :from, :job_queue
 
       def run
-        job_queue.register(worker: from)
+        job_queue.register(worker: from, capacity: count)
         claimed = job_queue.check_claims(worker: from, job_ids: jobs)
         max = count - claimed.length
         claimed += job_queue.claim(worker: from, max: max) if max.positive?
