@@ -7,8 +7,8 @@ module JobBoard
     class AllocateJobs
       extend Service
 
-      def initialize(jobs: [], count: 1, from: '', queue_name: '', site: '')
-        @count = Integer(count)
+      def initialize(jobs: [], capacity: 1, from: '', queue_name: '', site: '')
+        @capacity = Integer(capacity)
         @from = from.to_s
         @jobs = Array(jobs)
         @job_queue = JobBoard::JobQueue.new(
@@ -17,12 +17,12 @@ module JobBoard
         )
       end
 
-      attr_reader :jobs, :count, :from, :job_queue
+      attr_reader :jobs, :capacity, :from, :job_queue
 
       def run
-        job_queue.register(worker: from, capacity: count)
+        job_queue.register(worker: from, capacity: capacity)
         claimed = job_queue.check_claims(worker: from, job_ids: jobs)
-        max = count - claimed.length
+        max = capacity - claimed.length
         claimed += job_queue.claim(worker: from, max: max) if max.positive?
 
         {
