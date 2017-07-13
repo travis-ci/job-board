@@ -31,9 +31,9 @@ describe JobBoard::JobQueueReconciler do
     before do
       4.times { |n| job_queue.add(job_id: n) }
 
-      job_queue.register(worker: 'a')
-      job_queue.register(worker: 'b')
-      job_queue.register(worker: 'c')
+      job_queue.register(worker: 'a', capacity: 2)
+      job_queue.register(worker: 'b', capacity: 2)
+      job_queue.register(worker: 'c', capacity: 2)
     end
 
     context 'with all jobs claimed by active workers' do
@@ -48,21 +48,37 @@ describe JobBoard::JobQueueReconciler do
         stats = subject.reconcile!
         expect(stats).to_not be_nil
         expect(stats).to_not be_empty
-        expect(stats[:sites][site.to_sym]).to_not be_nil
-        expect(stats[:sites][site.to_sym]).to eq(
-          workers: {
-            'a' => { claimed: 2 },
-            'b' => { claimed: 2 },
-            'c' => { claimed: 0 }
-          },
-          queues: {
-            'lel' => { queued: 0, claimed: 4 }
-          },
+        site_def = stats[:sites].find { |s| s[:site] == site.to_sym }
+        expect(site_def).to_not be_nil
+        expect(site_def).to eq(
+          site: site.to_sym,
+          workers: [
+            {
+              name: 'a',
+              claimed: 2
+            },
+            {
+              name: 'b',
+              claimed: 2
+            },
+            {
+              name: 'c',
+              claimed: 0
+            }
+          ],
+          queues: [
+            {
+              name: 'lel',
+              queued: 0,
+              claimed: 4,
+              capacity: 6,
+              available: 2
+            }
+          ],
           reclaimed: 0,
-          capacity: {
-            busy: 2,
-            total: 3
-          }
+          claimed: 4,
+          capacity: 6,
+          available: 2
         )
         avail_a = job_queue.check_claims(
           worker: 'a', job_ids: %w[0 2]
@@ -86,21 +102,37 @@ describe JobBoard::JobQueueReconciler do
         stats = subject.reconcile!
         expect(stats).to_not be_nil
         expect(stats).to_not be_empty
-        expect(stats[:sites][site.to_sym]).to_not be_nil
-        expect(stats[:sites][site.to_sym]).to eq(
-          workers: {
-            'a' => { claimed: 2 },
-            'b' => { claimed: 1 },
-            'c' => { claimed: 0 }
-          },
-          queues: {
-            'lel' => { queued: 1, claimed: 3 }
-          },
+        site_def = stats[:sites].find { |s| s[:site] == site.to_sym }
+        expect(site_def).to_not be_nil
+        expect(site_def).to eq(
+          site: site.to_sym,
+          workers: [
+            {
+              name: 'a',
+              claimed: 2
+            },
+            {
+              name: 'b',
+              claimed: 1
+            },
+            {
+              name: 'c',
+              claimed: 0
+            }
+          ],
+          queues: [
+            {
+              name: 'lel',
+              queued: 1,
+              claimed: 3,
+              capacity: 6,
+              available: 3
+            }
+          ],
           reclaimed: 0,
-          capacity: {
-            busy: 2,
-            total: 3
-          }
+          claimed: 3,
+          capacity: 6,
+          available: 3
         )
         avail_a = job_queue.check_claims(
           worker: 'a', job_ids: %w[0 2]
@@ -123,27 +155,40 @@ describe JobBoard::JobQueueReconciler do
         # the worker queue and index ~meatballhat
         JobBoard.redis.del("worker:#{site}:a:idx")
         JobBoard.redis.del("worker:#{site}:a")
-        JobBoard.redis.del("worker:#{site}:a:ping")
+        JobBoard.redis.del("worker:#{site}:a:capacity")
       end
 
       it 'reconciles' do
         stats = subject.reconcile!
         expect(stats).to_not be_nil
         expect(stats).to_not be_empty
-        expect(stats[:sites][site.to_sym]).to_not be_nil
-        expect(stats[:sites][site.to_sym]).to eq(
-          workers: {
-            'b' => { claimed: 2 },
-            'c' => { claimed: 0 }
-          },
-          queues: {
-            'lel' => { queued: 2, claimed: 2 }
-          },
+        site_def = stats[:sites].find { |s| s[:site] == site.to_sym }
+        expect(site_def).to_not be_nil
+        expect(site_def).to eq(
+          site: site.to_sym,
+          workers: [
+            {
+              name: 'b',
+              claimed: 2
+            },
+            {
+              name: 'c',
+              claimed: 0
+            }
+          ],
+          queues: [
+            {
+              name: 'lel',
+              queued: 2,
+              claimed: 2,
+              capacity: 4,
+              available: 2
+            }
+          ],
           reclaimed: 2,
-          capacity: {
-            busy: 1,
-            total: 2
-          }
+          claimed: 2,
+          capacity: 4,
+          available: 2
         )
         avail_a = job_queue.check_claims(
           worker: 'a', job_ids: %w[0 2]

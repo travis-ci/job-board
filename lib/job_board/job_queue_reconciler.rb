@@ -13,31 +13,44 @@ module JobBoard
     def reconcile!(with_ids: JobBoard.config.reconcile_stats_with_ids)
       JobBoard.logger.info('starting reconciliation process')
       start_time = Time.now
-      stats = { sites: {} }
+      stats = { sites: [] }
 
       redis_pool.with do |redis|
         redis.smembers('sites').map(&:to_sym).each do |site|
           next if site.to_s.empty?
 
-          stats[:sites][site] = {
-            workers: {},
-            queues: {}
+          site_def = {
+            site: site.to_sym,
+            workers: [],
+            queues: []
           }
 
           JobBoard.logger.info('reconciling', site: site)
           reclaimed, claimed = reconcile_site!(redis: redis, site: site)
-          stats[:sites][site][:capacity] = {
-            total: measure_capacity(redis: redis, site: site),
-            busy: claimed.count { |_, w| w[:claimed].positive? }
-          }
+
+          total_capacity = measure_capacity(redis: redis, site: site)
+          total_claimed = claimed.values.select(&:positive?).reduce(:+) || 0
+          site_def.merge!(
+            capacity: total_capacity,
+            claimed: total_claimed,
+            available: total_capacity - total_claimed
+          )
 
           JobBoard.logger.info('reclaimed jobs', site: site, n: reclaimed.length)
-          stats[:sites][site][:reclaimed] = reclaimed.length
-          stats[:sites][site][:reclaimed_ids] = reclaimed if with_ids
-          stats[:sites][site][:workers].merge!(claimed)
+          site_def[:reclaimed] = reclaimed.length
+          site_def[:reclaimed_ids] = reclaimed if with_ids
+
+          claimed.each do |worker_name, count|
+            site_def[:workers] << {
+              name: worker_name,
+              claimed: count
+            }
+          end
 
           JobBoard.logger.info('fetching queue stats', site: site)
-          stats[:sites][site][:queues].merge!(measure(redis: redis, site: site))
+          site_def[:queues] = measure_queues(redis: redis, site: site)
+
+          stats[:sites] << site_def
         end
 
         JobBoard.logger.info('finished with reconciliation process')
@@ -54,9 +67,7 @@ module JobBoard
         next if worker.empty?
 
         if worker_is_current?(redis: redis, site: site, worker: worker)
-          claimed[worker] = {
-            claimed: redis.llen("worker:#{site}:#{worker}")
-          }
+          claimed[worker] = redis.llen("worker:#{site}:#{worker}")
         else
           reclaimed += reclaim_jobs_from_worker(
             redis: redis, site: site, worker: worker
@@ -70,12 +81,16 @@ module JobBoard
 
     private def measure_capacity(redis: nil, site: '')
       total = 0
-      redis.scan_each(match: "worker:#{site}:*:ping") { total += 1 }
+      redis.scan_each(match: "worker:#{site}:*:capacity") do |key|
+        redis.hvals(key).each do |i|
+          total += Integer(i) unless i.nil? || i.empty?
+        end
+      end
       total
     end
 
     private def worker_is_current?(redis: nil, site: '', worker: '')
-      redis.exists("worker:#{site}:#{worker}:ping")
+      redis.exists("worker:#{site}:#{worker}:capacity")
     end
 
     private def reclaim_jobs_from_worker(redis: nil, site: '', worker: '')
@@ -107,8 +122,8 @@ module JobBoard
       reclaimed
     end
 
-    private def measure(redis: nil, site: '')
-      measured = {}
+    private def measure_queues(redis: nil, site: '')
+      measured = []
 
       redis.smembers("queues:#{site}").each do |queue_name|
         resp = redis.multi do |conn|
@@ -116,10 +131,23 @@ module JobBoard
           conn.hlen("queue:#{site}:#{queue_name}:claims")
         end
 
-        measured[queue_name] = {
+        queue_def = {
+          name: queue_name,
           queued: resp.fetch(0),
           claimed: resp.fetch(1)
         }
+
+        queue_capacity = 0
+
+        redis.scan_each(match: "worker:#{site}:*:capacity") do |key|
+          cap = redis.hget(key, queue_name)
+          queue_capacity += Integer(cap) unless cap.nil? || cap.empty?
+        end
+
+        measured << queue_def.merge(
+          capacity: queue_capacity,
+          available: queue_capacity - queue_def[:claimed]
+        )
       end
 
       measured
