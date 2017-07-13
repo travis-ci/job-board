@@ -29,7 +29,7 @@ module JobBoard
           reclaimed, claimed = reconcile_site!(redis: redis, site: site)
 
           total_capacity = measure_capacity(redis: redis, site: site)
-          total_claimed = claimed.values.select(&:positive?).reduce(:+)
+          total_claimed = claimed.values.select(&:positive?).reduce(:+) || 0
           site_def.merge!(
             capacity: total_capacity,
             claimed: total_claimed,

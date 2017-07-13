@@ -13,31 +13,25 @@ $stdout.sync = true
 $stderr.sync = true
 
 def main(argv: ARGV)
-  if argv.include?('--once')
-    $stdout.puts JSON.pretty_generate(
-      JobBoard::JobQueueReconciler.new.reconcile!
-    )
-    return 0
-  end
-
   reconciler = JobBoard::JobQueueReconciler.new
   JobBoard.logger.info('starting reconciliation loop')
+
   loop do
     stats = reconciler.reconcile!
-    stats.fetch(:sites, {}).each do |site_name, site|
+    stats.fetch(:sites, []).each do |site_def|
       JobBoard.logger.info(
         'reconciled',
-        site: site_name,
-        reclaimed: site.fetch(:reclaimed, '???'),
-        reclaimed_ids: site.fetch(
+        site: site_def[:name],
+        reclaimed: site_def.fetch(:reclaimed, '???'),
+        reclaimed_ids: site_def.fetch(
           :reclaimed_ids, [:notset]
         ).map(&:to_s).join(',')
       )
-      site.fetch(:queues, {}).each do |queue_name, queue|
+      site_def.fetch(:queues, []).each do |queue_def|
         JobBoard.logger.info(
           'queue stats',
-          site: site_name, queue: queue_name,
-          queued: queue[:queued], claimed: queue[:claimed]
+          site: site_def[:name], queue: queue_def[:name],
+          queued: queue_def[:queued], claimed: queue_def[:claimed]
         )
       end
     end
@@ -50,6 +44,8 @@ def main(argv: ARGV)
         )
       )
     end
+
+    break if argv.include?('--once')
     sleep(Integer(ENV['JOB_BOARD_RECONCILIATION_SLEEP_INTERVAL'] || 1))
   end
 
