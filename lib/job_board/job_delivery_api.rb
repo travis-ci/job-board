@@ -26,6 +26,7 @@ module JobBoard
     post '/jobs' do
       param :queue, String, blank: true, required: true
       param :count, Integer, default: 1
+      param :capacity, Integer
 
       unless request.env.key?('HTTP_FROM')
         halt 412, JSON.dump(
@@ -37,19 +38,22 @@ module JobBoard
       from = request.env.fetch('HTTP_FROM')
       site = request.env.fetch('travis.site')
 
+      jobs = JSON.parse(request.body.read).fetch('jobs')
+      capacity = params[:capacity] || (params[:count] + jobs.length)
+
       body = JobBoard::Services::AllocateJobs.run(
-        count: params[:count],
+        capacity: capacity,
         from: from,
-        jobs: JSON.parse(request.body.read).fetch('jobs'),
+        jobs: jobs,
         queue_name: queue,
         site: site
       ).merge(
-        '@count' => params[:count],
+        '@capacity' => capacity,
         '@queue' => queue
       )
       JobBoard.logger.info(
         'allocated',
-        queue: queue, count: params[:count], from: from, site: site
+        queue: queue, capacity: capacity, from: from, site: site
       )
       json body
     end
