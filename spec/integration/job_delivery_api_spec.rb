@@ -65,7 +65,7 @@ describe 'Job Delivery API', integration: true do
 
     it 'rejects guest auth' do
       authorize(*guest_auth)
-      post '/jobs?queue=lel&count=3', JSON.dump(jobs: []),
+      post '/jobs?queue=lel&capacity=3', JSON.dump(jobs: []),
            'HTTP_CONTENT_TYPE' => 'application/json',
            'HTTP_FROM' => from,
            'HTTP_TRAVIS_SITE' => site
@@ -74,26 +74,26 @@ describe 'Job Delivery API', integration: true do
 
     it 'returns 200' do
       authorize(*admin_auth)
-      post '/jobs?queue=lel&count=3', JSON.dump(jobs: []),
+      post '/jobs?queue=lel&capacity=3', JSON.dump(jobs: []),
            'HTTP_CONTENT_TYPE' => 'application/json',
            'HTTP_FROM' => from,
            'HTTP_TRAVIS_SITE' => site
       expect(last_response.status).to eq(200)
     end
 
-    it 'includes count metadata' do
+    it 'includes capacity metadata' do
       authorize(*admin_auth)
-      post '/jobs?queue=lel&count=3', JSON.dump(jobs: []),
+      post '/jobs?queue=lel&capacity=3', JSON.dump(jobs: []),
            'HTTP_CONTENT_TYPE' => 'application/json',
            'HTTP_FROM' => from,
            'HTTP_TRAVIS_SITE' => site
       response_body = JSON.parse(last_response.body)
-      expect(response_body['@count']).to eq(3)
+      expect(response_body['@capacity']).to eq(3)
     end
 
     it 'includes queue metadata' do
       authorize(*admin_auth)
-      post '/jobs?queue=lel&count=3', JSON.dump(jobs: []),
+      post '/jobs?queue=lel&capacity=3', JSON.dump(jobs: []),
            'HTTP_CONTENT_TYPE' => 'application/json',
            'HTTP_FROM' => from,
            'HTTP_TRAVIS_SITE' => site
@@ -103,7 +103,7 @@ describe 'Job Delivery API', integration: true do
 
     it 'returns the expected number of jobs' do
       authorize(*admin_auth)
-      post '/jobs?queue=lel&count=3', JSON.dump(jobs: []),
+      post '/jobs?queue=lel&capacity=3', JSON.dump(jobs: []),
            'HTTP_CONTENT_TYPE' => 'application/json',
            'HTTP_FROM' => from,
            'HTTP_TRAVIS_SITE' => site
@@ -226,7 +226,7 @@ describe 'Job Delivery API', integration: true do
       )
 
       JobBoard::Services::AllocateJobs.run(
-        count: 1,
+        capacity: 1,
         from: from,
         jobs: [],
         queue_name: 'lel',
