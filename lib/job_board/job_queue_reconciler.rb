@@ -16,7 +16,7 @@ module JobBoard
       stats = { sites: [] }
 
       redis_pool.with do |redis|
-        redis.smembers('sites').map(&:to_sym).each do |site|
+        redis.smembers('sites').sort.map(&:to_sym).each do |site|
           next if site.to_s.empty?
 
           site_def = {
@@ -96,7 +96,7 @@ module JobBoard
     private def reclaim_jobs_from_worker(redis: nil, site: '', worker: '')
       reclaimed = []
 
-      redis.smembers("queues:#{site}").each do |queue_name|
+      redis.smembers("queues:#{site}").sort.each do |queue_name|
         reclaimed += reclaim!(
           redis: redis, worker: worker, site: site, queue_name: queue_name
         )
@@ -125,7 +125,7 @@ module JobBoard
     private def measure_queues(redis: nil, site: '')
       measured = []
 
-      redis.smembers("queues:#{site}").each do |queue_name|
+      redis.smembers("queues:#{site}").sort.each do |queue_name|
         resp = redis.multi do |conn|
           conn.llen("queue:#{site}:#{queue_name}")
           conn.hlen("queue:#{site}:#{queue_name}:claims")
