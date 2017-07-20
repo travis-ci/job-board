@@ -30,15 +30,16 @@ module JobBoard
         attr_writer :build_uris
       end
 
-      def initialize(job_data: {}, site: '',
+      def initialize(job_id: '', job_data: {}, site: '',
                      caching_enabled: true, cache_ttl: 3600)
+        @job_id = job_id
         @job_data = job_data
         @site = site
         @caching_enabled = caching_enabled
         @cache_ttl = cache_ttl
       end
 
-      attr_reader :job_data, :site, :caching_enabled, :cache_ttl
+      attr_reader :job_id, :job_data, :site, :caching_enabled, :cache_ttl
 
       def run
         if caching_enabled
@@ -47,7 +48,7 @@ module JobBoard
         end
 
         response = self.class.build_api_conn(site).post do |req|
-          req.url '/script'
+          req.url '/script', source: 'job-board', job_id: job_id.to_s
           req.headers['User-Agent'] = user_agent
           req.headers['Authorization'] = auth_header
           req.headers['Content-Type'] = 'application/json'
