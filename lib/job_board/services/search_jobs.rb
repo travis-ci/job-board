@@ -19,7 +19,7 @@ module JobBoard
       def run
         results = { jobs: nil, :@site => site }
 
-        if queue_name.to_s != ''
+        if queue_name.to_s.strip.empty?
           results[:jobs] = JobBoard::JobQueue.for_site(
             site: site
           )
