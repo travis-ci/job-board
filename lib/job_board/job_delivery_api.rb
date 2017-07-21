@@ -96,6 +96,20 @@ module JobBoard
       json job
     end
 
+    get '/search/jobs/:site' do
+      param :worker, String, default: nil
+      param :queue, String, default: nil
+
+      results = JobBoard::Services::SearchJobs.new(
+        site: params[:site],
+        queue_name: params[:queue],
+        worker: params[:worker]
+      ).run
+
+      status 400 unless results[:error].nil?
+      json results
+    end
+
     delete '/jobs/:job_id' do
       job_id = params.fetch('job_id')
       site = request.env.fetch('travis.site')
