@@ -10,8 +10,8 @@ module JobBoard
 
       def initialize(site: '', queue_name: nil, worker: nil)
         @site = site
-        @queue_name = queue_name
-        @worker = worker
+        @queue_name = queue_name.to_s.strip
+        @worker = worker.to_s.strip
       end
 
       attr_reader :site, :queue_name, :worker
@@ -19,23 +19,21 @@ module JobBoard
       def run
         results = { jobs: [], :@site => site }
 
-        if queue_name.to_s.strip.empty?
+        if queue_name.empty?
           results[:jobs] = JobBoard::JobQueue.for_site(
             site: site
           )
-        else
+        elsif worker.empty?
           results[:@queue] = queue_name
           results[:jobs] = JobBoard::JobQueue.for_queue(
             site: site, queue_name: queue_name
           )
-        end
-
-        if worker.to_s != ''
+        else
+          results[:@queue] = queue_name
           results[:@worker] = worker
-          results[:jobs].select! do |job|
-            !job[:claimed_by].nil? &&
-              File.fnmatch(worker, job[:claimed_by])
-          end
+          results[:jobs] = JobBoard::JobQueue.for_worker(
+            site: site, queue_name: queue_name, worker: worker
+          )
         end
 
         results
