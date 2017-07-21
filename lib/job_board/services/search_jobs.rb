@@ -17,7 +17,7 @@ module JobBoard
       attr_reader :site, :queue_name, :worker
 
       def run
-        results = { jobs: nil, :@site => site }
+        results = { jobs: [], :@site => site }
 
         if queue_name.to_s.strip.empty?
           results[:jobs] = JobBoard::JobQueue.for_site(
@@ -32,9 +32,9 @@ module JobBoard
 
         if worker.to_s != ''
           results[:@worker] = worker
-          results[:jobs].select! do |_, claim|
-            !claim[:claimed_by].nil? &&
-              File.fnmatch(worker, claim[:claimed_by])
+          results[:jobs].select! do |job|
+            !job[:claimed_by].nil? &&
+              File.fnmatch(worker, job[:claimed_by])
           end
         end
 
