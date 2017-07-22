@@ -99,12 +99,12 @@ describe 'Worker Interaction', integration: true do
 
     wait_around(label: 'first queued job', loop_sleep: 1) do
       !JobBoard::JobQueue.for_site(site: 'test')
-                         .fetch(:test, {}).empty?
+                         .map { |s| s[:jobs] }.flatten.empty?
     end
 
     wait_around(label: 'emptied queue', loop_sleep: 10, timeout: 120) do
       JobBoard::JobQueue.for_site(site: 'test')
-                        .fetch(:test, {}).empty?
+                        .map { |s| s[:jobs] }.flatten.empty?
     end
 
     wait_around(label: 'finished jobs', loop_sleep: 1) do

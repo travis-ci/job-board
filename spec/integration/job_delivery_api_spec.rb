@@ -35,8 +35,10 @@ describe 'Job Delivery API', integration: true do
       JobBoard::Models::Job.where(queue: 'lel', site: site).delete
       JobBoard.redis.del("queue:#{site}:lel")
       JobBoard.redis.srem("queues:#{site}", 'lel')
+      JobBoard.redis.del("worker:#{site}:#{from}")
+      JobBoard.redis.del("worker:#{site}:#{from}:idx")
 
-      3.times do |n|
+      rand(4..9).times do |n|
         job_id = "#{Time.now.to_i}#{n}"
 
         JobBoard::Services::CreateOrUpdateJob.run(
@@ -111,6 +113,23 @@ describe 'Job Delivery API', integration: true do
       expect(response_body['jobs']).to_not be_nil
       expect(response_body['jobs'].length).to eq(3)
       expect(response_body['unavailable_jobs'].length).to eq(0)
+    end
+
+    it 'records allocations for the worker' do
+      authorize(*admin_auth)
+      post '/jobs?queue=lel&capacity=3', JSON.dump(jobs: []),
+           'HTTP_CONTENT_TYPE' => 'application/json',
+           'HTTP_FROM' => from,
+           'HTTP_TRAVIS_SITE' => site
+      response_body = JSON.parse(last_response.body)
+      expect(response_body['jobs']).to_not be_nil
+      expect(response_body['jobs'].sort).to eql(
+        JobBoard::JobQueue.for_worker(
+          site: site,
+          queue_name: 'lel',
+          worker: from
+        ).map { |entry| entry[:id] }.sort
+      )
     end
   end
 

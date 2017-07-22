@@ -39,8 +39,18 @@ RSpec.configure do |c|
   c.include FactoryGirl::Syntax::Methods
   c.filter_run_excluding(integration: true) unless integration?
   c.before(:suite) do
-    JobBoard.redis.del('queues:test')
-    JobBoard.redis.del('queue:test:test')
-    JobBoard.redis.del('workers:test')
+    JobBoard.redis_pool.with do |redis|
+      redis.srem('sites', 'test')
+      redis.del('queues:test')
+      redis.del('workers:test')
+
+      redis.scan_each(match: 'queue:test:*') do |key|
+        redis.del(key)
+      end
+
+      redis.scan_each(match: 'worker:test:*') do |key|
+        redis.del(key)
+      end
+    end
   end
 end
