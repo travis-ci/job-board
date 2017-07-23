@@ -17,7 +17,7 @@ module JobBoard
       attr_reader :site, :queue_name, :worker
 
       def run
-        results = { jobs: [], :@site => site }
+        results = { :@site => site }
 
         if queue_name.empty?
           results[:jobs] = JobBoard::JobQueue.for_site(
@@ -25,15 +25,25 @@ module JobBoard
           )
         elsif worker.empty?
           results[:@queue] = queue_name
-          results[:jobs] = JobBoard::JobQueue.for_queue(
-            site: site, queue_name: queue_name
-          )
+          results[:jobs] = [
+            {
+              queue: queue_name,
+              jobs: JobBoard::JobQueue.for_queue(
+                site: site, queue_name: queue_name
+              )
+            }
+          ]
         else
           results[:@queue] = queue_name
           results[:@worker] = worker
-          results[:jobs] = JobBoard::JobQueue.for_worker(
-            site: site, queue_name: queue_name, worker: worker
-          )
+          results[:jobs] = [
+            {
+              queue: queue_name,
+              jobs: JobBoard::JobQueue.for_worker(
+                site: site, queue_name: queue_name, worker: worker
+              )
+            }
+          ]
         end
 
         results
