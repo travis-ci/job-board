@@ -140,7 +140,7 @@ module JobBoard
 
     def claim(worker: '', capacity: 1, timeout: 5.0)
       raise Invalid, 'missing worker name' if worker.empty?
-      raise Invalid, 'capacity must by > zero' unless capacity.positive?
+      raise Invalid, 'capacity must be > zero' unless capacity.positive?
       raise Invalid, 'timeout must be > zero' unless timeout.positive?
 
       start = Time.now
