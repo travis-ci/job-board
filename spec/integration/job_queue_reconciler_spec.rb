@@ -38,10 +38,10 @@ describe JobBoard::JobQueueReconciler do
 
     context 'with all jobs claimed by active workers' do
       before do
-        job_queue.claim(worker: 'a')
-        job_queue.claim(worker: 'b')
-        job_queue.claim(worker: 'a')
-        job_queue.claim(worker: 'b')
+        job_queue.claim(worker: 'a', capacity: 2)
+        job_queue.claim(worker: 'b', capacity: 2)
+        job_queue.claim(worker: 'a', capacity: 2)
+        job_queue.claim(worker: 'b', capacity: 2)
       end
 
       it 'reconciles' do
@@ -81,21 +81,21 @@ describe JobBoard::JobQueueReconciler do
           available: 2
         )
         avail_a = job_queue.check_claims(
-          worker: 'a', job_ids: %w[0 2]
+          worker: 'a', job_ids: %w[0 1]
         )
-        expect(avail_a).to eq(%w[0 2])
+        expect(avail_a).to eq(%w[0 1])
         avail_b = job_queue.check_claims(
-          worker: 'b', job_ids: %w[1 3]
+          worker: 'b', job_ids: %w[2 3]
         )
-        expect(avail_b).to eq(%w[1 3])
+        expect(avail_b).to eq(%w[2 3])
       end
     end
 
     context 'with unclaimed jobs available' do
       before do
-        job_queue.claim(worker: 'a')
-        job_queue.claim(worker: 'b')
-        job_queue.claim(worker: 'a')
+        job_queue.claim(worker: 'a', capacity: 2)
+        job_queue.claim(worker: 'b', capacity: 2)
+        job_queue.claim(worker: 'a', capacity: 2)
       end
 
       it 'reconciles' do
@@ -113,7 +113,7 @@ describe JobBoard::JobQueueReconciler do
             },
             {
               name: 'b',
-              claimed: 1
+              claimed: 2
             },
             {
               name: 'c',
@@ -123,34 +123,34 @@ describe JobBoard::JobQueueReconciler do
           queues: [
             {
               name: 'lel',
-              queued: 1,
-              claimed: 3,
+              queued: 0,
+              claimed: 4,
               capacity: 6,
-              available: 3
+              available: 2
             }
           ],
           reclaimed: 0,
-          claimed: 3,
+          claimed: 4,
           capacity: 6,
-          available: 3
+          available: 2
         )
         avail_a = job_queue.check_claims(
-          worker: 'a', job_ids: %w[0 2]
+          worker: 'a', job_ids: %w[0 1]
         )
-        expect(avail_a).to eq(%w[0 2])
+        expect(avail_a).to eq(%w[0 1])
         avail_b = job_queue.check_claims(
-          worker: 'b', job_ids: %w[1]
+          worker: 'b', job_ids: %w[2]
         )
-        expect(avail_b).to eq(%w[1])
+        expect(avail_b).to eq(%w[2])
       end
     end
 
     context 'with expired job claims' do
       before do
-        job_queue.claim(worker: 'a')
-        job_queue.claim(worker: 'b')
-        job_queue.claim(worker: 'a')
-        job_queue.claim(worker: 'b')
+        job_queue.claim(worker: 'a', capacity: 2)
+        job_queue.claim(worker: 'b', capacity: 2)
+        job_queue.claim(worker: 'a', capacity: 2)
+        job_queue.claim(worker: 'b', capacity: 2)
         # NOTE: these `del` commands are intended to simulate the expiration of
         # the worker queue and index ~meatballhat
         JobBoard.redis.del("worker:#{site}:a:idx")
@@ -191,13 +191,13 @@ describe JobBoard::JobQueueReconciler do
           available: 2
         )
         avail_a = job_queue.check_claims(
-          worker: 'a', job_ids: %w[0 2]
+          worker: 'a', job_ids: %w[0 1]
         )
         expect(avail_a).to eq(%w[])
         avail_b = job_queue.check_claims(
-          worker: 'b', job_ids: %w[1]
+          worker: 'b', job_ids: %w[2]
         )
-        expect(avail_b).to eq(%w[1])
+        expect(avail_b).to eq(%w[2])
       end
     end
   end

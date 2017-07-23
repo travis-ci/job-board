@@ -138,9 +138,9 @@ module JobBoard
       end
     end
 
-    def claim(worker: '', max: 1, timeout: 5.0)
+    def claim(worker: '', capacity: 1, timeout: 5.0)
       raise Invalid, 'missing worker name' if worker.empty?
-      raise Invalid, 'max must be > zero' unless max.positive?
+      raise Invalid, 'capacity must by > zero' unless capacity.positive?
       raise Invalid, 'timeout must be > zero' unless timeout.positive?
 
       start = Time.now
@@ -152,12 +152,12 @@ module JobBoard
           if delta >= timeout
             JobBoard.logger.warn(
               'timeout while claiming jobs',
-              max: max, timeout: timeout, delta: time_delta
+              capacity: capacity, timeout: timeout, delta: time_delta
             )
             break
           end
 
-          break if new_claims.length >= max
+          break if redis.llen(worker_queue_list_key(worker: worker)) >= capacity
 
           claimed = redis.rpoplpush(
             queue_key, worker_queue_list_key(worker: worker)
