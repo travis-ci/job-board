@@ -6,5 +6,9 @@ AllCops:
 Style/Documentation:
   Enabled: false
 
+Metrics/BlockLength:
+  Exclude:
+  - 'spec/**/*.rb'
+
 Metrics/ClassLength:
   Max: 250

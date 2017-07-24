@@ -22,8 +22,7 @@ module JobBoard
       def run
         job_queue.register(worker: from, capacity: capacity)
         claimed = job_queue.check_claims(worker: from, job_ids: jobs)
-        max = capacity - claimed.length
-        claimed += job_queue.claim(worker: from, max: max) if max.positive?
+        claimed += job_queue.claim(worker: from, capacity: capacity)
 
         {
           jobs: claimed,
