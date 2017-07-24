@@ -7,9 +7,12 @@ require_relative 'job_delivery_api'
 
 require 'rack/deflater'
 require 'sinatra/base'
+require 'sinatra/param'
 
 module JobBoard
   class App < Sinatra::Base
+    helpers Sinatra::Param
+
     configure do
       enable :logging if JobBoard.config.api_logging?
     end
@@ -38,6 +41,20 @@ module JobBoard
         { 'Content-Type' => 'application/json' },
         JobBoard.redis_pool.with { |c| c.get('latest-stats') }
       ]
+    end
+
+    get '/search/jobs/:site' do
+      param :worker, String, default: nil
+      param :queue, String, default: nil
+
+      results = JobBoard::Services::SearchJobs.new(
+        site: params[:site],
+        queue_name: params[:queue],
+        worker: params[:worker]
+      ).run
+
+      status 400 unless results[:error].nil?
+      json results
     end
 
     def pg_now

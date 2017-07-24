@@ -86,7 +86,9 @@ describe JobBoard::JobQueue do
     it 'can provide job ids for a given worker' do
       subject.register(worker: 'a')
       expect(
-        described_class.for_worker(redis: redis, worker: 'a', site: site)
+        described_class.for_worker(
+          redis: redis, worker: 'a', site: site, queue_name: queue_name
+        )
       ).to be_empty
     end
 
@@ -95,12 +97,17 @@ describe JobBoard::JobQueue do
       expect(
         described_class.for_site(redis: redis, site: site)
       ).to eq(
-        lel: {
-          '0' => { claimed_by: nil },
-          '1' => { claimed_by: nil },
-          '2' => { claimed_by: nil },
-          '3' => { claimed_by: nil }
-        }
+        [
+          {
+            queue: :lel,
+            jobs: [
+              { id: '3', claimed_by: nil },
+              { id: '2', claimed_by: nil },
+              { id: '1', claimed_by: nil },
+              { id: '0', claimed_by: nil }
+            ]
+          }
+        ]
       )
     end
 
@@ -111,10 +118,12 @@ describe JobBoard::JobQueue do
           redis: redis, site: site, queue_name: queue_name
         )
       ).to eq(
-        '0' => { claimed_by: nil },
-        '1' => { claimed_by: nil },
-        '2' => { claimed_by: nil },
-        '3' => { claimed_by: nil }
+        [
+          { id: '3', claimed_by: nil },
+          { id: '2', claimed_by: nil },
+          { id: '1', claimed_by: nil },
+          { id: '0', claimed_by: nil }
+        ]
       )
     end
 
