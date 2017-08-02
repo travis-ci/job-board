@@ -47,7 +47,7 @@ module JobBoard
     end
 
     define(
-      api_logging: true,
+      api_logging: ENV.fetch('JOB_BOARD_API_LOGGING', 'true') == 'true',
       auth: {
         tokens: ''
       },
