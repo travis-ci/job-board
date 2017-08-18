@@ -84,7 +84,7 @@ module JobBoard
         timeout: 3
       },
       sentry: { dsn: nil },
-      worker_ttl: Integer(ENV.fetch('JOB_BOARD_WORKER_TTL', '120'))
+      worker_ttl: Integer(ENV.fetch('JOB_BOARD_WORKER_TTL', '10'))
     )
 
     default(access: [:key])
