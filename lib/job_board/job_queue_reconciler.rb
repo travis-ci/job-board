@@ -4,13 +4,15 @@ require 'job_board'
 
 module JobBoard
   class JobQueueReconciler
-    def initialize(redis_pool: nil)
+    def initialize(redis_pool: nil, job_model: nil)
       @redis_pool = redis_pool || JobBoard.redis_pool
+      @job_model = job_model || JobBoard::Models::Job
     end
 
-    attr_reader :redis_pool
+    attr_reader :redis_pool, :job_model
 
-    def reconcile!(with_ids: JobBoard.config.reconcile_stats_with_ids)
+    def reconcile!(with_ids: JobBoard.config.reconcile_stats_with_ids,
+                   purge_unknown: false)
       JobBoard.logger.info('starting reconciliation process')
       start_time = Time.now
       stats = { sites: [] }
@@ -18,6 +20,11 @@ module JobBoard
       redis_pool.with do |redis|
         redis.smembers('sites').sort.map(&:to_sym).each do |site|
           next if site.to_s.empty?
+
+          if purge_unknown
+            JobBoard.logger.info('purging unknown jobs', site: site)
+            purge_unknown_jobs!(redis: redis, site: site)
+          end
 
           site_def = {
             site: site.to_sym,
@@ -162,6 +169,41 @@ module JobBoard
         conn.rpush("queue:#{site}:#{queue_name}", job_id)
         conn.hdel("queue:#{site}:#{queue_name}:claims", job_id)
         conn.hdel("queue:#{site}:#{queue_name}:claims:timestamps", job_id)
+      end
+    end
+
+    private def purge_unknown_jobs!(redis: nil, site: '')
+      return if site.empty?
+
+      unknown_by_queue = {}
+
+      redis.smembers("queues:#{site}").sort.each do |queue_name|
+        queue_name = queue_name.to_s.strip
+        next if queue_name.empty?
+
+        claimed_job_ids = redis.hkeys("queue:#{site}:#{queue_name}:claims")
+        found_in_db = job_model.select(:job_id)
+                               .where(job_id: claimed_job_ids)
+                               .map(:job_id)
+
+        unknown_by_queue[queue_name] ||= []
+        unknown_by_queue[queue_name] += (claimed_job_ids - found_in_db)
+      end
+
+      redis.smembers("workers:#{site}").sort.each do |worker|
+        worker = worker.to_s.strip
+        next if worker.empty?
+
+        unknown_by_queue.each do |queue_name, job_ids|
+          job_ids.each do |job_id|
+            redis.multi do |conn|
+              conn.srem("worker:#{site}:#{worker}:idx", job_id)
+              conn.lrem("worker:#{site}:#{worker}", 1, job_id)
+              conn.hdel("queue:#{site}:#{queue_name}:claims", job_id)
+              conn.hdel("queue:#{site}:#{queue_name}:claims:timestamps", job_id)
+            end
+          end
+        end
       end
     end
   end
