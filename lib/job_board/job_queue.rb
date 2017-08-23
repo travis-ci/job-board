@@ -9,14 +9,14 @@ module JobBoard
     Invalid = Class.new(StandardError)
     Error = Class.new(StandardError)
 
-    def self.for_worker(redis: nil, site: '', queue_name: '', worker: '')
+    def self.for_processor(redis: nil, site: '', queue_name: '', processor: '')
       redis ||= JobBoard.redis
       raise Invalid, 'unknown site' unless redis.sismember('sites', site)
 
       for_queue(
         site: site, queue_name: queue_name
       ).select do |job|
-        job[:claimed_by].to_s =~ /.*#{worker}.*/
+        job[:claimed_by].to_s =~ /.*#{processor}.*/
       end
     end
 
@@ -56,10 +56,10 @@ module JobBoard
       # rubocop:enable Style/NilComparison
 
       jobs = []
-      claims.value.each do |job_id, worker|
+      claims.value.each do |job_id, processor|
         jobs << {
           id: job_id,
-          claimed_by: worker,
+          claimed_by: processor,
           updated_at: redis.hget(
             "queue:#{site}:#{queue_name}:claims:timestamps", job_id
           )
@@ -79,7 +79,7 @@ module JobBoard
     attr_reader :redis_pool, :queue_name, :site, :ttl
 
     def initialize(redis_pool: nil, queue_name: '', site: '',
-                   ttl: JobBoard.config.worker_ttl)
+                   ttl: JobBoard.config.processor_ttl)
       @redis_pool = redis_pool || JobBoard.redis_pool
       @queue_name = queue_name
       @site = site
@@ -91,19 +91,15 @@ module JobBoard
       # rubocop:enable Style/GuardClause
     end
 
-    def register(worker: '', capacity: 1)
-      raise Invalid, 'missing worker name' if worker.to_s.empty?
-      raise Invalid, 'negative capacity' if capacity.negative?
-
-      capacity = capacity.to_s
+    def register(processor: '')
+      processor = processor.to_s.strip
+      raise Invalid, 'missing processor name' if processor.empty?
 
       redis_pool.with do |redis|
         redis.multi do |conn|
           conn.sadd('sites', site)
           conn.sadd("queues:#{site}", queue_name)
-          conn.sadd("workers:#{site}", worker)
-          conn.hset("worker:#{site}:#{worker}:capacity", queue_name, capacity)
-          conn.expire("worker:#{site}:#{worker}:capacity", ttl)
+          conn.setex(processor_key(processor: processor), ttl, now)
         end
       end
     end
@@ -125,12 +121,7 @@ module JobBoard
 
       redis_pool.with do |redis|
         result = redis.lrem(queue_key, 0, job_id)
-        workers = redis.smembers("workers:#{site}")
         redis.multi do |conn|
-          workers.each do |worker|
-            conn.srem("worker:#{site}:#{worker}:idx", job_id)
-            conn.lrem("worker:#{site}:#{worker}", 1, job_id)
-          end
           conn.hdel(queue_job_claims_key, job_id)
           conn.hdel(queue_job_claim_timestamps_key, job_id)
         end
@@ -138,132 +129,69 @@ module JobBoard
       end
     end
 
-    def claim(worker: '', capacity: 1, timeout: 5.0)
-      raise Invalid, 'missing worker name' if worker.empty?
-      raise Invalid, 'capacity must be > zero' unless capacity.positive?
-      raise Invalid, 'timeout must be > zero' unless timeout.positive?
+    def claim(processor: '')
+      raise Invalid, 'missing processor name' if processor.empty?
 
-      start = Time.now
-      new_claims = []
+      claimed = nil
 
       redis_pool.with do |redis|
-        loop do
-          delta = Time.now - start
-          if delta >= timeout
-            JobBoard.logger.warn(
-              'timeout while claiming jobs',
-              capacity: capacity, timeout: timeout, delta: time_delta
-            )
-            break
-          end
+        claimed = redis.rpop(queue_key)
+        return nil if claimed.nil?
 
-          break if redis.llen(worker_queue_list_key(worker: worker)) >= capacity
-
-          claimed = redis.rpoplpush(
-            queue_key, worker_queue_list_key(worker: worker)
-          )
-          break if claimed.nil?
-          new_claims << claimed
-        end
-
-        all_claims = redis.smembers(
-          worker_index_set_key(worker: worker)
-        ) + new_claims
-
-        unless all_claims.empty?
-          refresh_claims!(redis: redis, worker: worker, claimed: all_claims)
-        end
-
-        new_claims
+        refresh_claim!(redis: redis, processor: processor, job_id: claimed)
+        claimed
       end
     rescue => e
       JobBoard.logger.error('failure during claim', error: e.to_s)
 
       begin
+        return nil if claimed.nil?
         redis_pool.with do |redis|
-          new_claims.each do |job_id|
-            redis.lpush(queue_key, job_id)
-          end
+          redis.lpush(queue_key, claimed)
         end
       rescue => e
-        JobBoard.logger.error('failed to push claims back', error: e.to_s)
+        JobBoard.logger.error('failed to push claim back', error: e.to_s)
       end
 
-      []
+      nil
     end
 
-    def check_claims(worker: nil, job_ids: [])
-      claimed = []
-      return claimed if worker.nil?
+    def check_claim(processor: '', job_id: '')
+      claimed = nil
+      processor = processor.to_s.strip
+      return claimed if processor.empty?
 
       redis_pool.with do |redis|
-        job_ids.each do |job_id|
-          if worker_has_current_job_claim?(
-            redis: redis, worker: worker, job_id: job_id
-          )
-            touch_job_claim_timestamp(redis: redis, job_id: job_id)
-            claimed << job_id
-            next
-          end
-
-          remove_job_id_from_worker_queue(
-            redis: redis, worker: worker, job_id: job_id
-          )
+        if processor_has_current_job_claim?(
+          redis: redis, processor: processor, job_id: job_id
+        )
+          redis.hset(queue_job_claim_timestamps_key, job_id, now)
+          redis.setex(processor_key(processor: processor), ttl, now)
+          claimed = job_id
         end
-
-        extend_worker_queue_expiry(redis: redis, worker: worker)
       end
 
       claimed
     end
 
-    private def worker_has_current_job_claim?(
-      redis: nil, worker: nil, job_id: nil
+    private def processor_has_current_job_claim?(
+      redis: nil, processor: '', job_id: nil
     )
-      futures = {}
-
-      redis.pipelined do
-        futures[:claimed_by] = redis.hget(queue_job_claims_key, job_id)
-        futures[:exists] = redis.sismember(
-          worker_index_set_key(worker: worker), job_id
-        )
-      end
-
-      futures[:claimed_by].value == worker && futures[:exists].value
+      redis.exists(processor_key(processor: processor)) &&
+      redis.hget(queue_job_claims_key, job_id) == processor
     end
 
-    private def touch_job_claim_timestamp(redis: nil, job_id: '')
-      redis.hset(queue_job_claim_timestamps_key, job_id, now)
-    end
+    private def refresh_claim!(redis: nil, processor: '', job_id: '')
+      processor = processor.to_s.strip
+      return if processor.empty?
 
-    private def extend_worker_queue_expiry(redis: nil, worker: nil)
+      job_id = job_id.to_s.strip
+      return if job_id.empty?
+
       redis.multi do |conn|
-        conn.expire(worker_index_set_key(worker: worker), ttl)
-        conn.expire(worker_queue_list_key(worker: worker), ttl)
-      end
-    end
-
-    private def remove_job_id_from_worker_queue(
-      redis: nil, worker: nil, job_id: nil
-    )
-      redis.multi do |conn|
-        conn.srem(worker_index_set_key(worker: worker), job_id)
-        conn.lrem(worker_queue_list_key(worker: worker), 1, job_id)
-      end
-    end
-
-    private def refresh_claims!(redis: nil, worker: nil, claimed: [])
-      return if worker.nil?
-      claimed_map = claimed.map { |job_id| [job_id, worker] }
-      redis.multi do |conn|
-        conn.sadd(worker_index_set_key(worker: worker), claimed)
-        conn.expire(worker_index_set_key(worker: worker), ttl)
-        conn.expire(worker_queue_list_key(worker: worker), ttl)
-        conn.hmset(queue_job_claims_key, claimed_map.flatten)
-        conn.hmset(
-          queue_job_claim_timestamps_key,
-          claimed_map.map { |job_id, _| [job_id, now] }.flatten
-        )
+        conn.setex(processor_key(processor: processor), ttl, now)
+        conn.hset(queue_job_claims_key, job_id, processor)
+        conn.hset(queue_job_claim_timestamps_key, job_id, now)
       end
     end
 
@@ -284,12 +212,8 @@ module JobBoard
         "queue:#{site}:#{queue_name}:claims:timestamps"
     end
 
-    private def worker_index_set_key(worker: '')
-      "#{worker_queue_list_key(worker: worker)}:idx"
-    end
-
-    private def worker_queue_list_key(worker: '')
-      "worker:#{site}:#{worker}"
+    private def processor_key(processor: '')
+      "queues:#{site}:#{queue_name}:processor:#{processor}"
     end
   end
 end

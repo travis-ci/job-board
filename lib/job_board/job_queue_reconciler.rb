@@ -28,7 +28,7 @@ module JobBoard
 
           site_def = {
             site: site.to_sym,
-            workers: [],
+            processors: [],
             queues: []
           }
 
@@ -36,7 +36,7 @@ module JobBoard
           reclaimed, claimed = reconcile_site!(redis: redis, site: site)
 
           total_capacity = measure_capacity(redis: redis, site: site)
-          total_claimed = claimed.values.select(&:positive?).reduce(:+) || 0
+          total_claimed = claimed.values.map(&:length).reduce(:+) || 0
           site_def.merge!(
             capacity: total_capacity,
             claimed: total_claimed,
@@ -47,11 +47,13 @@ module JobBoard
           site_def[:reclaimed] = reclaimed.length
           site_def[:reclaimed_ids] = reclaimed if with_ids
 
-          claimed.each do |worker_name, count|
-            site_def[:workers] << {
-              name: worker_name,
-              claimed: count
-            }
+          claimed.each do |_, claimed_for_queue|
+            claimed_for_queue.each do |processor_name, jobs|
+              site_def[:processors] << {
+                name: processor_name,
+                claimed: jobs.length
+              }
+            end
           end
 
           JobBoard.logger.info('fetching queue stats', site: site)
@@ -65,68 +67,90 @@ module JobBoard
       end
     end
 
-    private def reconcile_site!(redis: nil, site: '')
+    private def reconcile_site!(redis: nil, site: '', cutoff_seconds: 120)
       reclaimed = []
       claimed = {}
 
-      redis.smembers("workers:#{site}").sort.each do |worker|
-        worker = worker.to_s.strip
-        next if worker.empty?
+      redis.smembers("queues:#{site}").sort.each do |queue_name|
+        queue_name = queue_name.to_s.strip
+        next if queue_name.empty?
 
-        if worker_is_current?(redis: redis, site: site, worker: worker)
-          claimed[worker] = redis.llen("worker:#{site}:#{worker}")
-        else
-          reclaimed += reclaim_jobs_from_worker(
-            redis: redis, site: site, worker: worker
-          )
-          redis.srem("workers:#{site}", worker)
-        end
+        queue_reclaimed, queue_claimed = reclaim_for_queue(
+          redis: redis, site: site, queue_name: queue_name,
+          cutoff_seconds: cutoff_seconds
+        )
+        reclaimed += queue_reclaimed
+        claimed[queue_name] = queue_claimed
       end
 
       [reclaimed, claimed]
     end
 
-    private def measure_capacity(redis: nil, site: '')
-      total = 0
-      redis.scan_each(match: "worker:#{site}:*:capacity") do |key|
-        redis.hvals(key).each do |i|
-          total += Integer(i) unless i.nil? || i.empty?
+    private def reclaim_for_queue(redis: nil, site: '', queue_name: '',
+                                  cutoff_seconds: 120)
+      reclaimed_for_queue = []
+      claimed_by_id = redis.hgetall("queue:#{site}:#{queue_name}:claims")
+      claimed_by_processor = {}
+      claimed_by_id.each do |job_id, processor_name|
+        claimed_by_processor[processor_name] ||= []
+        claimed_by_processor[processor_name] << job_id
+      end
+
+      now = Time.now.utc
+      redis.hgetall(
+        "queue:#{site}:#{queue_name}:claims:timestamps"
+      ).each do |job_id, timestamp|
+        parsed_ts = safe_time_parse(timestamp)
+        processor_name = claimed_by_id[job_id]
+        if parsed_ts.nil?
+          JobBoard.logger.debug(
+            'reclaiming', reason: 'invalid timestamp', job_id: job_id
+          )
+          reclaimed_for_queue << job_id
+        elsif (now - parsed_ts) > cutoff_seconds
+          JobBoard.logger.debug(
+            'reclaiming', reason: 'stale', job_id: job_id
+          )
+          reclaimed_for_queue << job_id
+        elsif !redis.exists(
+          "queues:#{site}:#{queue_name}:processor:#{processor_name}"
+        )
+          JobBoard.logger.debug(
+            'reclaiming', reason: 'expired processor', job_id: job_id
+          )
+          claimed_by_processor[processor_name].delete(job_id)
+          reclaimed_for_queue << job_id
         end
       end
-      total
+
+      unless reclaimed_for_queue.empty?
+        redis.multi do |conn|
+          conn.hdel(
+            "queue:#{site}:#{queue_name}:claims", reclaimed_for_queue
+          )
+          conn.hdel(
+            "queue:#{site}:#{queue_name}:claims:timestamps",
+            reclaimed_for_queue
+          )
+        end
+      end
+
+      claimed_by_processor.reject! { |_, v| v.empty? }
+      [reclaimed_for_queue, claimed_by_processor]
     end
 
-    private def worker_is_current?(redis: nil, site: '', worker: '')
-      redis.exists("worker:#{site}:#{worker}:capacity")
-    end
-
-    private def reclaim_jobs_from_worker(redis: nil, site: '', worker: '')
-      reclaimed = []
+    private def measure_capacity(redis: nil, site: '')
+      total = 0
 
       redis.smembers("queues:#{site}").sort.each do |queue_name|
-        reclaimed += reclaim!(
-          redis: redis, worker: worker, site: site, queue_name: queue_name
-        )
+        redis.scan_each(
+          match: "queues:#{site}:#{queue_name}:processor:*"
+        ).each do
+          total += 1
+        end
       end
 
-      reclaimed
-    end
-
-    private def reclaim!(redis: nil, worker: '', site: '', queue_name: '')
-      reclaimed = []
-      return reclaimed if worker.empty? || site.empty? || queue_name.empty?
-
-      claims = redis.hgetall("queue:#{site}:#{queue_name}:claims")
-      claims.each do |job_id, claimer|
-        next unless worker == claimer
-        reclaim_job(
-          redis: redis, worker: worker, job_id: job_id,
-          site: site, queue_name: queue_name
-        )
-        reclaimed << job_id
-      end
-
-      reclaimed
+      total
     end
 
     private def measure_queues(redis: nil, site: '')
@@ -146,9 +170,10 @@ module JobBoard
 
         queue_capacity = 0
 
-        redis.scan_each(match: "worker:#{site}:*:capacity") do |key|
-          cap = redis.hget(key, queue_name)
-          queue_capacity += Integer(cap) unless cap.nil? || cap.empty?
+        redis.scan_each(
+          match: "queues:#{site}:#{queue_name}:processor:*"
+        ) do
+          queue_capacity += 1
         end
 
         measured << queue_def.merge(
@@ -158,18 +183,6 @@ module JobBoard
       end
 
       measured
-    end
-
-    private def reclaim_job(
-      redis: nil, worker: '', job_id: '', site: '', queue_name: ''
-    )
-      redis.multi do |conn|
-        conn.srem("worker:#{site}:#{worker}:idx", job_id)
-        conn.lrem("worker:#{site}:#{worker}", 1, job_id)
-        conn.rpush("queue:#{site}:#{queue_name}", job_id)
-        conn.hdel("queue:#{site}:#{queue_name}:claims", job_id)
-        conn.hdel("queue:#{site}:#{queue_name}:claims:timestamps", job_id)
-      end
     end
 
     private def purge_unknown_jobs!(redis: nil, site: '')
@@ -190,21 +203,21 @@ module JobBoard
         unknown_by_queue[queue_name] += (claimed_job_ids - found_in_db)
       end
 
-      redis.smembers("workers:#{site}").sort.each do |worker|
-        worker = worker.to_s.strip
-        next if worker.empty?
-
-        unknown_by_queue.each do |queue_name, job_ids|
-          job_ids.each do |job_id|
-            redis.multi do |conn|
-              conn.srem("worker:#{site}:#{worker}:idx", job_id)
-              conn.lrem("worker:#{site}:#{worker}", 1, job_id)
-              conn.hdel("queue:#{site}:#{queue_name}:claims", job_id)
-              conn.hdel("queue:#{site}:#{queue_name}:claims:timestamps", job_id)
-            end
+      unknown_by_queue.each do |queue_name, job_ids|
+        job_ids.each do |job_id|
+          redis.multi do |conn|
+            conn.hdel("queue:#{site}:#{queue_name}:claims", job_id)
+            conn.hdel("queue:#{site}:#{queue_name}:claims:timestamps", job_id)
           end
         end
       end
+    end
+
+    private def safe_time_parse(timestamp)
+      Time.parse(timestamp)
+    rescue => e
+      warn e
+      nil
     end
   end
 end

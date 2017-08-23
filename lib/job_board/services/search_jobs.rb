@@ -8,13 +8,13 @@ module JobBoard
     class SearchJobs
       extend Service
 
-      def initialize(site: '', queue_name: nil, worker: nil)
+      def initialize(site: '', queue_name: nil, processor: nil)
         @site = site
         @queue_name = queue_name.to_s.strip
-        @worker = worker.to_s.strip
+        @processor = processor.to_s.strip
       end
 
-      attr_reader :site, :queue_name, :worker
+      attr_reader :site, :queue_name, :processor
 
       def run
         results = { :@site => site }
@@ -23,7 +23,7 @@ module JobBoard
           results[:jobs] = JobBoard::JobQueue.for_site(
             site: site
           )
-        elsif worker.empty?
+        elsif processor.empty?
           results[:@queue] = queue_name
           results[:jobs] = [
             {
@@ -35,12 +35,12 @@ module JobBoard
           ]
         else
           results[:@queue] = queue_name
-          results[:@worker] = worker
+          results[:@processor] = processor
           results[:jobs] = [
             {
               queue: queue_name,
-              jobs: JobBoard::JobQueue.for_worker(
-                site: site, queue_name: queue_name, worker: worker
+              jobs: JobBoard::JobQueue.for_processor(
+                site: site, queue_name: queue_name, processor: processor
               )
             }
           ]

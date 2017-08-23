@@ -67,10 +67,6 @@ describe 'Worker Interaction', integration: true do
     $stderr.puts('') if travis?
   end
 
-  def worker_index_sizes
-    @worker_index_sizes ||= {}
-  end
-
   before :all do
     expect(suite_start).to_not be_nil
 
@@ -107,12 +103,6 @@ describe 'Worker Interaction', integration: true do
     end
 
     wait_around(label: 'emptied queue', loop_sleep: 1, timeout: 120) do
-      JobBoard.redis_pool.with do |redis|
-        redis.smembers('workers:test').each do |worker|
-          worker_index_sizes[worker] ||= []
-          worker_index_sizes[worker] << redis.scard("worker:test:#{worker}:idx")
-        end
-      end
       JobBoard::JobQueue.for_site(site: 'test')
                         .map { |s| s[:jobs] }.flatten.empty?
     end
@@ -134,12 +124,6 @@ describe 'Worker Interaction', integration: true do
     expect(scheduler_runner.scheduled_summary).to_not be_empty
   end
 
-  it 'allocates no more than the available capacity per worker' do
-    expect(worker_index_sizes).to_not be_empty
-    expect(worker_index_sizes.values.map(&:max).sort.max).to be >= 0
-    expect(worker_index_sizes.values.map(&:max).sort.max).to be <= 3
-  end
-
   it 'schedules each job only once' do
     expect(scheduler_runner.scheduled_summary.length)
       .to eq scheduler_runner.scheduled_summary.sort.uniq.length
@@ -149,7 +133,7 @@ describe 'Worker Interaction', integration: true do
     expect(scheduler_runner.scheduled_summary.sort.uniq.length).to eq job_count
   end
 
-  it 'removes all records of completed jobs' do
+  xit 'removes all records of completed jobs' do
     expect(
       JobBoard::Models::Job.where(site: 'test').select(:job_id).map(:job_id)
     ).to be_empty
@@ -159,7 +143,7 @@ describe 'Worker Interaction', integration: true do
     expect(worker_runner.killed_workers.length).to be_positive
   end
 
-  it 'marks jobs completed only when completed' do
+  xit 'marks jobs completed only when completed' do
     state_summary = misc_http_runner.state_summary
     finished = state_summary.reject do |s|
       s['data']['finished'] == '0001-01-01T00:00:00Z'

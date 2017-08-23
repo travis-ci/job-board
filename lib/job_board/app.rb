@@ -44,13 +44,13 @@ module JobBoard
     end
 
     get '/search/jobs/:site' do
-      param :worker, String, default: nil
+      param :processor, String, default: nil
       param :queue, String, default: nil
 
       results = JobBoard::Services::SearchJobs.new(
         site: params[:site],
         queue_name: params[:queue],
-        worker: params[:worker]
+        processor: params[:processor]
       ).run
 
       status 400 unless results[:error].nil?

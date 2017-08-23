@@ -57,7 +57,7 @@ module Support
         'log-parts/multi'
       )
 
-      JobBoard.config.worker_ttl = 5
+      JobBoard.config.processor_ttl = 5
 
       JobBoard::Services::FetchJobScript.build_uris = {
         'test' => Addressable::URI.parse(misc_base_url)

@@ -4,9 +4,10 @@ require 'fileutils'
 
 module Support
   class WorkerRunner
-    def initialize(n: 1, target_version: 'v2.9.2')
+    def initialize(n: 1, target_version: nil)
       @n = n
-      @target_version = target_version
+      @target_version = target_version ||
+                        ENV.fetch('RSPEC_RUNNER_WORKER_VERSION', 'v2.9.2')
       @workers = {}
       @tmproot = ENV['RSPEC_RUNNER_TMPROOT'] ||
                  Dir.mktmpdir(%w[job-board- -travis-worker])

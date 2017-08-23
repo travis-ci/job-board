@@ -2,7 +2,7 @@
 
 module JobBoard
   module Services
-    autoload :AllocateJobs, 'job_board/services/allocate_jobs'
+    autoload :AllocateJob, 'job_board/services/allocate_job'
     autoload :CreateImage, 'job_board/services/create_image'
     autoload :CreateJWT, 'job_board/services/create_jwt'
     autoload :CreateOrUpdateJob, 'job_board/services/create_or_update_job'

@@ -4,7 +4,7 @@ describe 'Job Delivery API', integration: true do
   let(:guest_auth) { %w[guest guest] }
   let(:admin_auth) { %w[important secret] }
   let(:auth_tokens) { %w[abc123 secret] }
-  let(:from) { 'worker@localhost' }
+  let(:from) { '7d725741-70e4-4f92-8750-8d482392e40c+worker@localhost' }
   let(:site) { 'test' }
 
   before do
@@ -35,8 +35,7 @@ describe 'Job Delivery API', integration: true do
       JobBoard::Models::Job.where(queue: 'lel', site: site).delete
       JobBoard.redis.del("queue:#{site}:lel")
       JobBoard.redis.srem("queues:#{site}", 'lel')
-      JobBoard.redis.del("worker:#{site}:#{from}")
-      JobBoard.redis.del("worker:#{site}:#{from}:idx")
+      JobBoard.redis.del("queues:#{site}:lel:processors:#{from}")
 
       rand(4..9).times do |n|
         job_id = "#{Time.now.to_i}#{n}"
@@ -67,7 +66,7 @@ describe 'Job Delivery API', integration: true do
 
     it 'rejects guest auth' do
       authorize(*guest_auth)
-      post '/jobs?queue=lel&capacity=3', JSON.dump(jobs: []),
+      post '/jobs?queue=lel', JSON.dump(jobs: []),
            'HTTP_CONTENT_TYPE' => 'application/json',
            'HTTP_FROM' => from,
            'HTTP_TRAVIS_SITE' => site
@@ -76,26 +75,16 @@ describe 'Job Delivery API', integration: true do
 
     it 'returns 200' do
       authorize(*admin_auth)
-      post '/jobs?queue=lel&capacity=3', JSON.dump(jobs: []),
+      post '/jobs?queue=lel', JSON.dump(jobs: []),
            'HTTP_CONTENT_TYPE' => 'application/json',
            'HTTP_FROM' => from,
            'HTTP_TRAVIS_SITE' => site
       expect(last_response.status).to eq(200)
     end
 
-    it 'includes capacity metadata' do
-      authorize(*admin_auth)
-      post '/jobs?queue=lel&capacity=3', JSON.dump(jobs: []),
-           'HTTP_CONTENT_TYPE' => 'application/json',
-           'HTTP_FROM' => from,
-           'HTTP_TRAVIS_SITE' => site
-      response_body = JSON.parse(last_response.body)
-      expect(response_body['@capacity']).to eq(3)
-    end
-
     it 'includes queue metadata' do
       authorize(*admin_auth)
-      post '/jobs?queue=lel&capacity=3', JSON.dump(jobs: []),
+      post '/jobs?queue=lel', JSON.dump(jobs: []),
            'HTTP_CONTENT_TYPE' => 'application/json',
            'HTTP_FROM' => from,
            'HTTP_TRAVIS_SITE' => site
@@ -105,29 +94,28 @@ describe 'Job Delivery API', integration: true do
 
     it 'returns the expected number of jobs' do
       authorize(*admin_auth)
-      post '/jobs?queue=lel&capacity=3', JSON.dump(jobs: []),
+      post '/jobs?queue=lel', JSON.dump(jobs: []),
            'HTTP_CONTENT_TYPE' => 'application/json',
            'HTTP_FROM' => from,
            'HTTP_TRAVIS_SITE' => site
       response_body = JSON.parse(last_response.body)
       expect(response_body['jobs']).to_not be_nil
-      expect(response_body['jobs'].length).to eq(3)
-      expect(response_body['unavailable_jobs'].length).to eq(0)
+      expect(response_body['jobs'].length).to eq(1)
     end
 
-    it 'records allocations for the worker' do
+    xit 'records allocations for the processor' do
       authorize(*admin_auth)
-      post '/jobs?queue=lel&capacity=3', JSON.dump(jobs: []),
+      post '/jobs?queue=lel', JSON.dump(jobs: []),
            'HTTP_CONTENT_TYPE' => 'application/json',
            'HTTP_FROM' => from,
            'HTTP_TRAVIS_SITE' => site
       response_body = JSON.parse(last_response.body)
       expect(response_body['jobs']).to_not be_nil
       expect(response_body['jobs'].sort).to eql(
-        JobBoard::JobQueue.for_worker(
+        JobBoard::JobQueue.for_processor(
           site: site,
           queue_name: 'lel',
-          worker: from
+          processor: from
         ).map { |entry| entry[:id] }.sort
       )
     end
@@ -209,7 +197,7 @@ describe 'Job Delivery API', integration: true do
 
   describe 'GET /jobs/:job_id' do
     let(:job_id) { Time.now.to_i.to_s }
-    let(:from) { 'worker+test@localhost' }
+    let(:from) { '7d725741-70e4-4f92-8750-8d482392e40c+worker@localhost' }
 
     before :each do
       JobBoard::Models::Job.where(queue: 'lel', site: site).delete
@@ -244,10 +232,8 @@ describe 'Job Delivery API', integration: true do
         site: site
       )
 
-      JobBoard::Services::AllocateJobs.run(
-        capacity: 1,
+      JobBoard::Services::AllocateJob.run(
         from: from,
-        jobs: [],
         queue_name: 'lel',
         site: site
       )

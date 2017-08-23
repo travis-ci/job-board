@@ -86,7 +86,12 @@ module JobBoard
         timeout: 3
       },
       sentry: { dsn: nil },
-      worker_ttl: Integer(ENV.fetch('JOB_BOARD_WORKER_TTL', '120'))
+      processor_ttl: Integer(
+        ENV.fetch(
+          'JOB_BOARD_PROCESSOR_TTL',
+          ENV.fetch('JOB_BOARD_WORKER_TTL', '120')
+        )
+      )
     )
 
     default(access: [:key])
