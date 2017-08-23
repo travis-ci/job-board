@@ -29,7 +29,6 @@ module Support
     private def start_reconciler
       reopen_streams
 
-      JobBoard.config.processor_ttl = 5
       JobBoard.config.reconcile_stats_with_ids = true
       JobBoard.instance_variable_set(:@logger, nil)
       JobBoard.logdev = $stdout
