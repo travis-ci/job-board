@@ -18,7 +18,7 @@ describe JobBoard::JobQueue do
         queue:#{site}:#{queue_name}
         queue:#{site}:#{queue_name}:claims
         queue:#{site}:#{queue_name}:claims:timestamps
-        queue:#{site}:#{queue_name}:processors:a
+        processor:#{site}:#{queue_name}:a
         queues:#{site}
       ].each do |key|
         conn.del(key)
@@ -32,7 +32,7 @@ describe JobBoard::JobQueue do
       subject.register(processor: 'a')
       expect(redis.exists('sites')).to be true
       expect(redis.exists("queues:#{site}")).to be true
-      expect(redis.exists("queues:#{site}:#{queue_name}:processor:a"))
+      expect(redis.exists("processor:#{site}:#{queue_name}:a"))
         .to be true
     end
 
@@ -130,7 +130,7 @@ describe JobBoard::JobQueue do
       subject.register(processor: 'a')
       expect(redis.exists('sites')).to be true
       expect(redis.exists("queues:#{site}")).to be true
-      expect(redis.exists("queues:#{site}:#{queue_name}:processor:a"))
+      expect(redis.exists("processor:#{site}:#{queue_name}:a"))
         .to be true
     end
 

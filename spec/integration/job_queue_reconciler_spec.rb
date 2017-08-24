@@ -46,7 +46,7 @@ describe JobBoard::JobQueueReconciler do
         job_queue.claim(processor: 'd')
       end
 
-      xit 'reconciles' do
+      it 'reconciles' do
         stats = subject.reconcile!
         expect(stats).to_not be_nil
         expect(stats).to_not be_empty
@@ -100,7 +100,7 @@ describe JobBoard::JobQueueReconciler do
         job_queue.claim(processor: 'c')
       end
 
-      xit 'reconciles' do
+      it 'reconciles' do
         stats = subject.reconcile!
         expect(stats).to_not be_nil
         expect(stats).to_not be_empty
@@ -150,10 +150,10 @@ describe JobBoard::JobQueueReconciler do
         job_queue.claim(processor: 'd')
         # NOTE: this `del` command is intended to simulate the expiration of
         # the processor registration.
-        JobBoard.redis.del("queues:#{site}:#{queue_name}:processors:a")
+        JobBoard.redis.del("processor:#{site}:#{queue_name}:a")
       end
 
-      xit 'reconciles' do
+      it 'reconciles' do
         stats = subject.reconcile!
         expect(stats).to_not be_nil
         expect(stats).to_not be_empty

@@ -116,7 +116,7 @@ module JobBoard
           )
           reclaimed_for_queue << job_id
         elsif !redis.exists(
-          "queues:#{site}:#{queue_name}:processor:#{processor_name}"
+          "processor:#{site}:#{queue_name}:#{processor_name}"
         )
           JobBoard.logger.debug(
             'reclaiming', reason: 'expired processor', job_id: job_id
@@ -128,6 +128,9 @@ module JobBoard
 
       unless reclaimed_for_queue.empty?
         redis.multi do |conn|
+          reclaimed_for_queue.each do |job_id|
+            conn.rpush("queue:#{site}:#{queue_name}", job_id)
+          end
           conn.hdel(
             "queue:#{site}:#{queue_name}:claims", reclaimed_for_queue
           )
@@ -147,7 +150,7 @@ module JobBoard
 
       redis.smembers("queues:#{site}").sort.each do |queue_name|
         redis.scan_each(
-          match: "queues:#{site}:#{queue_name}:processor:*"
+          match: "processor:#{site}:#{queue_name}:*"
         ).each do
           total += 1
         end
@@ -174,7 +177,7 @@ module JobBoard
         queue_capacity = 0
 
         redis.scan_each(
-          match: "queues:#{site}:#{queue_name}:processor:*"
+          match: "processor:#{site}:#{queue_name}:*"
         ) do
           queue_capacity += 1
         end

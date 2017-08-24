@@ -148,7 +148,7 @@ module JobBoard
       begin
         return nil if claimed.nil?
         redis_pool.with do |redis|
-          redis.lpush(queue_key, claimed)
+          redis.rpush(queue_key, claimed)
         end
       rescue => e
         JobBoard.logger.error('failed to push claim back', error: e.to_s)
@@ -161,17 +161,17 @@ module JobBoard
       processor = processor.to_s.strip
       return false if processor.empty?
 
-      claimed = false
+      ret = { claimed: false }
 
       redis_pool.with do |redis|
-        claimed = processor_has_current_job_claim?(
+        ret[:claimed] = processor_has_current_job_claim?(
           redis: redis, processor: processor, job_id: job_id
         ) && refresh_claim(
           redis: redis, processor: processor, job_id: job_id
         )
       end
 
-      claimed
+      ret[:claimed]
     end
 
     private def processor_has_current_job_claim?(
@@ -194,7 +194,9 @@ module JobBoard
         conn.hset(queue_job_claim_timestamps_key, job_id, now)
       end
 
-      result == ['OK', true, true]
+      result.fetch(0) == 'OK' &&
+      [true, false].include?(result.fetch(1)) &&
+      [true, false].include?(result.fetch(2))
     end
 
     private def now
@@ -215,7 +217,7 @@ module JobBoard
     end
 
     private def processor_key(processor: '')
-      "queues:#{site}:#{queue_name}:processor:#{processor}"
+      "processor:#{site}:#{queue_name}:#{processor}"
     end
   end
 end
