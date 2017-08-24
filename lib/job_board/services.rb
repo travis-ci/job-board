@@ -12,6 +12,7 @@ module JobBoard
     autoload :FetchJob, 'job_board/services/fetch_job'
     autoload :FetchJobScript, 'job_board/services/fetch_job_script'
     autoload :FetchQueue, 'job_board/services/fetch_queue'
+    autoload :RefreshJobClaim, 'job_board/services/refresh_job_claim'
     autoload :SearchJobs, 'job_board/services/search_jobs'
     autoload :UpdateImage, 'job_board/services/update_image'
   end

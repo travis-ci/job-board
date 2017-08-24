@@ -16,7 +16,7 @@ module JobBoard
       for_queue(
         site: site, queue_name: queue_name
       ).select do |job|
-        job[:claimed_by].to_s =~ /.*#{processor}.*/
+        job[:claimed_by] == processor
       end
     end
 
@@ -138,9 +138,10 @@ module JobBoard
         claimed = redis.rpop(queue_key)
         return nil if claimed.nil?
 
-        refresh_claim!(redis: redis, processor: processor, job_id: claimed)
-        claimed
+        refresh_claim(redis: redis, processor: processor, job_id: claimed)
       end
+
+      claimed
     rescue => e
       JobBoard.logger.error('failure during claim', error: e.to_s)
 
@@ -156,19 +157,18 @@ module JobBoard
       nil
     end
 
-    def check_claim(processor: '', job_id: '')
-      claimed = nil
+    def claimed?(processor: '', job_id: '')
       processor = processor.to_s.strip
-      return claimed if processor.empty?
+      return false if processor.empty?
+
+      claimed = false
 
       redis_pool.with do |redis|
-        if processor_has_current_job_claim?(
+        claimed = processor_has_current_job_claim?(
+          redis: redis, processor: processor, job_id: job_id
+        ) && refresh_claim(
           redis: redis, processor: processor, job_id: job_id
         )
-          redis.hset(queue_job_claim_timestamps_key, job_id, now)
-          redis.setex(processor_key(processor: processor), ttl, now)
-          claimed = job_id
-        end
       end
 
       claimed
@@ -181,18 +181,20 @@ module JobBoard
       redis.hget(queue_job_claims_key, job_id) == processor
     end
 
-    private def refresh_claim!(redis: nil, processor: '', job_id: '')
+    private def refresh_claim(redis: nil, processor: '', job_id: '')
       processor = processor.to_s.strip
       return if processor.empty?
 
       job_id = job_id.to_s.strip
       return if job_id.empty?
 
-      redis.multi do |conn|
+      result = redis.multi do |conn|
         conn.setex(processor_key(processor: processor), ttl, now)
         conn.hset(queue_job_claims_key, job_id, processor)
         conn.hset(queue_job_claim_timestamps_key, job_id, now)
       end
+
+      result == ['OK', true, true]
     end
 
     private def now

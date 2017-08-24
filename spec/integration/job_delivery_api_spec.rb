@@ -30,12 +30,14 @@ describe 'Job Delivery API', integration: true do
     JobBoard.config[:"log_parts_#{site}_url"] = 'http://test.example.org'
   end
 
-  describe 'POST /jobs' do
+  describe 'POST /jobs/pop' do
     before :each do
       JobBoard::Models::Job.where(queue: 'lel', site: site).delete
       JobBoard.redis.del("queue:#{site}:lel")
       JobBoard.redis.srem("queues:#{site}", 'lel')
-      JobBoard.redis.del("queues:#{site}:lel:processors:#{from}")
+      JobBoard.redis.del("queue:#{site}:lel:processors:#{from}")
+      JobBoard.redis.del("queue:#{site}:lel:claims")
+      JobBoard.redis.del("queue:#{site}:lel:claims:timestamps")
 
       rand(4..9).times do |n|
         job_id = "#{Time.now.to_i}#{n}"
@@ -66,7 +68,7 @@ describe 'Job Delivery API', integration: true do
 
     it 'rejects guest auth' do
       authorize(*guest_auth)
-      post '/jobs?queue=lel', JSON.dump(jobs: []),
+      post '/jobs/pop?queue=lel', nil,
            'HTTP_CONTENT_TYPE' => 'application/json',
            'HTTP_FROM' => from,
            'HTTP_TRAVIS_SITE' => site
@@ -75,7 +77,7 @@ describe 'Job Delivery API', integration: true do
 
     it 'returns 200' do
       authorize(*admin_auth)
-      post '/jobs?queue=lel', JSON.dump(jobs: []),
+      post '/jobs/pop?queue=lel', nil,
            'HTTP_CONTENT_TYPE' => 'application/json',
            'HTTP_FROM' => from,
            'HTTP_TRAVIS_SITE' => site
@@ -84,7 +86,7 @@ describe 'Job Delivery API', integration: true do
 
     it 'includes queue metadata' do
       authorize(*admin_auth)
-      post '/jobs?queue=lel', JSON.dump(jobs: []),
+      post '/jobs/pop?queue=lel', nil,
            'HTTP_CONTENT_TYPE' => 'application/json',
            'HTTP_FROM' => from,
            'HTTP_TRAVIS_SITE' => site
@@ -92,31 +94,31 @@ describe 'Job Delivery API', integration: true do
       expect(response_body['@queue']).to eq('lel')
     end
 
-    it 'returns the expected number of jobs' do
+    it 'returns a job id' do
       authorize(*admin_auth)
-      post '/jobs?queue=lel', JSON.dump(jobs: []),
+      post '/jobs/pop?queue=lel', nil,
            'HTTP_CONTENT_TYPE' => 'application/json',
            'HTTP_FROM' => from,
            'HTTP_TRAVIS_SITE' => site
       response_body = JSON.parse(last_response.body)
-      expect(response_body['jobs']).to_not be_nil
-      expect(response_body['jobs'].length).to eq(1)
+      expect(response_body['job_id']).to_not be_nil
+      expect(response_body['job_id']).to_not be_empty
     end
 
-    xit 'records allocations for the processor' do
+    it 'allocates for the processor' do
       authorize(*admin_auth)
-      post '/jobs?queue=lel', JSON.dump(jobs: []),
+      post '/jobs/pop?queue=lel', nil,
            'HTTP_CONTENT_TYPE' => 'application/json',
            'HTTP_FROM' => from,
            'HTTP_TRAVIS_SITE' => site
       response_body = JSON.parse(last_response.body)
-      expect(response_body['jobs']).to_not be_nil
-      expect(response_body['jobs'].sort).to eql(
+      expect(response_body['job_id']).to_not be_nil
+      expect(response_body['job_id']).to eql(
         JobBoard::JobQueue.for_processor(
           site: site,
           queue_name: 'lel',
           processor: from
-        ).map { |entry| entry[:id] }.sort
+        ).map { |entry| entry[:id] }.first
       )
     end
   end

@@ -56,19 +56,10 @@ ${UUID}@${PID}.${HOSTNAME}
 
 Each Worker
 [Processor](https://github.com/travis-ci/worker/blob/9aed935dc3e67df7d4793560d08fc5947982e249/processor.go)
-has an HTTP Job Queue that is responsible for repeatedly placing `POST /jobs`
-requests to Job Board for purposes of transferring state information about the
-actively executing job and claiming any job that is available for delivery.
+has an HTTP Job Queue that is responsible for repeatedly placing `POST /jobs/pop`
+requests to Job Board for purposes of fetching newly available job ids.
 
-If any subsequent response from `POST /jobs` states that an active job has
-become unavailable, then the Processor Pool will cancel any matching job(s).
-In practice, such a collision *should be rare*, and explicit job cancellations
-should only come *from* the Job State API.
-
-#### `POST /jobs{?count,queue}`
-
-This resource is intended to act as a "heartbeat" where a given Worker Processor
-a list that *at most* contains the job ID it is actively executing.
+#### `POST /jobs/pop{?queue}`
 
 As shown below, the `queue` query param is required.
 
@@ -77,45 +68,27 @@ As shown below, the `queue` query param is required.
 If the Worker Processor is "waiting" or "new", such as when first initializing:
 
 ```
-POST /jobs?queue=flah
+POST /jobs/pop?queue=flah
 Content-Type: application/json
 Travis-Site: ${SITE}
 Authorization: basic ${BASE64_BASIC_AUTH}
 From: ${UNIQUE_ID}
 
 {
-  "jobs": []
-}
-```
-
-If the Worker Processor with is working on a job:
-
-```
-POST /jobs?queue=flah
-Content-Type: application/json
-Travis-Site: ${SITE}
-Authorization: basic ${BASE64_BASIC_AUTH}
-From: ${UNIQUE_ID}
-
-{
-  "jobs": [
-    "${JOB_ID}",
-  ]
+  "job_id": "${JOB_ID}"
 }
 ```
 
 ##### Responses
 
-If the job ID reported by the Worker Processor is available for claim:
+If there is a job ID available:
 
 ```
 HTTP/1.1 200 OK
 Content-Type: application/json
 
 {
-  "jobs": [
-    "${JOB_ID}"
-  ],
+  "job_id": "${JOB_ID}",
   "@queue": "${QUEUE}"
 }
 ```
@@ -132,18 +105,11 @@ Content-Type: application/json
 }
 ```
 
-If the job ID is unavailable for claim:
+If no job IDs are available for claim:
 
 ```
-HTTP/1.1 409 Conflict
+HTTP/1.1 204 No Content
 Content-Type: application/json
-
-{
-  "jobs": [
-    "${JOB_ID}"
-  ],
-  "@queue": "${QUEUE}"
-}
 ```
 
 If the `Authorization` header is missing, `401`.
@@ -208,6 +174,18 @@ If the `Travis-Site` header is missing, `412`.
 If the `Authorization` header is missing, `401`.
 
 If the `Authorization` header is invalid, `403`.
+
+#### `POST /jobs/{job_id}/claim`
+
+_TODO_
+
+##### Request
+
+_TODO_
+
+##### Responses
+
+_TODO_
 
 #### `GET /jobs/{job_id}`
 

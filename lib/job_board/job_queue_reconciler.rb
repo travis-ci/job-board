@@ -12,7 +12,8 @@ module JobBoard
     attr_reader :redis_pool, :job_model
 
     def reconcile!(with_ids: JobBoard.config.reconcile_stats_with_ids,
-                   purge_unknown: false)
+                   purge_unknown: false,
+                   cutoff_seconds: JobBoard.config.reconcile_cutoff_seconds)
       JobBoard.logger.info('starting reconciliation process')
       start_time = Time.now
       stats = { sites: [] }
@@ -33,7 +34,9 @@ module JobBoard
           }
 
           JobBoard.logger.info('reconciling', site: site)
-          reclaimed, claimed = reconcile_site!(redis: redis, site: site)
+          reclaimed, claimed = reconcile_site!(
+            redis: redis, site: site, cutoff_seconds: cutoff_seconds
+          )
 
           total_capacity = measure_capacity(redis: redis, site: site)
           total_claimed = claimed.values.map(&:length).reduce(:+) || 0

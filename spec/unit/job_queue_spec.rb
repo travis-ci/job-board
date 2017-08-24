@@ -57,8 +57,7 @@ describe JobBoard::JobQueue do
     end
 
     it 'can check claims' do
-      claimed = subject.check_claim(processor: 'a', job_id: '0')
-      expect(claimed).to be_nil
+      expect(subject.claimed?(processor: 'a', job_id: '0')).to be false
     end
 
     it 'can claim a job id' do
@@ -136,7 +135,7 @@ describe JobBoard::JobQueue do
     end
 
     it 'can check claims' do
-      expect(subject.check_claim(processor: 'a', job_id: '0')).to be_nil
+      expect(subject.claimed?(processor: 'a', job_id: '0')).to be false
     end
 
     it 'can claim a job id' do

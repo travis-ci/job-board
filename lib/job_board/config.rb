@@ -75,6 +75,7 @@ module JobBoard
       log_parts_org_url: ENV.fetch('JOB_BOARD_LOG_PARTS_ORG_URL', ''),
       logger: { format_type: 'l2met', thread_id: true },
       paranoid_queues: ENV.fetch('JOB_BOARD_PARANOID_QUEUES', 'docker,ec2'),
+      reconcile_cutoff_seconds: 20,
       reconcile_purge_unknown_always: false,
       reconcile_purge_unknown_every: 42,
       reconcile_stats_with_ids: false,

@@ -32,7 +32,9 @@ describe 'Worker Interaction', integration: true do
   end
 
   def n_workers
-    @n_workers ||= rand(10..29)
+    @n_workers ||= Integer(
+      ENV.fetch('RSPEC_TRAVIS_WORKER_RUNNER_COUNT', rand(10..29))
+    )
   end
 
   def job_count
@@ -133,7 +135,7 @@ describe 'Worker Interaction', integration: true do
     expect(scheduler_runner.scheduled_summary.sort.uniq.length).to eq job_count
   end
 
-  xit 'removes all records of completed jobs' do
+  it 'removes all records of completed jobs' do
     expect(
       JobBoard::Models::Job.where(site: 'test').select(:job_id).map(:job_id)
     ).to be_empty
@@ -143,7 +145,7 @@ describe 'Worker Interaction', integration: true do
     expect(worker_runner.killed_workers.length).to be_positive
   end
 
-  xit 'marks jobs completed only when completed' do
+  it 'marks jobs completed only when completed' do
     state_summary = misc_http_runner.state_summary
     finished = state_summary.reject do |s|
       s['data']['finished'] == '0001-01-01T00:00:00Z'
