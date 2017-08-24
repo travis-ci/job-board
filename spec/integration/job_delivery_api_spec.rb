@@ -35,7 +35,7 @@ describe 'Job Delivery API', integration: true do
       JobBoard::Models::Job.where(queue: 'lel', site: site).delete
       JobBoard.redis.del("queue:#{site}:lel")
       JobBoard.redis.srem("queues:#{site}", 'lel')
-      JobBoard.redis.del("queue:#{site}:lel:processors:#{from}")
+      JobBoard.redis.del("processor:#{site}:lel:#{from}")
       JobBoard.redis.del("queue:#{site}:lel:claims")
       JobBoard.redis.del("queue:#{site}:lel:claims:timestamps")
 

@@ -8,7 +8,7 @@ describe JobBoard::JobQueueReconciler do
   let(:site) { 'test' }
 
   before do
-    keys = %w[sites queues:* queue:*].map do |glob|
+    keys = %w[sites queues:* queue:* processor:*].map do |glob|
       JobBoard.redis.keys(glob)
     end
 

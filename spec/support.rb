@@ -46,6 +46,10 @@ RSpec.configure do |c|
       redis.scan_each(match: 'queue:test:*') do |key|
         redis.del(key)
       end
+
+      redis.scan_each(match: 'processor:test:*') do |key|
+        redis.del(key)
+      end
     end
   end
 end
