@@ -7,7 +7,7 @@ module Support
     def initialize(n: 1, target_version: nil)
       @n = n
       @target_version = target_version ||
-                        ENV.fetch('RSPEC_TRAVIS_WORKER_VERSION', 'v2.9.2')
+                        ENV.fetch('RSPEC_TRAVIS_WORKER_VERSION', 'master')
       @workers = {}
       @tmproot = ENV['RSPEC_RUNNER_TMPROOT'] ||
                  Dir.mktmpdir(%w[job-board- -travis-worker])

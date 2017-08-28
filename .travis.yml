@@ -19,8 +19,6 @@ env:
   global:
   - DATABASE_URL='postgres://localhost:5432/job_board_test'
   - RUBYOPT=-W0
-  # TODO: back out this override for integration testing with worker
-  - RSPEC_TRAVIS_WORKER_VERSION=meat-job-queue-ready-chan
   matrix:
   - INTEGRATION_SPECS='1' COVERAGE='1'
   - INTEGRATION_SPECS='0'
