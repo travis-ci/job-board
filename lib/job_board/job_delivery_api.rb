@@ -23,11 +23,6 @@ module JobBoard
       halt 403, JSON.dump('@type' => 'error', error: 'just no') if guest?
     end
 
-    post '/jobs' do
-      JobBoard.logger.warn('received legacy jobs request')
-      json(jobs: [], unavailable_jobs: [])
-    end
-
     post '/jobs/add' do
       job = JSON.parse(request.body.read)
       site = request.env.fetch('travis.site')
