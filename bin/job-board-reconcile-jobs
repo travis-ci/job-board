@@ -15,9 +15,13 @@ $stderr.sync = true
 def main(argv: ARGV)
   reconciler = JobBoard::JobQueueReconciler.new
   JobBoard.logger.info('starting reconciliation loop')
+  n = 0
 
   loop do
-    stats = reconciler.reconcile!
+    stats = reconciler.reconcile!(
+      purge_unknown: JobBoard.config.reconcile_purge_unknown_always? ||
+                     (n % JobBoard.config.reconcile_purge_unknown_every).zero?
+    )
     stats.fetch(:sites, []).each do |site_def|
       JobBoard.logger.info(
         'reconciled',
@@ -34,6 +38,8 @@ def main(argv: ARGV)
           queued: queue_def[:queued], claimed: queue_def[:claimed]
         )
       end
+
+      n += 1
     end
 
     JobBoard.redis_pool.with do |conn|

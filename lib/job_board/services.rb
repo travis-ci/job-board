@@ -2,7 +2,7 @@
 
 module JobBoard
   module Services
-    autoload :AllocateJobs, 'job_board/services/allocate_jobs'
+    autoload :AllocateJob, 'job_board/services/allocate_job'
     autoload :CreateImage, 'job_board/services/create_image'
     autoload :CreateJWT, 'job_board/services/create_jwt'
     autoload :CreateOrUpdateJob, 'job_board/services/create_or_update_job'
@@ -12,6 +12,7 @@ module JobBoard
     autoload :FetchJob, 'job_board/services/fetch_job'
     autoload :FetchJobScript, 'job_board/services/fetch_job_script'
     autoload :FetchQueue, 'job_board/services/fetch_queue'
+    autoload :RefreshJobClaim, 'job_board/services/refresh_job_claim'
     autoload :SearchJobs, 'job_board/services/search_jobs'
     autoload :UpdateImage, 'job_board/services/update_image'
   end

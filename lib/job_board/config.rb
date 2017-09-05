@@ -75,6 +75,9 @@ module JobBoard
       log_parts_org_url: ENV.fetch('JOB_BOARD_LOG_PARTS_ORG_URL', ''),
       logger: { format_type: 'l2met', thread_id: true },
       paranoid_queues: ENV.fetch('JOB_BOARD_PARANOID_QUEUES', 'docker,ec2'),
+      reconcile_cutoff_seconds: 20,
+      reconcile_purge_unknown_always: false,
+      reconcile_purge_unknown_every: 42,
       reconcile_stats_with_ids: false,
       redis_url: ENV.fetch(
         ENV.fetch('REDIS_PROVIDER', 'REDIS_URL'), 'redis://localhost:6379/0'
@@ -84,7 +87,12 @@ module JobBoard
         timeout: 3
       },
       sentry: { dsn: nil },
-      worker_ttl: Integer(ENV.fetch('JOB_BOARD_WORKER_TTL', '10'))
+      processor_ttl: Integer(
+        ENV.fetch(
+          'JOB_BOARD_PROCESSOR_TTL',
+          ENV.fetch('JOB_BOARD_WORKER_TTL', '10')
+        )
+      )
     )
 
     default(access: [:key])

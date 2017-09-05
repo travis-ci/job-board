@@ -43,95 +43,52 @@ are no longer registered with job-board.
 #### Unique source identifier (`${UNIQUE_ID}`)
 
 The `${UNIQUE_ID}` string used in the `From:` header is intended to be a unique
-identifier for purposes of a given Worker communicating with Job Board.  The
-scope of uniqueness we need is limited to "one Worker", which is used on the Job
-Board side as a way to track job IDs claimed by Workers.  In implementation
-terms, each Worker has a redis set that includes the job IDs Job Board expects
-it is actively processing.
+identifier for purposes of a given Worker Processor communicating with Job
+Board.  The scope of uniqueness we need is limited to "one Worker Processor",
+which is used on the Job Board side as a way to track job IDs claimed by Worker
+Processors.
 
 ```
-worker+${SHA}@${PID}.${HOSTNAME}
+${UUID}@${PID}.${HOSTNAME}
 ```
 
 #### Delivery workflow
 
-A given Worker's [Processor
-Pool](https://github.com/travis-ci/worker/blob/9aed935dc3e67df7d4793560d08fc5947982e249/processor_pool.go)
-has an HTTP Job Queue that is responsible for repeatedly placing `POST /jobs`
-requests  to Job Board for purposes of transferring state information about the
-actively executing jobs and claiming any jobs that are available for delivery.
+Each Worker
+[Processor](https://github.com/travis-ci/worker/blob/9aed935dc3e67df7d4793560d08fc5947982e249/processor.go)
+has an HTTP Job Queue that is responsible for repeatedly placing `POST /jobs/pop`
+requests to Job Board for purposes of fetching newly available job ids.
 
-Any job IDs that are successfully claimed are consumed by one of the
-Processor Pool's processors, at which point the skeletal Job is "hydrated" via a
-`GET /jobs/:job_id` request and job processing continues.
+#### `POST /jobs/pop{?queue}`
 
-If any subsequent response from `POST /jobs` states that an active job has
-become unavailable, then the Processor Pool will cancel any matching job(s).
-In practice, such a collision *should be rare*, and explicit job cancellations
-should only come *from* the Job State API.
-
-#### `POST /jobs{?count,queue}`
-
-This resource is intended to act as a "heartbeat" where a given Worker's
-Processor Pool sends a list of job IDs it is actively executing and expects to
-receive back a list of job IDs that are confirmed to be claimed by the
-requesting Worker or are available for claim.
-
-As shown below, the `count` query param is optional, but the `queue` query
-param is required.
+As shown below, the `queue` query param is required.
 
 ##### Requests
 
-If the Worker's Processor Pool with capacity 20 is "empty", such as when the
-process first initializes:
+If the Worker Processor is "waiting" or "new", such as when first initializing:
 
 ```
-POST /jobs?count=20&queue=flah
+POST /jobs/pop?queue=flah
 Content-Type: application/json
 Travis-Site: ${SITE}
 Authorization: basic ${BASE64_BASIC_AUTH}
 From: ${UNIQUE_ID}
 
 {
-  "jobs": []
-}
-```
-
-If the Worker's Processor Pool with capacity 20 has 17 available processors and
-is working on 3 jobs:
-
-```
-POST /jobs?count=17&queue=flah
-Content-Type: application/json
-Travis-Site: ${SITE}
-Authorization: basic ${BASE64_BASIC_AUTH}
-From: ${UNIQUE_ID}
-
-{
-  "jobs": [
-    "${JOB_ID}",
-    "${JOB_ID}",
-    "${JOB_ID}"
-  ]
+  "job_id": "${JOB_ID}"
 }
 ```
 
 ##### Responses
 
-If all of the job IDs reported by Worker are available for claim:
+If there is a job ID available:
 
 ```
 HTTP/1.1 200 OK
 Content-Type: application/json
 
 {
-  "jobs": [
-    "${JOB_ID}",
-    "${JOB_ID}",
-    "${JOB_ID}",
-    // … however many job IDs there were in the request
-  ],
-  "@count": ${COUNT},
+  "job_id": "${JOB_ID}",
   "@queue": "${QUEUE}"
 }
 ```
@@ -148,21 +105,11 @@ Content-Type: application/json
 }
 ```
 
-If some of the job IDs are unavailable for claim:
+If no job IDs are available for claim:
 
 ```
-HTTP/1.1 409 Conflict
+HTTP/1.1 204 No Content
 Content-Type: application/json
-
-{
-  "jobs": [
-    "${JOB_ID}",
-    "${JOB_ID}",
-    // … excluding the jobs unavailable for claim
-  ],
-  "@count": ${COUNT},
-  "@queue": "${QUEUE}"
-}
 ```
 
 If the `Authorization` header is missing, `401`.
@@ -227,6 +174,18 @@ If the `Travis-Site` header is missing, `412`.
 If the `Authorization` header is missing, `401`.
 
 If the `Authorization` header is invalid, `403`.
+
+#### `POST /jobs/{job_id}/claim`
+
+_TODO_
+
+##### Request
+
+_TODO_
+
+##### Responses
+
+_TODO_
 
 #### `GET /jobs/{job_id}`
 

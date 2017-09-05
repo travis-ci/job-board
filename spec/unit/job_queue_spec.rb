@@ -18,9 +18,8 @@ describe JobBoard::JobQueue do
         queue:#{site}:#{queue_name}
         queue:#{site}:#{queue_name}:claims
         queue:#{site}:#{queue_name}:claims:timestamps
+        processor:#{site}:#{queue_name}:a
         queues:#{site}
-        worker:#{site}:a
-        workers:#{site}
       ].each do |key|
         conn.del(key)
       end
@@ -30,15 +29,16 @@ describe JobBoard::JobQueue do
 
   context 'with no data' do
     it 'can register' do
-      subject.register(worker: 'a')
+      subject.register(processor: 'a')
       expect(redis.exists('sites')).to be true
       expect(redis.exists("queues:#{site}")).to be true
-      expect(redis.exists("workers:#{site}")).to be true
+      expect(redis.exists("processor:#{site}:#{queue_name}:a"))
+        .to be true
     end
 
-    it 'cannot provide job ids for a given worker' do
+    it 'cannot provide job id for a given processor' do
       expect do
-        described_class.for_worker(redis: redis, worker: 'a', site: site)
+        described_class.for_processor(redis: redis, processor: 'a', site: site)
       end.to raise_error(JobBoard::JobQueue::Invalid)
     end
 
@@ -57,14 +57,13 @@ describe JobBoard::JobQueue do
     end
 
     it 'can check claims' do
-      claimed = subject.check_claims(worker: 'a', job_ids: %w[0 1 2 3])
-      expect(claimed).to be_empty
+      expect(subject.claimed?(processor: 'a', job_id: '0')).to be false
     end
 
     it 'can claim a job id' do
-      subject.register(worker: 'a')
-      claimed = subject.claim(worker: 'a')
-      expect(claimed).to be_empty
+      subject.register(processor: 'a')
+      claimed = subject.claim(processor: 'a')
+      expect(claimed).to be_nil
     end
 
     it 'can remove a job id' do
@@ -72,28 +71,28 @@ describe JobBoard::JobQueue do
     end
 
     it 'can add a job id' do
-      subject.register(worker: 'a')
+      subject.register(processor: 'a')
       expect(subject.add(job_id: '0').last).to eq(1)
     end
   end
 
   context 'with queued job ids' do
     before :each do
-      subject.register(worker: 'a')
+      subject.register(processor: 'a')
       4.times { |n| subject.add(job_id: n.to_s) }
     end
 
-    it 'can provide job ids for a given worker' do
-      subject.register(worker: 'a')
+    it 'can provide job ids for a given processor' do
+      subject.register(processor: 'a')
       expect(
-        described_class.for_worker(
-          redis: redis, worker: 'a', site: site, queue_name: queue_name
+        described_class.for_processor(
+          redis: redis, processor: 'a', site: site, queue_name: queue_name
         )
       ).to be_empty
     end
 
     it 'can provide job ids for a given site' do
-      subject.register(worker: 'a')
+      subject.register(processor: 'a')
       expect(
         described_class.for_site(redis: redis, site: site)
       ).to eq(
@@ -112,7 +111,7 @@ describe JobBoard::JobQueue do
     end
 
     it 'can provide job ids for a given queue' do
-      subject.register(worker: 'a')
+      subject.register(processor: 'a')
       expect(
         described_class.for_queue(
           redis: redis, site: site, queue_name: queue_name
@@ -128,23 +127,20 @@ describe JobBoard::JobQueue do
     end
 
     it 'can register' do
-      subject.register(worker: 'a')
+      subject.register(processor: 'a')
       expect(redis.exists('sites')).to be true
       expect(redis.exists("queues:#{site}")).to be true
-      expect(redis.exists("workers:#{site}")).to be true
+      expect(redis.exists("processor:#{site}:#{queue_name}:a"))
+        .to be true
     end
 
     it 'can check claims' do
-      claimed = subject.check_claims(
-        worker: 'a', job_ids: %w[0 1 2 3]
-      )
-      expect(claimed).to eq([])
+      expect(subject.claimed?(processor: 'a', job_id: '0')).to be false
     end
 
     it 'can claim a job id' do
-      subject.register(worker: 'a')
-      claimed = subject.claim(worker: 'a')
-      expect(claimed).to_not be_nil
+      subject.register(processor: 'a')
+      expect(subject.claim(processor: 'a')).to_not be_nil
     end
 
     it 'can remove a job id' do
@@ -152,7 +148,7 @@ describe JobBoard::JobQueue do
     end
 
     it 'can add a job id' do
-      subject.register(worker: 'a')
+      subject.register(processor: 'a')
       expect(subject.add(job_id: '4').last).to eq(5)
     end
   end

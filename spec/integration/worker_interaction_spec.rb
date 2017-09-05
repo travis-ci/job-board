@@ -32,7 +32,9 @@ describe 'Worker Interaction', integration: true do
   end
 
   def n_workers
-    @n_workers ||= rand(10..29)
+    @n_workers ||= Integer(
+      ENV.fetch('RSPEC_TRAVIS_WORKER_RUNNER_COUNT', rand(10..29))
+    )
   end
 
   def job_count
@@ -65,10 +67,6 @@ describe 'Worker Interaction', integration: true do
       sleep loop_sleep
     end
     $stderr.puts('') if travis?
-  end
-
-  def worker_index_sizes
-    @worker_index_sizes ||= {}
   end
 
   before :all do
@@ -107,12 +105,6 @@ describe 'Worker Interaction', integration: true do
     end
 
     wait_around(label: 'emptied queue', loop_sleep: 1, timeout: 120) do
-      JobBoard.redis_pool.with do |redis|
-        redis.smembers('workers:test').each do |worker|
-          worker_index_sizes[worker] ||= []
-          worker_index_sizes[worker] << redis.scard("worker:test:#{worker}:idx")
-        end
-      end
       JobBoard::JobQueue.for_site(site: 'test')
                         .map { |s| s[:jobs] }.flatten.empty?
     end
@@ -132,12 +124,6 @@ describe 'Worker Interaction', integration: true do
 
   it 'schedules jobs' do
     expect(scheduler_runner.scheduled_summary).to_not be_empty
-  end
-
-  it 'allocates no more than the available capacity per worker' do
-    expect(worker_index_sizes).to_not be_empty
-    expect(worker_index_sizes.values.map(&:max).sort.max).to be >= 0
-    expect(worker_index_sizes.values.map(&:max).sort.max).to be <= 3
   end
 
   it 'schedules each job only once' do

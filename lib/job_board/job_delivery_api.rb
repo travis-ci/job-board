@@ -24,38 +24,8 @@ module JobBoard
     end
 
     post '/jobs' do
-      param :queue, String, blank: true, required: true
-      param :count, Integer, default: 1
-      param :capacity, Integer
-
-      unless request.env.key?('HTTP_FROM')
-        halt 412, JSON.dump(
-          '@type' => 'error', error: 'missing from header'
-        )
-      end
-
-      queue = params[:queue].to_s.sub(/^builds\./, '')
-      from = request.env.fetch('HTTP_FROM')
-      site = request.env.fetch('travis.site')
-
-      jobs = JSON.parse(request.body.read).fetch('jobs')
-      capacity = params[:capacity] || (params[:count] + jobs.length)
-
-      body = JobBoard::Services::AllocateJobs.run(
-        capacity: capacity,
-        from: from,
-        jobs: jobs,
-        queue_name: queue,
-        site: site
-      ).merge(
-        '@capacity' => capacity,
-        '@queue' => queue
-      )
-      JobBoard.logger.info(
-        'allocated',
-        queue: queue, capacity: capacity, from: from, site: site
-      )
-      json body
+      JobBoard.logger.warn('received legacy jobs request')
+      json(jobs: [], unavailable_jobs: [])
     end
 
     post '/jobs/add' do
@@ -75,6 +45,78 @@ module JobBoard
       end
       JobBoard.logger.info('added', job_id: job.fetch('id'), site: site)
       [201, { 'Content-Length' => '0' }, '']
+    end
+
+    post '/jobs/pop' do
+      param :queue, String, blank: true, required: true
+
+      unless request.env.key?('HTTP_FROM')
+        halt 412, JSON.dump(
+          '@type' => 'error', error: 'missing from header'
+        )
+      end
+
+      queue = params[:queue].to_s.sub(/^builds\./, '')
+      from = request.env.fetch('HTTP_FROM')
+      site = request.env.fetch('travis.site')
+
+      job_id = JobBoard::Services::AllocateJob.run(
+        from: from,
+        queue_name: queue,
+        site: site
+      )
+
+      if job_id.nil?
+        JobBoard.logger.info(
+          'no jobs available',
+          queue: queue, from: from, site: site
+        )
+        halt 204
+      end
+
+      JobBoard.logger.info(
+        'popped',
+        queue: queue, from: from, site: site, job_id: job_id
+      )
+
+      status 200
+      json('@queue' => queue, 'job_id' => job_id)
+    end
+
+    post '/jobs/:job_id/claim' do
+      param :queue, String, blank: true, required: true
+
+      unless request.env.key?('HTTP_FROM')
+        halt 412, JSON.dump(
+          '@type' => 'error', error: 'missing from header'
+        )
+      end
+
+      queue = params[:queue].to_s.sub(/^builds\./, '')
+      from = request.env.fetch('HTTP_FROM')
+      site = request.env.fetch('travis.site')
+      job_id = params[:job_id]
+
+      unless JobBoard::Services::RefreshJobClaim.run(
+        job_id: job_id,
+        from: from,
+        queue_name: queue,
+        site: site
+      )
+        JobBoard.logger.info(
+          'job id is not claimed',
+          job_id: job_id, claimed: claimed_id,
+          queue: queue, from: from, site: site
+        )
+        halt 409
+      end
+
+      JobBoard.logger.info(
+        'claim refreshed',
+        queue: queue, from: from, site: site, job_id: job_id
+      )
+      status 200
+      json('@queue' => queue, '@job_id' => job_id)
     end
 
     get '/jobs/:job_id' do

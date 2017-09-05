@@ -4,9 +4,10 @@ require 'fileutils'
 
 module Support
   class WorkerRunner
-    def initialize(n: 1, target_version: 'v2.9.2')
+    def initialize(n: 1, target_version: nil)
       @n = n
-      @target_version = target_version
+      @target_version = target_version ||
+                        ENV.fetch('RSPEC_TRAVIS_WORKER_VERSION', 'master')
       @workers = {}
       @tmproot = ENV['RSPEC_RUNNER_TMPROOT'] ||
                  Dir.mktmpdir(%w[job-board- -travis-worker])
@@ -99,12 +100,13 @@ module Support
       FileUtils.mkdir_p(worker_scripts_dir)
 
       job_board_url = "http://worker#{worker_n}:test@127.0.0.1:#{port}"
+      worker_pool_size = ENV.fetch('RSPEC_TRAVIS_WORKER_POOL_SIZE', '3')
 
       {
         'TRAVIS_WORKER_DEBUG' => 'true',
         'TRAVIS_WORKER_JOB_BOARD_URL' => job_board_url,
         'TRAVIS_WORKER_LOCAL_SCRIPTS_DIR' => worker_scripts_dir,
-        'TRAVIS_WORKER_POOL_SIZE' => '3',
+        'TRAVIS_WORKER_POOL_SIZE' => worker_pool_size,
         'TRAVIS_WORKER_PROVIDER_NAME' => 'local',
         'TRAVIS_WORKER_QUEUE_NAME' => 'test',
         'TRAVIS_WORKER_QUEUE_TYPE' => 'http',

@@ -8,7 +8,7 @@ describe JobBoard::JobQueueReconciler do
   let(:site) { 'test' }
 
   before do
-    keys = %w[sites queues:* queue:* workers:* worker:*].map do |glob|
+    keys = %w[sites queues:* queue:* processor:*].map do |glob|
       JobBoard.redis.keys(glob)
     end
 
@@ -31,17 +31,19 @@ describe JobBoard::JobQueueReconciler do
     before do
       4.times { |n| job_queue.add(job_id: n) }
 
-      job_queue.register(worker: 'a', capacity: 2)
-      job_queue.register(worker: 'b', capacity: 2)
-      job_queue.register(worker: 'c', capacity: 2)
+      job_queue.register(processor: 'a')
+      job_queue.register(processor: 'b')
+      job_queue.register(processor: 'c')
+      job_queue.register(processor: 'd')
+      job_queue.register(processor: 'e')
     end
 
-    context 'with all jobs claimed by active workers' do
+    context 'with all jobs claimed by active processors' do
       before do
-        job_queue.claim(worker: 'a', capacity: 2)
-        job_queue.claim(worker: 'b', capacity: 2)
-        job_queue.claim(worker: 'a', capacity: 2)
-        job_queue.claim(worker: 'b', capacity: 2)
+        job_queue.claim(processor: 'a')
+        job_queue.claim(processor: 'b')
+        job_queue.claim(processor: 'c')
+        job_queue.claim(processor: 'd')
       end
 
       it 'reconciles' do
@@ -52,18 +54,22 @@ describe JobBoard::JobQueueReconciler do
         expect(site_def).to_not be_nil
         expect(site_def).to eq(
           site: site.to_sym,
-          workers: [
+          processors: [
             {
               name: 'a',
-              claimed: 2
+              claimed: 1
             },
             {
               name: 'b',
-              claimed: 2
+              claimed: 1
             },
             {
               name: 'c',
-              claimed: 0
+              claimed: 1
+            },
+            {
+              name: 'd',
+              claimed: 1
             }
           ],
           queues: [
@@ -71,31 +77,27 @@ describe JobBoard::JobQueueReconciler do
               name: 'lel',
               queued: 0,
               claimed: 4,
-              capacity: 6,
-              available: 2
+              capacity: 5,
+              available: 1
             }
           ],
           reclaimed: 0,
           claimed: 4,
-          capacity: 6,
-          available: 2
+          capacity: 5,
+          available: 1
         )
-        avail_a = job_queue.check_claims(
-          worker: 'a', job_ids: %w[0 1]
-        )
-        expect(avail_a).to eq(%w[0 1])
-        avail_b = job_queue.check_claims(
-          worker: 'b', job_ids: %w[2 3]
-        )
-        expect(avail_b).to eq(%w[2 3])
+        expect(job_queue.claimed?(processor: 'a', job_id: '0')).to be true
+        expect(job_queue.claimed?(processor: 'b', job_id: '1')).to be true
+        expect(job_queue.claimed?(processor: 'c', job_id: '2')).to be true
+        expect(job_queue.claimed?(processor: 'd', job_id: '3')).to be true
       end
     end
 
     context 'with unclaimed jobs available' do
       before do
-        job_queue.claim(worker: 'a', capacity: 2)
-        job_queue.claim(worker: 'b', capacity: 2)
-        job_queue.claim(worker: 'a', capacity: 2)
+        job_queue.claim(processor: 'a')
+        job_queue.claim(processor: 'b')
+        job_queue.claim(processor: 'c')
       end
 
       it 'reconciles' do
@@ -106,56 +108,49 @@ describe JobBoard::JobQueueReconciler do
         expect(site_def).to_not be_nil
         expect(site_def).to eq(
           site: site.to_sym,
-          workers: [
+          processors: [
             {
               name: 'a',
-              claimed: 2
+              claimed: 1
             },
             {
               name: 'b',
-              claimed: 2
+              claimed: 1
             },
             {
               name: 'c',
-              claimed: 0
+              claimed: 1
             }
           ],
           queues: [
             {
               name: 'lel',
-              queued: 0,
-              claimed: 4,
-              capacity: 6,
+              queued: 1,
+              claimed: 3,
+              capacity: 5,
               available: 2
             }
           ],
           reclaimed: 0,
-          claimed: 4,
-          capacity: 6,
+          claimed: 3,
+          capacity: 5,
           available: 2
         )
-        avail_a = job_queue.check_claims(
-          worker: 'a', job_ids: %w[0 1]
-        )
-        expect(avail_a).to eq(%w[0 1])
-        avail_b = job_queue.check_claims(
-          worker: 'b', job_ids: %w[2]
-        )
-        expect(avail_b).to eq(%w[2])
+        expect(job_queue.claimed?(processor: 'a', job_id: '0')).to be true
+        expect(job_queue.claimed?(processor: 'b', job_id: '1')).to be true
+        expect(job_queue.claimed?(processor: 'c', job_id: '2')).to be true
       end
     end
 
     context 'with expired job claims' do
       before do
-        job_queue.claim(worker: 'a', capacity: 2)
-        job_queue.claim(worker: 'b', capacity: 2)
-        job_queue.claim(worker: 'a', capacity: 2)
-        job_queue.claim(worker: 'b', capacity: 2)
-        # NOTE: these `del` commands are intended to simulate the expiration of
-        # the worker queue and index ~meatballhat
-        JobBoard.redis.del("worker:#{site}:a:idx")
-        JobBoard.redis.del("worker:#{site}:a")
-        JobBoard.redis.del("worker:#{site}:a:capacity")
+        job_queue.claim(processor: 'a')
+        job_queue.claim(processor: 'b')
+        job_queue.claim(processor: 'c')
+        job_queue.claim(processor: 'd')
+        # NOTE: this `del` command is intended to simulate the expiration of
+        # the processor registration.
+        JobBoard.redis.del("processor:#{site}:#{queue_name}:a")
       end
 
       it 'reconciles' do
@@ -166,38 +161,38 @@ describe JobBoard::JobQueueReconciler do
         expect(site_def).to_not be_nil
         expect(site_def).to eq(
           site: site.to_sym,
-          workers: [
+          processors: [
             {
               name: 'b',
-              claimed: 2
+              claimed: 1
             },
             {
               name: 'c',
-              claimed: 0
+              claimed: 1
+            },
+            {
+              name: 'd',
+              claimed: 1
             }
           ],
           queues: [
             {
               name: 'lel',
-              queued: 2,
-              claimed: 2,
+              queued: 1,
+              claimed: 3,
               capacity: 4,
-              available: 2
+              available: 1
             }
           ],
-          reclaimed: 2,
-          claimed: 2,
+          reclaimed: 1,
+          claimed: 3,
           capacity: 4,
-          available: 2
+          available: 1
         )
-        avail_a = job_queue.check_claims(
-          worker: 'a', job_ids: %w[0 1]
-        )
-        expect(avail_a).to eq(%w[])
-        avail_b = job_queue.check_claims(
-          worker: 'b', job_ids: %w[2]
-        )
-        expect(avail_b).to eq(%w[2])
+        expect(job_queue.claimed?(processor: 'a', job_id: '0')).to be false
+        expect(job_queue.claimed?(processor: 'b', job_id: '1')).to be true
+        expect(job_queue.claimed?(processor: 'c', job_id: '2')).to be true
+        expect(job_queue.claimed?(processor: 'd', job_id: '3')).to be true
       end
     end
   end

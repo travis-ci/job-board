@@ -42,13 +42,12 @@ RSpec.configure do |c|
     JobBoard.redis_pool.with do |redis|
       redis.srem('sites', 'test')
       redis.del('queues:test')
-      redis.del('workers:test')
 
       redis.scan_each(match: 'queue:test:*') do |key|
         redis.del(key)
       end
 
-      redis.scan_each(match: 'worker:test:*') do |key|
+      redis.scan_each(match: 'processor:test:*') do |key|
         redis.del(key)
       end
     end

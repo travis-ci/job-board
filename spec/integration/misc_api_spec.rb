@@ -47,7 +47,7 @@ describe 'Misc API', integration: true do
       queue.add(job_id: '1')
       queue.add(job_id: '2')
       queue.add(job_id: '3')
-      queue.claim(worker: 'test-worker-1')
+      queue.claim(processor: 'test-processor-1')
     end
 
     it 'returns 200' do
@@ -81,25 +81,25 @@ describe 'Misc API', integration: true do
         expect(response_body['@queue']).to eql('test')
       end
 
-      context 'with worker' do
+      context 'with processor' do
         it 'returns 200' do
-          get '/search/jobs/test?queue=test&worker=test-worker-1'
+          get '/search/jobs/test?queue=test&processor=test-processor-1'
           expect(last_response.status).to eql(200)
         end
 
-        it 'has jobs, @site, @queue, and @worker' do
-          get '/search/jobs/test?queue=test&worker=test-worker-1'
+        it 'has jobs, @site, @queue, and @processor' do
+          get '/search/jobs/test?queue=test&processor=test-processor-1'
           response_body = JSON.parse(last_response.body)
           expect(response_body).to include('jobs')
           expect(response_body).to include('@site')
           expect(response_body).to include('@queue')
-          expect(response_body).to include('@worker')
+          expect(response_body).to include('@processor')
           expect(response_body['jobs']).to_not be_empty
           expect(response_body['@site']).to eql('test')
           expect(response_body['@queue']).to eql('test')
-          expect(response_body['@worker']).to eql('test-worker-1')
+          expect(response_body['@processor']).to eql('test-processor-1')
           expect(response_body['jobs'].first['jobs'].first['claimed_by'])
-            .to eql('test-worker-1')
+            .to eql('test-processor-1')
         end
       end
     end

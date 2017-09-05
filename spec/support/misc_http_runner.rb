@@ -23,7 +23,7 @@ module Support
     post '/log-parts/multi' do
       $stderr.puts '---> POST /log-parts/multi ' \
                    "body: #{request.body.read}"
-      status 200
+      status 204
     end
 
     patch '/jobs/:job_id/state' do
