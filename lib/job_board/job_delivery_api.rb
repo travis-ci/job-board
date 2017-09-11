@@ -24,7 +24,7 @@ module JobBoard
     end
 
     post '/jobs' do
-      JobBoard.logger.debug('received legacy jobs request')
+      JobBoard.logger.debug('received legacy jobs request', source: source)
       json(jobs: [], unavailable_jobs: [])
     end
 
@@ -57,7 +57,6 @@ module JobBoard
       end
 
       queue = params[:queue].to_s.sub(/^builds\./, '')
-      from = request.env.fetch('HTTP_FROM')
       site = request.env.fetch('travis.site')
 
       job_id = JobBoard::Services::AllocateJob.run(
@@ -93,7 +92,6 @@ module JobBoard
       end
 
       queue = params[:queue].to_s.sub(/^builds\./, '')
-      from = request.env.fetch('HTTP_FROM')
       site = request.env.fetch('travis.site')
       job_id = params[:job_id]
 
@@ -134,7 +132,9 @@ module JobBoard
           upstream_error: job.message
         )
       end
-      JobBoard.logger.info('fetched', job_id: job_id, site: site, infra: infra)
+      JobBoard.logger.info(
+        'fetched', job_id: job_id, site: site, infra: infra, source: source
+      )
       json job
     end
 
@@ -142,8 +142,22 @@ module JobBoard
       job_id = params.fetch('job_id')
       site = request.env.fetch('travis.site')
       JobBoard::Services::DeleteJob.run(job_id: job_id, site: site)
-      JobBoard.logger.info('deleted', job_id: job_id, site: site)
+      JobBoard.logger.info('deleted', job_id: job_id, site: site, source: source)
       [204, {}, '']
+    end
+
+    def from
+      request.env.fetch('HTTP_FROM')
+    end
+
+    def source
+      request.env.fetch(
+        'HTTP_FROM',
+        params.fetch(
+          'source',
+          request.env.fetch('REMOTE_ADDR', '???')
+        )
+      )
     end
   end
 end
