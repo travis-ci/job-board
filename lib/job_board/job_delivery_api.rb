@@ -24,7 +24,7 @@ module JobBoard
     end
 
     post '/jobs' do
-      JobBoard.logger.warn('received legacy jobs request')
+      JobBoard.logger.debug('received legacy jobs request')
       json(jobs: [], unavailable_jobs: [])
     end
 
@@ -67,7 +67,7 @@ module JobBoard
       )
 
       if job_id.nil?
-        JobBoard.logger.info(
+        JobBoard.logger.debug(
           'no jobs available',
           queue: queue, from: from, site: site
         )
@@ -103,7 +103,7 @@ module JobBoard
         queue_name: queue,
         site: site
       )
-        JobBoard.logger.info(
+        JobBoard.logger.warn(
           'job id is not claimed',
           job_id: job_id, claimed: claimed_id,
           queue: queue, from: from, site: site
@@ -111,7 +111,7 @@ module JobBoard
         halt 409
       end
 
-      JobBoard.logger.info(
+      JobBoard.logger.debug(
         'claim refreshed',
         queue: queue, from: from, site: site, job_id: job_id
       )
