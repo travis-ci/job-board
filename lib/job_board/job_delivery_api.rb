@@ -24,7 +24,8 @@ module JobBoard
     end
 
     post '/jobs' do
-      JobBoard.logger.debug('received legacy jobs request')
+      from = request.env.fetch('HTTP_FROM')
+      JobBoard.logger.debug('received legacy jobs request', from: from)
       json(jobs: [], unavailable_jobs: [])
     end
 
@@ -123,6 +124,7 @@ module JobBoard
       job_id = params.fetch('job_id')
       site = request.env.fetch('travis.site')
       infra = request.env.fetch('travis.infra', '')
+      from = request.env.fetch('HTTP_FROM')
       job = JobBoard::Services::FetchJob.run(
         job_id: job_id, site: site, infra: infra
       )
@@ -134,15 +136,18 @@ module JobBoard
           upstream_error: job.message
         )
       end
-      JobBoard.logger.info('fetched', job_id: job_id, site: site, infra: infra)
+      JobBoard.logger.info(
+        'fetched', job_id: job_id, site: site, infra: infra, from: from
+      )
       json job
     end
 
     delete '/jobs/:job_id' do
       job_id = params.fetch('job_id')
       site = request.env.fetch('travis.site')
+      from = request.env.fetch('HTTP_FROM')
       JobBoard::Services::DeleteJob.run(job_id: job_id, site: site)
-      JobBoard.logger.info('deleted', job_id: job_id, site: site)
+      JobBoard.logger.info('deleted', job_id: job_id, site: site, from: from)
       [204, {}, '']
     end
   end
