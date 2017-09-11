@@ -24,7 +24,6 @@ module JobBoard
     end
 
     post '/jobs' do
-      from = request.env.fetch('HTTP_FROM')
       JobBoard.logger.debug('received legacy jobs request', from: from)
       json(jobs: [], unavailable_jobs: [])
     end
@@ -58,11 +57,10 @@ module JobBoard
       end
 
       queue = params[:queue].to_s.sub(/^builds\./, '')
-      from = request.env.fetch('HTTP_FROM')
       site = request.env.fetch('travis.site')
 
       job_id = JobBoard::Services::AllocateJob.run(
-        from: from,
+        from: from!,
         queue_name: queue,
         site: site
       )
@@ -70,14 +68,14 @@ module JobBoard
       if job_id.nil?
         JobBoard.logger.debug(
           'no jobs available',
-          queue: queue, from: from, site: site
+          queue: queue, from: from!, site: site
         )
         halt 204
       end
 
       JobBoard.logger.info(
         'popped',
-        queue: queue, from: from, site: site, job_id: job_id
+        queue: queue, from: from!, site: site, job_id: job_id
       )
 
       status 200
@@ -94,27 +92,26 @@ module JobBoard
       end
 
       queue = params[:queue].to_s.sub(/^builds\./, '')
-      from = request.env.fetch('HTTP_FROM')
       site = request.env.fetch('travis.site')
       job_id = params[:job_id]
 
       unless JobBoard::Services::RefreshJobClaim.run(
         job_id: job_id,
-        from: from,
+        from: from!,
         queue_name: queue,
         site: site
       )
         JobBoard.logger.warn(
           'job id is not claimed',
           job_id: job_id, claimed: claimed_id,
-          queue: queue, from: from, site: site
+          queue: queue, from: from!, site: site
         )
         halt 409
       end
 
       JobBoard.logger.debug(
         'claim refreshed',
-        queue: queue, from: from, site: site, job_id: job_id
+        queue: queue, from: from!, site: site, job_id: job_id
       )
       status 200
       json('@queue' => queue, '@job_id' => job_id)
@@ -124,7 +121,6 @@ module JobBoard
       job_id = params.fetch('job_id')
       site = request.env.fetch('travis.site')
       infra = request.env.fetch('travis.infra', '')
-      from = request.env.fetch('HTTP_FROM')
       job = JobBoard::Services::FetchJob.run(
         job_id: job_id, site: site, infra: infra
       )
@@ -145,10 +141,17 @@ module JobBoard
     delete '/jobs/:job_id' do
       job_id = params.fetch('job_id')
       site = request.env.fetch('travis.site')
-      from = request.env.fetch('HTTP_FROM')
       JobBoard::Services::DeleteJob.run(job_id: job_id, site: site)
       JobBoard.logger.info('deleted', job_id: job_id, site: site, from: from)
       [204, {}, '']
+    end
+
+    def from!
+      request.env.fetch('HTTP_FROM')
+    end
+
+    def from
+      request.env.fetch('HTTP_FROM', request.env.fetch('REMOTE_ADDR', '???'))
     end
   end
 end
