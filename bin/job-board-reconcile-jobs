@@ -25,7 +25,7 @@ def main(argv: ARGV)
     stats.fetch(:sites, []).each do |site_def|
       JobBoard.logger.info(
         'reconciled',
-        site: site_def[:name],
+        site: site_def[:site],
         reclaimed: site_def.fetch(:reclaimed, '???'),
         reclaimed_ids: site_def.fetch(
           :reclaimed_ids, [:notset]
@@ -34,7 +34,7 @@ def main(argv: ARGV)
       site_def.fetch(:queues, []).each do |queue_def|
         JobBoard.logger.info(
           'queue stats',
-          site: site_def[:name], queue: queue_def[:name],
+          site: site_def[:site], queue: queue_def[:name],
           queued: queue_def[:queued], claimed: queue_def[:claimed]
         )
       end
