@@ -85,15 +85,22 @@ module JobBoard
     post '/jobs/:job_id/claim' do
       param :queue, String, blank: true, required: true
 
+      queue = params[:queue].to_s.sub(/^builds\./, '')
+      site = request.env.fetch('travis.site')
+      job_id = params[:job_id]
+
       unless request.env.key?('HTTP_FROM')
+        JobBoard.logger.warn(
+          'missing from header',
+          job_id: job_id,
+          queue: queue,
+          site: site
+        )
+
         halt 412, JSON.dump(
           '@type' => 'error', error: 'missing from header'
         )
       end
-
-      queue = params[:queue].to_s.sub(/^builds\./, '')
-      site = request.env.fetch('travis.site')
-      job_id = params[:job_id]
 
       unless JobBoard::Services::RefreshJobClaim.run(
         job_id: job_id,
@@ -103,8 +110,7 @@ module JobBoard
       )
         JobBoard.logger.warn(
           'job id is not claimed',
-          job_id: job_id, claimed: claimed_id,
-          queue: queue, from: from, site: site
+          job_id: job_id, queue: queue, from: from, site: site
         )
         halt 409
       end
