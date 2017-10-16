@@ -58,7 +58,7 @@ module JobBoard
         cleaned(job.merge('@type' => 'job_board_job'))
       end
 
-      def fetch_db_job
+      private def fetch_db_job
         JobBoard.logger.info(
           'fetching job from database',
           job_id: job_id, site: site, infra: infra
@@ -66,7 +66,7 @@ module JobBoard
         JobBoard::Models::Job.first(job_id: job_id, site: site)
       end
 
-      def fetch_job_script(job_data)
+      private def fetch_job_script(job_data)
         JobBoard.logger.info(
           'fetching job script',
           job_id: job_id, site: site, infra: infra
@@ -76,7 +76,7 @@ module JobBoard
         )
       end
 
-      def generate_jwt
+      private def generate_jwt
         JobBoard.logger.info(
           'creating jwt', job_id: job_id, site: site, infra: infra
         )
@@ -85,7 +85,7 @@ module JobBoard
         )
       end
 
-      def fetch_image_name(job)
+      private def fetch_image_name(job)
         JobBoard.logger.info(
           'fetching image name', job_id: job_id, site: site, infra: infra
         )
@@ -98,41 +98,55 @@ module JobBoard
         'default'
       end
 
-      def cleaned(job)
+      REJECT_KEYS = %w[
+        cache_settings
+        env_vars
+        source
+        ssh_key
+      ].freeze
+      private_constant :REJECT_KEYS
+
+      SELECT_KEYS = {
+        'config' => %w[
+          dist
+          group
+          language
+          os
+        ].freeze,
+        'job' => %w[
+          id
+          number
+          queued_at
+        ].freeze,
+        'repository' => %w[
+          slug
+        ].freeze
+      }.freeze
+      private_constant :SELECT_KEYS
+
+      private def cleaned(job)
         job_copy = Marshal.load(Marshal.dump(job))
         data = job_copy.fetch('data', {})
-        data.reject! do |k, _|
-          %w[
-            cache_settings
-            env_vars
-            source
-            ssh_key
-          ].include?(k)
+        data.reject! { |k, _| REJECT_KEYS.include?(k) }
+
+        SELECT_KEYS.each do |data_key, select_keys|
+          data.fetch(data_key, {}).select! do |k, _|
+            select_keys.include?(k)
+          end
         end
 
-        data.fetch('config', {}).select! do |k, _|
-          %w[
-            dist
-            group
-            language
-            os
-          ].include?(k)
-        end
-
-        data.fetch('job', {}).select! { |k, _| k == 'id' }
-        data.fetch('repository', {}).select! { |k, _| k == 'slug' }
         job_copy
       end
 
-      def paranoid?(queue)
+      private def paranoid?(queue)
         config.paranoid_queue_names.include?(queue)
       end
 
-      def config
+      private def config
         JobBoard.config
       end
 
-      def job_id_url(key)
+      private def job_id_url(key)
         Addressable::Template.new(
           config.fetch(:"#{format(key, site: site)}")
         ).partial_expand('job_id' => job_id).pattern
