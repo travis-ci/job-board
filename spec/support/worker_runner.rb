@@ -20,7 +20,7 @@ module Support
     private :workers
 
     def start(port: 9987, maybe_killer: true)
-      ensure_worker_exe_exists
+      ensure_fresh_worker_exe_exists
       n.times do |worker_n|
         workers[worker_n] = spawn_worker(worker_n, port)
       end
@@ -73,8 +73,8 @@ module Support
       end
     end
 
-    private def ensure_worker_exe_exists
-      return if File.exist?(worker_exe)
+    private def ensure_fresh_worker_exe_exists
+      return if fresh_exists?(worker_exe)
       FileUtils.mkdir_p(File.dirname(worker_exe))
 
       dl_out_file = File.join(tmproot, 'worker-download.out')
@@ -91,6 +91,11 @@ module Support
       end
 
       FileUtils.chmod(0o755, worker_exe)
+    end
+
+    private def fresh_exists?(path, max_age: 60 * 60 * 24)
+      return false unless File.exist?(path)
+      (Time.now - File.mtime(worker_exe)) < max_age
     end
 
     private def build_worker_env(worker_n, port)
