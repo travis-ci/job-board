@@ -147,12 +147,13 @@ describe 'Worker Interaction', integration: true do
 
   it 'marks jobs completed only when completed' do
     state_summary = misc_http_runner.state_summary
-    finished = state_summary.reject do |s|
-      s['data']['finished'] == '0001-01-01T00:00:00Z'
-    end
+    finished = state_summary.reject { |s| s['data']['finished_at'].nil? }
+
     expect(finished.length).to eq job_count
 
-    finished_timestamps = finished.map { |s| Time.parse(s['data']['finished']) }
+    finished_timestamps = finished.map do |s|
+      Time.parse(s['data']['finished_at'])
+    end
     finished_timestamps.sort!
 
     expect(finished_timestamps.min).to be > suite_start
