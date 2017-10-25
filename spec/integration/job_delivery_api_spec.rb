@@ -121,6 +121,17 @@ describe 'Job Delivery API', integration: true do
         ).map { |entry| entry[:id] }.first
       )
     end
+
+    it 'specifies a pop interval' do
+      authorize(*admin_auth)
+      post '/jobs/pop?queue=lel', nil,
+           'HTTP_CONTENT_TYPE' => 'application/json',
+           'HTTP_FROM' => from,
+           'HTTP_TRAVIS_SITE' => site
+      expect(last_response['Travis-Pop-Interval']).to eql(
+        JobBoard.config.processor_pop_interval.to_s
+      )
+    end
   end
 
   describe 'POST /jobs/add' do
@@ -292,6 +303,20 @@ describe 'Job Delivery API', integration: true do
         response_body = JSON.parse(last_response.body)
         expect(response_body[key]).to_not be_nil
       end
+    end
+  end
+
+  describe 'POST /jobs/:job_id/claim' do
+    let(:job_id) { Time.now.to_i.to_s }
+    let(:from) { '7dfafafa-f0e4-4f92-8750-8d482392e40c+worker@localhost' }
+
+    it 'specifies a refresh claim interval' do
+      authorize(*admin_auth)
+      post "/jobs/#{job_id}/claim", nil,
+           'HTTP_FROM' => from, 'HTTP_TRAVIS_SITE' => site
+      expect(last_response['Travis-Refresh-Claim-Interval']).to eql(
+        Integer(JobBoard.config.processor_ttl / 2).to_s
+      )
     end
   end
 
