@@ -75,6 +75,10 @@ module JobBoard
       log_parts_org_url: ENV.fetch('JOB_BOARD_LOG_PARTS_ORG_URL', ''),
       logger: { format_type: 'l2met', thread_id: true },
       paranoid_queues: ENV.fetch('JOB_BOARD_PARANOID_QUEUES', 'docker,ec2'),
+      processor_ttl: Integer(ENV.fetch('JOB_BOARD_PROCESSOR_TTL', '60')),
+      processor_pop_interval: Integer(
+        ENV.fetch('JOB_BOARD_PROCESSOR_POP_INTERVAL', '10')
+      ),
       reconcile_cutoff_seconds: 20,
       reconcile_purge_unknown_always: false,
       reconcile_purge_unknown_every: 42,
@@ -86,13 +90,7 @@ module JobBoard
         size: 5,
         timeout: 3
       },
-      sentry: { dsn: nil },
-      processor_ttl: Integer(
-        ENV.fetch(
-          'JOB_BOARD_PROCESSOR_TTL',
-          ENV.fetch('JOB_BOARD_WORKER_TTL', '10')
-        )
-      )
+      sentry: { dsn: nil }
     )
 
     default(access: [:key])

@@ -21,6 +21,7 @@ module JobBoard
 
     before '/jobs*' do
       halt 403, JSON.dump('@type' => 'error', error: 'just no') if guest?
+      headers(interval_headers)
     end
 
     post '/jobs' do
@@ -164,6 +165,15 @@ module JobBoard
           request.env.fetch('REMOTE_ADDR', '???')
         )
       )
+    end
+
+    private def interval_headers
+      {
+        'Travis-Pop-Interval' => JobBoard.config.processor_pop_interval.to_s,
+        'Travis-Refresh-Claim-Interval' => Integer(
+          JobBoard.config.processor_ttl / 2
+        ).to_s
+      }
     end
   end
 end
