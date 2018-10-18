@@ -2,6 +2,7 @@ language: ruby
 rvm: 2.5.2
 dist: xenial
 group: edge
+sudo: required
 
 cache:
   bundler: true
