@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-libdir = File.expand_path('../../lib', __FILE__)
+libdir = File.expand_path('../lib', __dir__)
 $LOAD_PATH.unshift(libdir) unless $LOAD_PATH.include?(libdir)
 
 require 'json'
@@ -52,6 +52,7 @@ def main(argv: ARGV)
     end
 
     break if argv.include?('--once')
+
     sleep(Integer(ENV['JOB_BOARD_RECONCILIATION_SLEEP_INTERVAL'] || 1))
   end
 

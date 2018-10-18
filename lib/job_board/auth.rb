@@ -71,6 +71,7 @@ module JobBoard
 
     private def basic_valid?(auth)
       return true if auth.basic_credentials == %w[guest guest]
+
       auth_tokens.include?(auth.basic_credentials.last) ||
       auth_tokens.include?(auth.basic_credentials)
     end
@@ -79,6 +80,7 @@ module JobBoard
       return false if auth.job_id.nil?
       return false if auth.params.empty?
       return false if auth.jwt_header.nil? || auth.jwt_payload.nil?
+
       true
     end
 
@@ -94,9 +96,7 @@ module JobBoard
     end
 
     private def build_auth_tokens
-      unless raw_auth_tokens.include?(',')
-        return raw_auth_tokens.split(':').map(&:strip)
-      end
+      return raw_auth_tokens.split(':').map(&:strip) unless raw_auth_tokens.include?(',')
 
       raw_auth_tokens.split(',').map do |pair|
         pair.split(':').map(&:strip)
@@ -113,11 +113,11 @@ module JobBoard
       end
 
       def basic?
-        'basic' == scheme
+        scheme == 'basic'
       end
 
       def bearer?
-        'bearer' == scheme
+        scheme == 'bearer'
       end
 
       def basic_credentials

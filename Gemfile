@@ -2,11 +2,10 @@
 
 source 'https://rubygems.org'
 
-ruby '2.4.2' if ENV.key?('DYNO')
+ruby File.read(File.expand_path('.ruby-version', __dir__)) if ENV.key?('DYNO')
 
 gem 'activesupport'
 gem 'addressable'
-gem 'codeclimate-test-reporter', group: %i[development test], require: nil
 gem 'connection_pool'
 gem 'factory_girl', group: %i[development test]
 gem 'fakeredis', group: %i[development test], require: false

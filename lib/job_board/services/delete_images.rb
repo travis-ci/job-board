@@ -16,6 +16,7 @@ module JobBoard
       def run
         images = by_infra_and_name
         return nil if images.empty?
+
         images.destroy
       end
 

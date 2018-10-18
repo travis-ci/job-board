@@ -58,15 +58,16 @@ describe 'Worker Interaction', integration: true do
     start = Time.now
     loop do
       break if (Time.now - start) > timeout
+
       begin
         break if yield
-      rescue => e
+      rescue StandardError => e
         warn e
       end
       $stderr.print('.') if travis?
       sleep loop_sleep
     end
-    $stderr.puts('') if travis?
+    warn('') if travis?
   end
 
   before :all do

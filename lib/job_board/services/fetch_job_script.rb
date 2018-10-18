@@ -80,6 +80,7 @@ module JobBoard
       def fetch_cached
         value = JobBoard.redis_pool.with { |c| c.get(cache_key) }
         return nil unless value
+
         Base64.decode64(value)
       end
 

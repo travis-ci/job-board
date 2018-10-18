@@ -18,6 +18,7 @@ module JobBoard
       def run
         image = by_infra_and_name
         return nil if image.nil?
+
         update_image(image)
       end
 

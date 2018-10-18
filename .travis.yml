@@ -1,7 +1,7 @@
 language: ruby
-rvm: 2.4.2
-dist: trusty
-sudo: false
+rvm: 2.5.2
+dist: xenial
+group: edge
 
 cache:
   bundler: true
@@ -13,7 +13,7 @@ services:
 - redis
 
 addons:
-  postgresql: 9.3
+  postgresql: 9.6
 
 env:
   global:
@@ -31,6 +31,3 @@ before_script:
 - createdb job_board_test
 - sqitch deploy
 - sqitch verify
-
-after_success:
-- bundle exec codeclimate-test-reporter
