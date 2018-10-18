@@ -11,7 +11,7 @@ cache:
   - ${HOME}/.cache
 
 services:
-- redis
+- redis-server
 
 addons:
   postgresql: 9.6
