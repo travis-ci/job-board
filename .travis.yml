@@ -15,6 +15,11 @@ services:
 
 addons:
   postgresql: 10.5
+  apt:
+    packages:
+    - postgresql-10
+    - postgresql-client-10
+    - postgresql-server-dev-10
 
 env:
   global:
