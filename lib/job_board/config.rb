@@ -64,7 +64,7 @@ module JobBoard
       build_api_org_url: ENV.fetch('JOB_BOARD_BUILD_API_ORG_URL', ''),
       database: {
         url: '',
-        sql_logging: ENV.fetch('JOB_BOARD_DATABASE_LOGGING', false)
+        sql_logging: ENV.fetch('JOB_BOARD_DATABASE_LOGGING', 'false') == 'true'
       },
       images_name_format: '.*',
       job_max_duration: ENV.fetch('JOB_BOARD_JOB_MAX_DURATION', '10800'),
