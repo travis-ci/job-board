@@ -14,7 +14,7 @@ services:
 - redis-server
 
 addons:
-  postgresql: 9.6
+  postgresql: 10.5
 
 env:
   global:
