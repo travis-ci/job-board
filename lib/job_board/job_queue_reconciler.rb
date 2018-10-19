@@ -221,7 +221,7 @@ module JobBoard
 
     private def safe_time_parse(timestamp)
       Time.parse(timestamp)
-    rescue => e
+    rescue StandardError => e
       warn e
       nil
     end

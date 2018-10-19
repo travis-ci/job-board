@@ -34,6 +34,7 @@ module Support
 
     def killed_workers
       return [] unless File.exist?(killed_workers_file)
+
       JSON.parse(File.read(killed_workers_file))
     end
 
@@ -64,6 +65,7 @@ module Support
       Thread.start do
         loop do
           break if to_kill.empty?
+
           pid = to_kill.keys.first
           Process.kill(:TERM, pid)
           to_kill.delete(pid)
@@ -75,6 +77,7 @@ module Support
 
     private def ensure_fresh_worker_exe_exists
       return if fresh_exists?(worker_exe)
+
       FileUtils.mkdir_p(File.dirname(worker_exe))
 
       dl_out_file = File.join(tmproot, 'worker-download.out')
@@ -95,6 +98,7 @@ module Support
 
     private def fresh_exists?(path, max_age: 60 * 60 * 24)
       return false unless File.exist?(path)
+
       (Time.now - File.mtime(worker_exe)) < max_age
     end
 
@@ -125,7 +129,7 @@ module Support
     end
 
     private def worker_exe
-      @worker_exe ||= File.expand_path('../bin/travis-worker', __FILE__)
+      @worker_exe ||= File.expand_path('bin/travis-worker', __dir__)
     end
 
     private def worker_download_url

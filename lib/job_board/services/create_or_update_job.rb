@@ -46,6 +46,7 @@ module JobBoard
 
       private def queue
         return @queue if @queue
+
         @queue = job.fetch('data', {}).fetch('queue', nil)
         if @queue.nil?
           @queue = assign_queue

@@ -21,7 +21,7 @@ module JobBoard
     def jwt_public_key
       @jwt_public_key ||= begin
         jwt_private_key.public_key
-      rescue => e
+      rescue StandardError => e
         warn e
         nil
       end
@@ -31,8 +31,9 @@ module JobBoard
       @jwt_private_key ||= begin
         value = super
         return OpenSSL::PKey::RSA.new(value) if value.start_with?('-----')
+
         OpenSSL::PKey::RSA.new(Base64.decode64(value))
-      rescue => e
+      rescue StandardError => e
         warn e
         nil
       end
@@ -63,7 +64,7 @@ module JobBoard
       build_api_org_url: ENV.fetch('JOB_BOARD_BUILD_API_ORG_URL', ''),
       database: {
         url: '',
-        sql_logging: false
+        sql_logging: ENV.fetch('JOB_BOARD_DATABASE_LOGGING', 'false') == 'true'
       },
       images_name_format: '.*',
       job_max_duration: ENV.fetch('JOB_BOARD_JOB_MAX_DURATION', '10800'),

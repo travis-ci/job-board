@@ -38,9 +38,7 @@ module JobBoard
 
     def self.for_queue(redis: nil, site: '', queue_name: '')
       redis ||= JobBoard.redis
-      unless redis.sismember("queues:#{site}", queue_name)
-        raise Invalid, 'unknown queue'
-      end
+      raise Invalid, 'unknown queue' unless redis.sismember("queues:#{site}", queue_name)
 
       claims = nil
       queued_ids = nil
@@ -53,6 +51,7 @@ module JobBoard
       # rubocop:disable Style/NilComparison
       raise Error, 'unable to read queued ids' if queued_ids == nil
       raise Error, 'unable to read claims' if claims == nil
+
       # rubocop:enable Style/NilComparison
 
       jobs = []
@@ -84,11 +83,7 @@ module JobBoard
       @queue_name = queue_name
       @site = site
       @ttl = ttl
-      # rubocop:disable Style/GuardClause
-      if site.empty? || queue_name.empty?
-        raise Invalid, 'missing site or queue name'
-      end
-      # rubocop:enable Style/GuardClause
+      raise Invalid, 'missing site or queue name' if site.empty? || queue_name.empty?
     end
 
     def register(processor: '')
@@ -142,15 +137,16 @@ module JobBoard
       end
 
       claimed
-    rescue => e
+    rescue StandardError => e
       JobBoard.logger.error('failure during claim', error: e.to_s)
 
       begin
         return nil if claimed.nil?
+
         redis_pool.with do |redis|
           redis.rpush(queue_key, claimed)
         end
-      rescue => e
+      rescue StandardError => e
         JobBoard.logger.error('failed to push claim back', error: e.to_s)
       end
 

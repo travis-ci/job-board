@@ -36,7 +36,7 @@ module Support
 
       File.write(pid_file, Process.pid.to_s)
 
-      load File.expand_path('../../../bin/job-board-reconcile-jobs', __FILE__)
+      load File.expand_path('../../bin/job-board-reconcile-jobs', __dir__)
     end
 
     private def reopen_streams

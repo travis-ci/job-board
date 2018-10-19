@@ -12,7 +12,7 @@ ENV['DATABASE_URL'] = 'mock://' unless integration?
 ENV['DATABASE_SQL_LOGGING'] = nil
 ENV['AUTH_TOKENS'] = 'test'
 ENV['JOB_BOARD_JWT_PRIVATE_KEY'] = File.read(
-  File.expand_path('../test_rsa', __FILE__)
+  File.expand_path('test_rsa', __dir__)
 )
 
 require 'job_board'

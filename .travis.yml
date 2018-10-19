@@ -1,7 +1,8 @@
 language: ruby
-rvm: 2.4.2
-dist: trusty
-sudo: false
+rvm: 2.5.2
+dist: xenial
+group: edge
+sudo: required
 
 cache:
   bundler: true
@@ -10,10 +11,15 @@ cache:
   - ${HOME}/.cache
 
 services:
-- redis
+- redis-server
 
 addons:
-  postgresql: 9.3
+  postgresql: 10
+  apt:
+    packages:
+    - postgresql-10
+    - postgresql-client-10
+    - postgresql-server-dev-10
 
 env:
   global:
@@ -26,11 +32,9 @@ env:
 before_install:
 - script/install-sqitch
 - eval "$(perl -I ~/perl5/lib/perl5/ '-Mlocal::lib')"
+- psql -c 'select version()'
 
 before_script:
 - createdb job_board_test
 - sqitch deploy
 - sqitch verify
-
-after_success:
-- bundle exec codeclimate-test-reporter

@@ -43,7 +43,7 @@ module Support
 
     private def start_rack_server(options: {}, misc_http_port: 10_087)
       reopen_streams
-      $stderr.puts '---> starting server'
+      warn '---> starting server'
 
       JobBoard.logger.level = ::Logger::DEBUG
 

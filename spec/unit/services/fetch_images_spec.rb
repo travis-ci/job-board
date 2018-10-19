@@ -35,7 +35,7 @@ describe JobBoard::Services::FetchImages do
 
   it 'fetches images' do
     expect(JobBoard::Models::Image).to receive(:where).with(infra: 'test')
-      .and_return(FakeImageQuery.new(results))
+                                                      .and_return(FakeImageQuery.new(results))
 
     fetch_query = { 'infra' => 'test', 'limit' => 10 }
     expect(described_class.run(query: fetch_query)).to eql(results)

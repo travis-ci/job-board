@@ -14,7 +14,7 @@ RuboCop::RakeTask.new if defined?(RuboCop)
 task default: %i[rubocop spec]
 
 task :routes do
-  $LOAD_PATH << File.expand_path('../lib', __FILE__)
+  $LOAD_PATH << File.expand_path('lib', __dir__)
   ENV['DATABASE_SQL_LOGGING'] = nil
   require 'job_board'
 

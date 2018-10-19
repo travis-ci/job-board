@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 require 'fileutils'
-require 'thread'
-
 require 'rack/server'
 require 'sinatra/base'
 
@@ -21,14 +19,14 @@ module Support
     end
 
     post '/log-parts/multi' do
-      $stderr.puts '---> POST /log-parts/multi ' \
+      warn '---> POST /log-parts/multi ' \
                    "body: #{request.body.read}"
       status 204
     end
 
     patch '/jobs/:job_id/state' do
       parsed = JSON.parse(request.body.read)
-      $stderr.puts "---> PATCH /jobs/#{params[:job_id]}/state body: #{parsed}"
+      warn "---> PATCH /jobs/#{params[:job_id]}/state body: #{parsed}"
       save_state_update(params[:job_id], parsed)
       status 200
     end
@@ -36,7 +34,7 @@ module Support
     post '/script' do
       request_body = request.body.read
       request_json = JSON.parse(request_body)
-      $stderr.puts "---> POST /script body: #{request_body}"
+      warn "---> POST /script body: #{request_body}"
       status 200
       content_type :text
       body gen_script(
@@ -101,12 +99,13 @@ module Support
 
     def state_summary
       return [] unless File.exist?(state_summary_file)
+
       JSON.parse(File.read(state_summary_file))
     end
 
     private def start_rack_server(options: {})
       reopen_streams
-      $stderr.puts '---> starting misc http server'
+      warn '---> starting misc http server'
       Rack::Server.start(options)
     end
 

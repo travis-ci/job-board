@@ -29,6 +29,7 @@ module JobBoard
 
       def initdb!
         return if @initdb
+
         Sequel.extension(*global_extensions)
 
         %w[images jobs].each do |table|
@@ -79,6 +80,7 @@ module JobBoard
 
       private def connection_extensions
         return [] if JobBoard.config.database.url.start_with?('mock')
+
         %i[pg_hstore pg_json]
       end
     end

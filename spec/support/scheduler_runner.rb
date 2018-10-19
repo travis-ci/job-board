@@ -32,10 +32,10 @@ module Support
       reopen_streams if redir_streams
       pid = pid_file if pid.empty?
 
-      $stderr.puts '---> writing pid file'
+      warn '---> writing pid file'
       File.open(pid, 'w') { |f| f.puts(Process.pid.to_s) }
 
-      $stderr.puts '---> starting scheduler loop'
+      warn '---> starting scheduler loop'
       scheduler_loop(port: port, count: count)
     end
 
@@ -44,6 +44,7 @@ module Support
       scheduled = 0
       loop do
         break if scheduled >= count
+
         scheduled += 1
         File.write(scheduled_count_file, scheduled.to_s)
 
@@ -65,9 +66,9 @@ module Support
             }
           ]
 
-          $stderr.puts "---> added job_id=#{job_id}" if system(*command)
-        rescue => e
-          $stderr.puts "---> ERROR: #{e}"
+          warn "---> added job_id=#{job_id}" if system(*command)
+        rescue StandardError => e
+          warn "---> ERROR: #{e}"
           job_ids.pop
         end
 
@@ -135,9 +136,8 @@ module Support
     end
 
     def scheduled_count
-      if File.exist?(scheduled_count_file)
-        return Integer(File.read(scheduled_count_file))
-      end
+      return Integer(File.read(scheduled_count_file)) if File.exist?(scheduled_count_file)
+
       0
     end
 
@@ -149,6 +149,7 @@ module Support
       if File.exist?(scheduled_summary_file)
         return JSON.parse(File.read(scheduled_summary_file))
       end
+
       []
     end
   end
