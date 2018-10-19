@@ -14,7 +14,7 @@ services:
 - redis-server
 
 addons:
-  postgresql: 10.5
+  postgresql: 10
   apt:
     packages:
     - postgresql-10
