@@ -1,4 +1,4 @@
 web: bin/job-board-pgbouncer-exec bin/job-board-server
-reconciler: bundle exec je bin/job-board-reconcile-jobs
+reconciler: bundle exec bin/job-board-reconcile-jobs
 
-console: bundle exec je bin/job-board-console
+console: bundle exec bin/job-board-console

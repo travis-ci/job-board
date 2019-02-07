@@ -6,11 +6,11 @@ ruby File.read(File.expand_path('.ruby-version', __dir__)) if ENV.key?('DYNO')
 
 gem 'activesupport'
 gem 'addressable'
+gem 'codecov', group: %i[development test], require: false
 gem 'connection_pool'
 gem 'factory_girl', group: %i[development test]
 gem 'fakeredis', group: %i[development test], require: false
 gem 'faraday'
-gem 'jemalloc'
 gem 'jwt'
 gem 'pg'
 gem 'pry', require: false
