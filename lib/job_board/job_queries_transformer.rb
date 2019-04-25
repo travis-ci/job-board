@@ -72,6 +72,13 @@ module JobBoard
         )
       end
 
+      if has?('os', 'dist')
+        add_tags.call(
+          os: val('os'),
+          dist: val('dist')
+        )
+      end
+
       add_default_tag.call(language_key => 'true') if has?('language')
       if osx? && has?('osx_image')
         add_default_tag.call(
