@@ -49,6 +49,10 @@ module JobBoard
           puts db_job.to_hash
           puts '-----Create 2 End-----'
           db_job.to_hash
+          puts '-----Create 2 Start-----'
+          puts 'create-jobs-add'
+          puts db_job.to_hash
+          puts '-----Create 2 End-----'
         end
       end
 
