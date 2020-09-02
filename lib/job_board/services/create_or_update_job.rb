@@ -20,6 +20,10 @@ module JobBoard
         job_id = job.fetch('id')
 
         db_job = JobBoard::Models::Job.first(job_id: job_id.to_s)
+        puts '-----Create 1 Start-----'
+        puts 'create-jobs-add'
+        puts db_job
+        puts '-----Create 1 End-----'
         if db_job.nil?
           JobBoard.logger.info(
             'creating new job record', job: job_id, queue: queue, site: site
@@ -40,6 +44,10 @@ module JobBoard
             site: site
           )
           db_job.save_changes
+          puts '-----Create 2 Start-----'
+          puts 'create-jobs-add'
+          puts db_job.to_hash
+          puts '-----Create 2 End-----'
           db_job.to_hash
         end
       end
