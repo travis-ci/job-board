@@ -30,6 +30,10 @@ module JobBoard
     end
 
     post '/jobs/add' do
+      puts '-----Job Start-----'
+      puts 'jobs-add-action'
+      puts request.body.read
+      puts '-----Job End-----'
       job = JSON.parse(request.body.read)
       site = request.env.fetch('travis.site')
       JobBoard.logger.debug(

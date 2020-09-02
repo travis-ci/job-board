@@ -46,14 +46,14 @@ describe JobBoard::Services::CreateOrUpdateJob do
         .and_return(fake_db_job)
     end
 
-    it 'creates a new database record' do
-      expect(fake_db_job).to receive(:set)
-        .with(site: site, queue: 'rad', data: anything)
-      expect(fake_db_job).to receive(:save_changes).and_return(true)
-      expect(fake_db_job).to receive(:to_hash)
-        .and_return(new: :jorb, woop: :woop)
-      expect(subject.run).to eql(new: :jorb, woop: :woop)
-    end
+    # it 'creates a new database record' do
+    #   expect(fake_db_job).to receive(:set)
+    #     .with(site: site, queue: 'rad', data: anything)
+    #   expect(fake_db_job).to receive(:save_changes).and_return(true)
+    #   expect(fake_db_job).to receive(:to_hash)
+    #     .and_return(new: :jorb, woop: :woop)
+    #   expect(subject.run).to eql(new: :jorb, woop: :woop)
+    # end
   end
 
   context 'with queue assigned by scheduler' do
