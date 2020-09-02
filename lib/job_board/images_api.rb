@@ -37,6 +37,10 @@ module JobBoard
       param :limit, Integer, default: 0
       param :is_default, Boolean, default: false
 
+      puts '----------'
+      puts 'sb-jobboard-images-debugging GET /images'
+      puts params
+
       images = JobBoard::Services::FetchImages.run(query: params)
       data = images.map(&:to_hash)
 
@@ -48,6 +52,10 @@ module JobBoard
 
       data = images_fields(data, fields) unless fields.empty?
 
+      puts 'response data in GET /images'
+      puts data
+      puts '----------'
+
       status 200
       json data: data,
            meta: {
@@ -58,10 +66,6 @@ module JobBoard
     # This is a POST-ish version of `GET /images` that accepts a body of
     # line-delimited queries, returning with the first query with results
     post '/images/search' do
-      puts '----------'
-      puts 'sb-jobboard-debugging'
-      puts request.body.read
-      puts '----------'
       images, matching_query, limit = image_searcher.search(request.body.read)
       data = images.map(&:to_hash)
 
@@ -71,6 +75,11 @@ module JobBoard
 
       data = images_fields(data, fields) unless fields.empty?
 
+      puts '----------'
+      puts 'sb-jobboard-images-debugging /images/search'
+      puts "request body: #{request.body.read}"
+      puts "response data: #{data}"
+      puts '----------'
       status 200
       json data: data,
            meta: { limit: limit, matching_query: matching_query }
@@ -85,6 +94,11 @@ module JobBoard
 
       image = JobBoard::Services::CreateImage.run(params: params)
 
+      puts '----------'
+      puts 'sb-jobboard-images-debugging in POST /images'
+      puts "params: #{params}"
+      puts "created image: #{image}"
+      puts '----------'
       status 201
       json data: [image.to_hash]
     end
@@ -97,6 +111,11 @@ module JobBoard
       params['is_default'] = false unless params.key?('is_default')
 
       image = JobBoard::Services::UpdateImage.run(params: params)
+      puts '----------'
+      puts 'sb-jobboard-images-debugging PUT /images'
+      puts "params: #{params}"
+      puts "Updated image: #{image}"
+      puts '----------'
       halt 404 if image.nil?
 
       status 200
@@ -110,6 +129,11 @@ module JobBoard
       halt 403 if guest?
 
       images, errors = image_updater.update(request.body.read)
+      puts '----------'
+      puts 'sb-jobboard-images-debugging PUT /images/multi'
+      puts "request body: #{request.body.read}"
+      puts "multi images: #{images}"
+      puts '----------'
       halt 400, JSON.dump(error: errors) if images.nil? || images.empty?
 
       status 200
@@ -122,6 +146,11 @@ module JobBoard
       set_images_mutation_params
 
       n_destroyed = JobBoard::Services::DeleteImages.run(params: params)
+      puts '----------'
+      puts 'sb-jobboard-images-debugging DELETE /images'
+      puts "request body: #{request.body.read}"
+      puts "deleted image: #{n_destroyed}"
+      puts '----------'
       halt 404 if n_destroyed.nil? || n_destroyed.zero?
 
       [204, {}, '']
