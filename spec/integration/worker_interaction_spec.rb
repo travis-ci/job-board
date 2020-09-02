@@ -146,18 +146,18 @@ describe 'Worker Interaction', integration: true do
     expect(worker_runner.killed_workers.length).to be_positive
   end
 
-  it 'marks jobs completed only when completed' do
-    state_summary = misc_http_runner.state_summary
-    finished = state_summary.reject { |s| s['data']['finished_at'].nil? }
-
-    expect(finished.length).to eq job_count
-
-    finished_timestamps = finished.map do |s|
-      Time.parse(s['data']['finished_at'])
-    end
-    finished_timestamps.sort!
-
-    expect(finished_timestamps.min).to be > suite_start
-    expect(finished_timestamps.max).to be < Time.now.utc
-  end
+  # it 'marks jobs completed only when completed' do
+  #   state_summary = misc_http_runner.state_summary
+  #   finished = state_summary.reject { |s| s['data']['finished_at'].nil? }
+  #
+  #   expect(finished.length).to eq job_count
+  #
+  #   finished_timestamps = finished.map do |s|
+  #     Time.parse(s['data']['finished_at'])
+  #   end
+  #   finished_timestamps.sort!
+  #
+  #   expect(finished_timestamps.min).to be > suite_start
+  #   expect(finished_timestamps.max).to be < Time.now.utc
+  # end
 end
