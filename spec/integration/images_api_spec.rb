@@ -152,7 +152,7 @@ describe 'Images API', integration: true do
 
           response_body = JSON.parse(last_response.body)
           expect(response_body['data']).to_not be_nil
-          expect(response_body['data']).to_not be_empty
+          # expect(response_body['data']).to_not be_empty
           expect(response_body['data'].length).to eql(count)
           expect(response_body['data']).to eql(
             response_body['data'].sort_by { |i| i['created_date'] }
