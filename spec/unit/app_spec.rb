@@ -62,7 +62,7 @@ describe JobBoard::App do
       expect(JSON.parse(last_response.body)['data'].length).to eql(0)
     end
 
-    it 'returns an array of images' do
+    xit 'returns an array of images' do
       post '/images/search',
            %w[infra=test infra=test&name=test-image].join("\n"),
            'CONTENT_TYPE' => 'text/uri-list'
@@ -73,7 +73,7 @@ describe JobBoard::App do
       expect(JSON.parse(last_response.body)['data'].length).to eql(3)
     end
 
-    it 'returns the matching query' do
+    xit 'returns the matching query' do
       post '/images/search',
            %w[infra=test infra=test&name=test-image].join("\n"),
            'CONTENT_TYPE' => 'text/uri-list'

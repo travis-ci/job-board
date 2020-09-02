@@ -58,6 +58,10 @@ module JobBoard
     # This is a POST-ish version of `GET /images` that accepts a body of
     # line-delimited queries, returning with the first query with results
     post '/images/search' do
+      puts '----------'
+      puts 'sb-jobboard-debugging'
+      puts request.body.read
+      puts '----------'
       images, matching_query, limit = image_searcher.search(request.body.read)
       data = images.map(&:to_hash)
 
