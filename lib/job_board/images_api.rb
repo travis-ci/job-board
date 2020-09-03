@@ -77,7 +77,7 @@ module JobBoard
 
       puts '----------'
       puts 'sb-jobboard-images-debugging /images/search'
-      puts "request body: #{request.body.read}"
+      puts "request body: #{request.body}"
       puts "response data: #{data}"
       puts '----------'
       status 200
