@@ -10,6 +10,9 @@ module JobBoard
         request_body: request_body.inspect
       )
 
+      puts '-----Inside ImageSearcher-----'
+      puts "request_body: #{request_body}"
+      puts '----------'
       request_body.split(/\n|\r\n/).each do |line|
         images, params, limit = fetch_images_for_line(line)
         return [images, params, limit] unless images.empty?
@@ -20,6 +23,10 @@ module JobBoard
 
     private def fetch_images_for_line(line)
       params = JobBoard::ImageParams.parse(line)
+      puts '-----Inside ImageSearcher#fetch_images_for_line-----'
+      puts "line: #{line}"
+      puts "params: #{params}"
+      puts '----------'
 
       return [[], 1] if missing_infra?(params)
 
