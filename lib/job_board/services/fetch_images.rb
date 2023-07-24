@@ -54,10 +54,10 @@ module JobBoard
       end
 
       private def with_is_gpu(image_query)
-        gpu_vm_type = query.key?('gpu_vm_type') ? query.fetch('gpu_vm_type') : false
-        return image_query unless gpu_vm_type
+        gpu_vm_type = query.key?('gpu_vm_type') ? query.fetch('gpu_vm_type') : nil
+        is_gpu = gpu_vm_type.nil? || gpu_vm_type.empty? ? false : true
 
-        image_query.where(is_gpu: true)
+        image_query.where(is_gpu: is_gpu)
       end
 
       private def with_name_like(image_query)
