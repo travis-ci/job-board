@@ -18,9 +18,6 @@ module JobBoard
       end
 
       def run
-        puts '-----Inside FetchImage-----'
-        puts "query"" #{query}"
-        puts '----------'
         images = []
 
         build_database_query.each do |image|

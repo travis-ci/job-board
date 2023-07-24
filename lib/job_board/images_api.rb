@@ -67,16 +67,6 @@ module JobBoard
 
       data = images_fields(data, fields) unless fields.empty?
 
-      puts '----------'
-      puts 'MK-debug-Job-board /images/search'
-      puts "request body.read: #{request.body.read}"
-      puts "images: #{images}"
-      puts "matching_query: #{matching_query}"
-      puts "limit: #{limit}"
-      puts "fields: #{fields}"
-      puts "response data: #{data}"
-      puts '----------'
-
       status 200
       json data: data,
            meta: { limit: limit, matching_query: matching_query }
