@@ -32,8 +32,10 @@ module JobBoard
       private def build_database_query
         database_query = with_tags_matching(
           with_name_like(
-            with_is_default(
-              JobBoard::Models::Image.where(infra: infra)
+            with_is_gpu(
+              with_is_default(
+                JobBoard::Models::Image.where(infra: infra)
+              )
             )
           )
         ).reverse_order(:created_at)
@@ -46,6 +48,13 @@ module JobBoard
         return image_query unless query.fetch('is_default', false)
 
         image_query.where(is_default: true)
+      end
+
+      private def with_is_gpu(image_query)
+        gpu_vm_type = query.key?('gpu_vm_type') ? query.fetch('gpu_vm_type') : nil
+        is_gpu = gpu_vm_type.nil? || gpu_vm_type.empty? ? false : true
+
+        image_query.where(is_gpu: is_gpu)
       end
 
       private def with_name_like(image_query)
