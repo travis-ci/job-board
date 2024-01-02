@@ -30,6 +30,7 @@ env:
   - INTEGRATION_SPECS='0'
 
 before_install:
+  - gem install rubygems-update -v 3.4.22
 - script/install-sqitch
 - eval "$(perl -I ~/perl5/lib/perl5/ '-Mlocal::lib')"
 - psql -c 'select version()'
