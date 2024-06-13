@@ -1,8 +1,6 @@
 language: ruby
-rvm: 2.5.2
 dist: xenial
 group: edge
-sudo: required
 
 cache:
   bundler: true
@@ -30,6 +28,7 @@ env:
   - INTEGRATION_SPECS='0'
 
 before_install:
+- gem install bundler
 - script/install-sqitch
 - eval "$(perl -I ~/perl5/lib/perl5/ '-Mlocal::lib')"
 - psql -c 'select version()'

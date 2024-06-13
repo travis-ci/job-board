@@ -7,7 +7,7 @@ cd "$(dirname "${0}")/.."
 : ${PUMA_MIN_THREADS:=8}
 : ${PUMA_MAX_THREADS:=12}
 
-exec bundle exec je -v \
+exec bundle exec \
   puma \
   -I lib \
   -p "${PORT}" \

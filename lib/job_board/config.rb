@@ -21,9 +21,9 @@ module JobBoard
     def jwt_public_key
       @jwt_public_key ||= begin
         jwt_private_key.public_key
-      rescue StandardError => e
-        warn e
-        nil
+                          rescue StandardError => e
+                            warn e
+                            nil
       end
     end
 
@@ -33,9 +33,9 @@ module JobBoard
         return OpenSSL::PKey::RSA.new(value) if value.start_with?('-----')
 
         OpenSSL::PKey::RSA.new(Base64.decode64(value))
-      rescue StandardError => e
-        warn e
-        nil
+                           rescue StandardError => e
+                             warn e
+                             nil
       end
     end
 
