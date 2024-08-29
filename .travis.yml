@@ -1,6 +1,6 @@
 language: ruby
-rvm: 2.5.2
-dist: xenial
+rvm: 3.2.5
+dist: focal
 group: edge
 sudo: required
 
@@ -14,12 +14,12 @@ services:
 - redis-server
 
 addons:
-  postgresql: 10
+  postgresql: 12
   apt:
     packages:
-    - postgresql-10
-    - postgresql-client-10
-    - postgresql-server-dev-10
+    - postgresql-12
+    - postgresql-client-12
+    - postgresql-server-dev-12
 
 env:
   global:
@@ -33,7 +33,7 @@ before_install:
 - script/install-sqitch
 - eval "$(perl -I ~/perl5/lib/perl5/ '-Mlocal::lib')"
 - psql -c 'select version()'
-- gem install bundler -v 2.0.1
+- gem install bundler -v 2.5.11
 
 before_script:
 - createdb job_board_test

@@ -1,5 +1,6 @@
 # frozen_string_literal: true
-
+require 'active_support'
+require 'factory_bot'
 require 'simplecov'
 
 def integration?
@@ -17,8 +18,6 @@ ENV['JOB_BOARD_JWT_PRIVATE_KEY'] = File.read(
 
 require 'job_board'
 require 'rack/test'
-require 'factory_girl'
-require 'fakeredis/rspec' unless integration?
 
 module RackTestBits
   include Rack::Test::Methods
@@ -28,7 +27,7 @@ module RackTestBits
   end
 end
 
-FactoryGirl.define do
+FactoryBot.define do
   factory :image, class: JobBoard::Models::Image do
     to_create(&:save)
   end
@@ -36,7 +35,7 @@ end
 
 RSpec.configure do |c|
   c.include RackTestBits
-  c.include FactoryGirl::Syntax::Methods
+  c.include FactoryBot::Syntax::Methods
   c.filter_run_excluding(integration: true) unless integration?
   c.before(:suite) do
     JobBoard.redis_pool.with do |redis|

@@ -4,7 +4,7 @@ require 'fileutils'
 require 'logger'
 
 require 'addressable/uri'
-require 'rack/server'
+require 'rack'
 
 require 'job_board'
 

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'fileutils'
-require 'rack/server'
+require 'rack'
 require 'sinatra/base'
 
 module Support
