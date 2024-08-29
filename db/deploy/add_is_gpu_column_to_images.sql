@@ -2,7 +2,7 @@
 
 BEGIN;
 
-ALTER TABLE images
+ALTER TABLE job_board.images
 ADD COLUMN is_gpu BOOLEAN NOT NULL DEFAULT FALSE;
 
 COMMIT;

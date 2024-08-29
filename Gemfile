@@ -16,6 +16,7 @@ gem 'pry', require: false
 gem 'puma'
 gem 'rack-ssl', require: false
 gem 'rack-test', group: %i[development test]
+gem 'rackup'
 gem 'rake'
 gem 'redis' , '~> 5'
 gem 'redis-namespace'

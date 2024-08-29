@@ -106,7 +106,7 @@ module Support
     private def start_rack_server(options: {})
       reopen_streams
       warn '---> starting misc http server'
-      Rack::Server.start(options)
+      Rackup::Server.start(options)
     end
 
     private def reopen_streams

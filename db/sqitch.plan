@@ -8,3 +8,4 @@ images_indices [appschema images] 2016-07-26T02:29:09Z Dan Buch <dan@travis-ci.o
 jobs [appschema] 2016-10-19T23:08:04Z Dan Buch <dan@travis-ci.org> # Adds the jobs table
 jobs_indices [appschema jobs] 2016-10-19T23:23:10Z Dan Buch <dan@travis-ci.org> # Adds indices for the jobs table
 jobs_images_updated_at_defaults [images jobs] 2016-10-24T15:18:03Z Dan Buch <dan@travis-ci.org> # Set jobs and images updated_at fields to now on initialization
+add_is_gpu_column_to_images [images] 2023-07-31T14:26:00Z Murtaza Khan < > # add is_gpu to images

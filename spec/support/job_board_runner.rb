@@ -61,7 +61,7 @@ module Support
         'test' => Addressable::URI.parse(misc_base_url)
       }
 
-      Rack::Server.start(options)
+      Rackup::Server.start(options)
     end
 
     private def reopen_streams
