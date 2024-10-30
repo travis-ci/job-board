@@ -30,9 +30,9 @@ describe JobBoard::JobQueue do
   context 'with no data' do
     it 'can register' do
       subject.register(processor: 'a')
-      expect(redis.exists('sites')).to be true
-      expect(redis.exists("queues:#{site}")).to be true
-      expect(redis.exists("processor:#{site}:#{queue_name}:a"))
+      expect(redis.exists?('sites')).to be true
+      expect(redis.exists?("queues:#{site}")).to be true
+      expect(redis.exists?("processor:#{site}:#{queue_name}:a"))
         .to be true
     end
 
@@ -128,9 +128,9 @@ describe JobBoard::JobQueue do
 
     it 'can register' do
       subject.register(processor: 'a')
-      expect(redis.exists('sites')).to be true
-      expect(redis.exists("queues:#{site}")).to be true
-      expect(redis.exists("processor:#{site}:#{queue_name}:a"))
+      expect(redis.exists?('sites')).to be true
+      expect(redis.exists?("queues:#{site}")).to be true
+      expect(redis.exists?("processor:#{site}:#{queue_name}:a"))
         .to be true
     end
 

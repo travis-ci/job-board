@@ -115,7 +115,7 @@ module JobBoard
             'reclaiming', reason: 'stale', job_id: job_id
           )
           reclaimed_for_queue << job_id
-        elsif !redis.exists(
+        elsif !redis.exists?(
           "processor:#{site}:#{queue_name}:#{processor_name}"
         )
           JobBoard.logger.debug(

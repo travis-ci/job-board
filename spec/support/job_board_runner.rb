@@ -4,7 +4,7 @@ require 'fileutils'
 require 'logger'
 
 require 'addressable/uri'
-require 'rack/server'
+require 'rack'
 
 require 'job_board'
 
@@ -61,7 +61,7 @@ module Support
         'test' => Addressable::URI.parse(misc_base_url)
       }
 
-      Rack::Server.start(options)
+      Rackup::Server.start(options)
     end
 
     private def reopen_streams

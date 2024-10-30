@@ -3,8 +3,8 @@
 module JobBoard
   module Services
     module Service
-      def run(*args)
-        new(*args).run
+      def run(**args)
+        new(**args).run
       end
     end
   end

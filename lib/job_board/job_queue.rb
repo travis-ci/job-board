@@ -173,7 +173,7 @@ module JobBoard
     private def processor_has_current_job_claim?(
       redis: nil, processor: '', job_id: nil
     )
-      redis.exists(processor_key(processor: processor)) &&
+      redis.exists?(processor_key(processor: processor)) &&
       redis.hget(queue_job_claims_key, job_id) == processor
     end
 
@@ -191,8 +191,8 @@ module JobBoard
       end
 
       result.fetch(0) == 'OK' &&
-      [true, false].include?(result.fetch(1)) &&
-      [true, false].include?(result.fetch(2))
+      [true, false].include?(!!result.fetch(1)) &&
+      [true, false].include?(!!result.fetch(2))
     end
 
     private def now
