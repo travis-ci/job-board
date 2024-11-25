@@ -18,6 +18,7 @@ module JobBoard
     end
 
     use Rack::Deflater
+    use Rack::RewindableInput::Middleware
     use JobBoard::Auth, site_paths: %r{^/jobs.+}
     use JobBoard::JobDeliveryAPI
     use JobBoard::ImagesAPI

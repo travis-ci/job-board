@@ -30,6 +30,7 @@ module JobBoard
     end
 
     post '/jobs/add' do
+      request.body.rewind if request.body.respond_to?(:rewind)
       job = JSON.parse(request.body.read)
       site = request.env.fetch('travis.site')
       JobBoard.logger.debug(
