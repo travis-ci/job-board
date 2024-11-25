@@ -58,6 +58,7 @@ module JobBoard
     # This is a POST-ish version of `GET /images` that accepts a body of
     # line-delimited queries, returning with the first query with results
     post '/images/search' do
+      request.body.rewind if request.body.respond_to?(:rewind)
       images, matching_query, limit = image_searcher.search(request.body.read)
       data = images.map(&:to_hash)
 
@@ -105,6 +106,7 @@ module JobBoard
     put '/images/multi' do
       halt 403 if guest?
 
+      request.body.rewind if request.body.respond_to?(:rewind)
       images, errors = image_updater.update(request.body.read)
       halt 400, JSON.dump(error: errors) if images.nil? || images.empty?
 
